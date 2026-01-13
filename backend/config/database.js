@@ -4,14 +4,13 @@ import dotenv from "dotenv";
 // Load environment variables
 dotenv.config();
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 3306,
-    dialect: "mariadb",
+let sequelize;
+
+// Check if DATABASE_URL is provided (Render/production)
+if (process.env.DATABASE_URL) {
+  // Use PostgreSQL via DATABASE_URL (Render)
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: "postgres",
     logging: false, // Set to console.log to see SQL queries
     pool: {
       max: 5,
@@ -19,8 +18,33 @@ const sequelize = new Sequelize(
       acquire: 30000,
       idle: 10000,
     },
-  }
-);
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
+    },
+  });
+} else {
+  // Use MariaDB locally
+  sequelize = new Sequelize(
+    process.env.DB_NAME,
+    process.env.DB_USER,
+    process.env.DB_PASSWORD,
+    {
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT || 3306,
+      dialect: "mariadb",
+      logging: false, // Set to console.log to see SQL queries
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+      },
+    }
+  );
+}
 
 // Test database connection
 sequelize
