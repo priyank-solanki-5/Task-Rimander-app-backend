@@ -1,13 +1,17 @@
 import express from "express";
 import taskController from "../controller/task.controller.js";
+import authMiddleware from "../utils/authMiddleware.js";
 
 const router = express.Router();
+
+// Apply authentication middleware to all task routes
+router.use(authMiddleware);
 
 // Create task
 router.post("/", (req, res) => taskController.createTask(req, res));
 
-// Get all tasks for a user (with optional filters)
-router.get("/user/:userId", (req, res) => taskController.getAllTasks(req, res));
+// Get all tasks for authenticated user (with optional filters)
+router.get("/", (req, res) => taskController.getAllTasks(req, res));
 
 // Get task by ID
 router.get("/:id", (req, res) => taskController.getTaskById(req, res));
@@ -29,17 +33,15 @@ router.patch("/:id/pending", (req, res) =>
 );
 
 // Get overdue tasks
-router.get("/user/:userId/overdue", (req, res) =>
-  taskController.getOverdueTasks(req, res)
-);
+router.get("/overdue", (req, res) => taskController.getOverdueTasks(req, res));
 
 // Get upcoming tasks (default 7 days)
-router.get("/user/:userId/upcoming", (req, res) =>
+router.get("/upcoming", (req, res) =>
   taskController.getUpcomingTasks(req, res)
 );
 
 // Get recurring tasks
-router.get("/user/:userId/recurring", (req, res) =>
+router.get("/recurring", (req, res) =>
   taskController.getRecurringTasks(req, res)
 );
 

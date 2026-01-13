@@ -4,16 +4,17 @@ import fs from "fs/promises";
 class DocumentController {
   async uploadDocument(req, res) {
     try {
-      const { taskId, userId } = req.body;
+      const { taskId } = req.body;
+      const userId = req.user.id; // Get from authenticated token
 
       // Validate required fields
-      if (!taskId || !userId) {
+      if (!taskId) {
         // Delete uploaded file if validation fails
         if (req.file) {
           await fs.unlink(req.file.path).catch(() => {});
         }
         return res.status(400).json({
-          error: "Task ID and User ID are required",
+          error: "Task ID is required",
         });
       }
 
@@ -53,11 +54,7 @@ class DocumentController {
   async getDocumentById(req, res) {
     try {
       const { id } = req.params;
-      const { userId } = req.query;
-
-      if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
-      }
+      const userId = req.user.id; // Get from authenticated token
 
       const document = await documentService.getDocumentById(id, userId);
 
@@ -73,11 +70,7 @@ class DocumentController {
   async getDocumentsByTask(req, res) {
     try {
       const { taskId } = req.params;
-      const { userId } = req.query;
-
-      if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
-      }
+      const userId = req.user.id; // Get from authenticated token
 
       const documents = await documentService.getDocumentsByTask(
         taskId,
@@ -95,7 +88,7 @@ class DocumentController {
 
   async getDocumentsByUser(req, res) {
     try {
-      const { userId } = req.params;
+      const userId = req.user.id; // Get from authenticated token
 
       const documents = await documentService.getDocumentsByUser(userId);
 
@@ -111,11 +104,7 @@ class DocumentController {
   async downloadDocument(req, res) {
     try {
       const { id } = req.params;
-      const { userId } = req.query;
-
-      if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
-      }
+      const userId = req.user.id; // Get from authenticated token
 
       const { path, originalName, mimeType } =
         await documentService.getDocumentPath(id, userId);
@@ -138,11 +127,7 @@ class DocumentController {
   async deleteDocument(req, res) {
     try {
       const { id } = req.params;
-      const { userId } = req.query;
-
-      if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
-      }
+      const userId = req.user.id; // Get from authenticated token
 
       const result = await documentService.deleteDocument(id, userId);
 

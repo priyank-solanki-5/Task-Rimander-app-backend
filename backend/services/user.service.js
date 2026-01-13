@@ -1,4 +1,5 @@
 import userDao from "../dao/userDao.js";
+import authService from "./auth.service.js";
 
 class UserService {
   async registerUser(username, mobilenumber, email, password) {
@@ -25,7 +26,18 @@ class UserService {
       throw new Error("Invalid credentials");
     }
 
-    return user;
+    // Generate JWT token
+    const token = authService.generateToken(user);
+
+    return {
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        mobilenumber: user.mobilenumber,
+      },
+      token,
+    };
   }
 
   async changePassword(email, mobilenumber, newPassword) {

@@ -4,7 +4,6 @@ class TaskController {
   async createTask(req, res) {
     try {
       const {
-        userId,
         title,
         description,
         status,
@@ -14,10 +13,12 @@ class TaskController {
         recurrenceType,
       } = req.body;
 
+      const userId = req.user.id; // Get from authenticated token
+
       // Validate required fields
-      if (!userId || !title) {
+      if (!title) {
         return res.status(400).json({
-          error: "User ID and title are required",
+          error: "Title is required",
         });
       }
 
@@ -57,7 +58,7 @@ class TaskController {
 
   async getAllTasks(req, res) {
     try {
-      const { userId } = req.params;
+      const userId = req.user.id; // Get from authenticated token
       const { status, categoryId } = req.query;
 
       const filters = {};
@@ -78,11 +79,7 @@ class TaskController {
   async getTaskById(req, res) {
     try {
       const { id } = req.params;
-      const { userId } = req.query;
-
-      if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
-      }
+      const userId = req.user.id; // Get from authenticated token
 
       const task = await taskService.getTaskById(id, userId);
 
@@ -99,7 +96,6 @@ class TaskController {
     try {
       const { id } = req.params;
       const {
-        userId,
         title,
         description,
         status,
@@ -109,9 +105,7 @@ class TaskController {
         recurrenceType,
       } = req.body;
 
-      if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
-      }
+      const userId = req.user.id; // Get from authenticated token
 
       // Validate status if provided
       if (status && !["Pending", "Completed"].includes(status)) {
@@ -142,11 +136,7 @@ class TaskController {
   async deleteTask(req, res) {
     try {
       const { id } = req.params;
-      const { userId } = req.query;
-
-      if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
-      }
+      const userId = req.user.id; // Get from authenticated token
 
       const result = await taskService.deleteTask(id, userId);
 
@@ -159,11 +149,7 @@ class TaskController {
   async markTaskComplete(req, res) {
     try {
       const { id } = req.params;
-      const { userId } = req.body;
-
-      if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
-      }
+      const userId = req.user.id; // Get from authenticated token
 
       const task = await taskService.markTaskComplete(id, userId);
 
@@ -179,11 +165,7 @@ class TaskController {
   async markTaskPending(req, res) {
     try {
       const { id } = req.params;
-      const { userId } = req.body;
-
-      if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
-      }
+      const userId = req.user.id; // Get from authenticated token
 
       const task = await taskService.markTaskPending(id, userId);
 
@@ -198,7 +180,7 @@ class TaskController {
 
   async getOverdueTasks(req, res) {
     try {
-      const { userId } = req.params;
+      const userId = req.user.id; // Get from authenticated token
 
       const tasks = await taskService.getOverdueTasks(userId);
 
@@ -213,7 +195,7 @@ class TaskController {
 
   async getUpcomingTasks(req, res) {
     try {
-      const { userId } = req.params;
+      const userId = req.user.id; // Get from authenticated token
       const { days } = req.query;
 
       const tasks = await taskService.getUpcomingTasks(
@@ -233,11 +215,7 @@ class TaskController {
   async stopRecurrence(req, res) {
     try {
       const { id } = req.params;
-      const { userId } = req.body;
-
-      if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
-      }
+      const userId = req.user.id; // Get from authenticated token
 
       const result = await taskService.stopRecurrence(id, userId);
 
@@ -249,7 +227,7 @@ class TaskController {
 
   async getRecurringTasks(req, res) {
     try {
-      const { userId } = req.params;
+      const userId = req.user.id; // Get from authenticated token
 
       const tasks = await taskService.getRecurringTasks(userId);
 

@@ -44,15 +44,12 @@ class UserController {
         });
       }
 
-      const user = await userService.loginUser(email, password);
+      const result = await userService.loginUser(email, password);
 
       res.status(200).json({
         message: "Login successful",
-        data: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-        },
+        data: result.user,
+        token: result.token,
       });
     } catch (error) {
       res.status(401).json({ error: error.message });
