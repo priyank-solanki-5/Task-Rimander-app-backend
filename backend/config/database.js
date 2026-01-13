@@ -26,7 +26,7 @@ if (process.env.DATABASE_URL) {
     },
   });
 } else {
-  // Use MariaDB locally
+  // Use MySQL locally
   sequelize = new Sequelize(
     process.env.DB_NAME,
     process.env.DB_USER,
@@ -34,7 +34,7 @@ if (process.env.DATABASE_URL) {
     {
       host: process.env.DB_HOST,
       port: process.env.DB_PORT || 3306,
-      dialect: "mariadb",
+      dialect: "mysql",
       logging: false, // Set to console.log to see SQL queries
       pool: {
         max: 5,
