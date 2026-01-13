@@ -30,6 +30,14 @@ sequelize
   })
   .catch((err) => {
     console.error("❌ Unable to connect to the database:", err.message);
+    console.error("\n📝 To fix this issue, run: npm run init-db");
+    console.error("\nMake sure:");
+    console.error("1. MariaDB is running");
+    console.error("2. Your .env file has correct credentials:");
+    console.error(`   DB_HOST=${process.env.DB_HOST || "localhost"}`);
+    console.error(`   DB_PORT=${process.env.DB_PORT || 3306}`);
+    console.error(`   DB_USER=${process.env.DB_USER || "root"}`);
+    console.error(`   DB_NAME=${process.env.DB_NAME || "task_management_db"}`);
   });
 
 export default sequelize;
