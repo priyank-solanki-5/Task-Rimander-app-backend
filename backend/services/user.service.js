@@ -26,6 +26,9 @@ class UserService {
       throw new Error("Invalid credentials");
     }
 
+    // Update last login timestamp
+    await userDao.updateLastLogin(user.id);
+
     // Generate JWT token
     const token = authService.generateToken(user);
 
@@ -35,6 +38,8 @@ class UserService {
         username: user.username,
         email: user.email,
         mobilenumber: user.mobilenumber,
+        notificationPreferences: user.notificationPreferences,
+        settings: user.settings,
       },
       token,
     };
@@ -50,6 +55,154 @@ class UserService {
     await userDao.updateUser(user);
 
     return { message: "Password changed successfully" };
+  }
+
+  /**
+   * Get user profile
+   */
+  async getUserProfile(userId) {
+    const user = await userDao.findUserById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        mobilenumber: user.mobilenumber,
+        notificationPreferences: user.notificationPreferences,
+        settings: user.settings,
+        metadata: user.metadata,
+        lastLogin: user.lastLogin,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    };
+  }
+
+  /**
+   * Update notification preferences
+   */
+  async updateNotificationPreferences(userId, preferences) {
+    // Validate preferences
+    const validKeys = [
+      "email",
+      "push",
+      "sms",
+      "inApp",
+      "remindersBefore",
+      "overdueNotifications",
+      "completionNotifications",
+      "recurringNotifications",
+    ];
+
+    const invalidKeys = Object.keys(preferences).filter(
+      (key) => !validKeys.includes(key)
+    );
+
+    if (invalidKeys.length > 0) {
+      throw new Error(`Invalid preference keys: ${invalidKeys.join(", ")}`);
+    }
+
+    const user = await userDao.updateNotificationPreferences(
+      userId,
+      preferences
+    );
+
+    return {
+      success: true,
+      message: "Notification preferences updated successfully",
+      notificationPreferences: user.notificationPreferences,
+      metadata: {
+        timestamp: new Date(),
+        userId,
+      },
+    };
+  }
+
+  /**
+   * Get notification preferences
+   */
+  async getNotificationPreferences(userId) {
+    const preferences = await userDao.getNotificationPreferences(userId);
+
+    return {
+      success: true,
+      notificationPreferences: preferences,
+      metadata: {
+        timestamp: new Date(),
+        userId,
+      },
+    };
+  }
+
+  /**
+   * Update user settings
+   */
+  async updateSettings(userId, settings) {
+    // Validate settings
+    const validKeys = [
+      "theme",
+      "language",
+      "timezone",
+      "dateFormat",
+      "timeFormat",
+      "weekStartsOn",
+    ];
+
+    const invalidKeys = Object.keys(settings).filter(
+      (key) => !validKeys.includes(key)
+    );
+
+    if (invalidKeys.length > 0) {
+      throw new Error(`Invalid setting keys: ${invalidKeys.join(", ")}`);
+    }
+
+    const user = await userDao.updateSettings(userId, settings);
+
+    return {
+      success: true,
+      message: "Settings updated successfully",
+      settings: user.settings,
+      metadata: {
+        timestamp: new Date(),
+        userId,
+      },
+    };
+  }
+
+  /**
+   * Get user settings
+   */
+  async getSettings(userId) {
+    const settings = await userDao.getSettings(userId);
+
+    return {
+      success: true,
+      settings: settings,
+      metadata: {
+        timestamp: new Date(),
+        userId,
+      },
+    };
+  }
+
+  /**
+   * Update user metadata
+   */
+  async updateMetadata(userId, metadata) {
+    const user = await userDao.updateMetadata(userId, metadata);
+
+    return {
+      success: true,
+      message: "Metadata updated successfully",
+      metadata: user.metadata,
+      timestamp: new Date(),
+    };
   }
 }
 

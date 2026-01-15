@@ -138,6 +138,111 @@ class TaskDao {
       ],
     });
   }
+
+  /**
+   * Search tasks by name (title)
+   * Supports partial matching using LIKE
+   */
+  async searchTasksByName(userId, searchTerm) {
+    return await Task.findAll({
+      where: {
+        userId,
+        title: {
+          [Op.like]: `%${searchTerm}%`,
+        },
+      },
+      include: [
+        {
+          model: Category,
+          as: "category",
+          attributes: ["id", "name", "isPredefined"],
+        },
+      ],
+      order: [
+        ["dueDate", "ASC"],
+        ["createdAt", "DESC"],
+      ],
+    });
+  }
+
+  /**
+   * Advanced filter for tasks
+   * Supports: name search, category filter, status filter, date range
+   */
+  async filterTasks(userId, filters = {}) {
+    const whereClause = { userId };
+
+    // Search by name (partial match)
+    if (filters.search) {
+      whereClause.title = {
+        [Op.like]: `%${filters.search}%`,
+      };
+    }
+
+    // Filter by status (exact match)
+    if (filters.status) {
+      whereClause.status = filters.status;
+    }
+
+    // Filter by category (exact match)
+    if (filters.categoryId) {
+      whereClause.categoryId = filters.categoryId;
+    }
+
+    // Filter by date range
+    if (filters.startDate || filters.endDate) {
+      whereClause.dueDate = {};
+      if (filters.startDate) {
+        whereClause.dueDate[Op.gte] = new Date(filters.startDate);
+      }
+      if (filters.endDate) {
+        whereClause.dueDate[Op.lte] = new Date(filters.endDate);
+      }
+    }
+
+    // Filter by recurring status
+    if (filters.isRecurring !== undefined) {
+      whereClause.isRecurring = filters.isRecurring;
+    }
+
+    return await Task.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: Category,
+          as: "category",
+          attributes: ["id", "name", "isPredefined"],
+        },
+      ],
+      order: [
+        ["dueDate", "ASC"],
+        ["createdAt", "DESC"],
+      ],
+    });
+  }
+
+  /**
+   * Get task count by filters
+   */
+  async getTaskCountByFilters(userId, filters = {}) {
+    const whereClause = { userId };
+
+    if (filters.search) {
+      whereClause.title = {
+        [Op.like]: `%${filters.search}%`,
+      };
+    }
+
+    if (filters.status) {
+      whereClause.status = filters.status;
+    }
+
+    if (filters.categoryId) {
+      whereClause.categoryId = filters.categoryId;
+    }
+
+    return await Task.count({ where: whereClause });
+  }
 }
 
 export default new TaskDao();

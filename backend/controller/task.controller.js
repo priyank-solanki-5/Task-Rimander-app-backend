@@ -252,6 +252,119 @@ class TaskController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  /**
+   * Search tasks by name
+   * GET /api/tasks/search?q=searchTerm
+   */
+  async searchTasks(req, res) {
+    try {
+      const userId = req.user.id;
+      const { q } = req.query;
+
+      if (!q) {
+        return res.status(400).json({
+          success: false,
+          error: "Search query parameter 'q' is required",
+        });
+      }
+
+      const result = await taskService.searchTasks(userId, q);
+
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        error: error.message,
+      });
+    }
+  }
+
+  /**
+   * Filter tasks by category, status, date range
+   * GET /api/tasks/filter?status=Pending&categoryId=1&startDate=2026-01-01&endDate=2026-12-31
+   */
+  async filterTasks(req, res) {
+    try {
+      const userId = req.user.id;
+      const { status, categoryId, startDate, endDate, isRecurring } = req.query;
+
+      const filters = {};
+
+      if (status) {
+        if (!["Pending", "Completed"].includes(status)) {
+          return res.status(400).json({
+            success: false,
+            error: "Status must be either 'Pending' or 'Completed'",
+          });
+        }
+        filters.status = status;
+      }
+
+      if (categoryId) {
+        filters.categoryId = parseInt(categoryId);
+      }
+
+      if (startDate) {
+        filters.startDate = startDate;
+      }
+
+      if (endDate) {
+        filters.endDate = endDate;
+      }
+
+      if (isRecurring !== undefined) {
+        filters.isRecurring = isRecurring === "true";
+      }
+
+      const result = await taskService.filterTasks(userId, filters);
+
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: error.message,
+      });
+    }
+  }
+
+  /**
+   * Combined search and filter
+   * GET /api/tasks/search-filter?q=searchTerm&status=Pending&categoryId=1
+   */
+  async searchAndFilter(req, res) {
+    try {
+      const userId = req.user.id;
+      const { q, status, categoryId, startDate, endDate } = req.query;
+
+      const filters = {};
+
+      if (status) {
+        filters.status = status;
+      }
+
+      if (categoryId) {
+        filters.categoryId = parseInt(categoryId);
+      }
+
+      if (startDate) {
+        filters.startDate = startDate;
+      }
+
+      if (endDate) {
+        filters.endDate = endDate;
+      }
+
+      const result = await taskService.searchAndFilter(userId, q, filters);
+
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: error.message,
+      });
+    }
+  }
 }
 
 export default new TaskController();

@@ -249,6 +249,74 @@ class TaskService {
   async getUpcomingTasks(userId, days = 7) {
     return await taskDao.findUpcomingTasks(userId, days);
   }
+
+  /**
+   * Search tasks by name
+   */
+  async searchTasks(userId, searchTerm) {
+    if (!searchTerm || searchTerm.trim() === "") {
+      throw new Error("Search term is required");
+    }
+
+    const tasks = await taskDao.searchTasksByName(userId, searchTerm.trim());
+
+    return {
+      success: true,
+      count: tasks.length,
+      searchTerm,
+      tasks,
+      metadata: {
+        timestamp: new Date(),
+        userId,
+      },
+    };
+  }
+
+  /**
+   * Filter tasks by category, status, date range, etc.
+   */
+  async filterTasks(userId, filters = {}) {
+    const tasks = await taskDao.filterTasks(userId, filters);
+    const totalCount = await taskDao.getTaskCountByFilters(userId, filters);
+
+    return {
+      success: true,
+      count: tasks.length,
+      totalCount,
+      filters,
+      tasks,
+      metadata: {
+        timestamp: new Date(),
+        userId,
+        appliedFilters: Object.keys(filters).filter((key) => filters[key]),
+      },
+    };
+  }
+
+  /**
+   * Search and filter tasks combined
+   */
+  async searchAndFilter(userId, searchTerm, filters = {}) {
+    const combinedFilters = { ...filters };
+
+    if (searchTerm && searchTerm.trim() !== "") {
+      combinedFilters.search = searchTerm.trim();
+    }
+
+    const tasks = await taskDao.filterTasks(userId, combinedFilters);
+
+    return {
+      success: true,
+      count: tasks.length,
+      searchTerm,
+      filters,
+      tasks,
+      metadata: {
+        timestamp: new Date(),
+        userId,
+      },
+    };
+  }
 }
 
 export default new TaskService();
