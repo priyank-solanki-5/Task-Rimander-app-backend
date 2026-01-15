@@ -9,6 +9,7 @@ import documentRoutes from "./routes/document.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import reminderRoutes from "./routes/reminder.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
+import ttlRoutes from "./routes/ttl.routes.js";
 import categoryService from "./services/category.service.js";
 import schedulerService from "./services/scheduler.service.js";
 import "./models/Task.js";
@@ -35,6 +36,7 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/ttl", ttlRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {
