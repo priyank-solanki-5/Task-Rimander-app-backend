@@ -1,0 +1,7 @@
+i want to make task reminder app backend.
+my need is:
+1 : user can register field is (username, mobilenumber, email, password).
+2 : user can login fields is (email, password)
+3 : user can change password if only mobile number or email is match.
+tachstack : express, maria db, sqlize etc
+folder structure is ready follow my folder stcture.
