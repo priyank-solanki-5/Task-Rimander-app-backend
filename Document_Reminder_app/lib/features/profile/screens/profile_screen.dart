@@ -32,23 +32,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
 
     // Load counts
-    final docCount = await context.read<DocumentProvider>().getDocumentCount();
-    final memCount = await context.read<MemberProvider>().getMemberCount();
+    final docProvider = context.read<DocumentProvider>();
+    final memberProvider = context.read<MemberProvider>();
+
+    final docCount = await docProvider.getDocumentCount();
+    final memCount = await memberProvider.getMemberCount();
 
     // Load user info
     final user = await _authService.getCurrentUser();
     final prefs = await SharedPreferences.getInstance();
     final photoPath = prefs.getString('profile_photo');
 
-    if (mounted) {
-      setState(() {
-        _documentCount = docCount;
-        _memberCount = memCount;
-        _userName = user?.name ?? 'User';
-        _profilePhotoPath = photoPath;
-        _isLoading = false;
-      });
-    }
+    if (!mounted) return;
+
+    setState(() {
+      _documentCount = docCount;
+      _memberCount = memCount;
+      _userName = user?.name ?? 'User';
+      _profilePhotoPath = photoPath;
+      _isLoading = false;
+    });
   }
 
   @override
@@ -124,7 +127,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Text(
                           'Document Reminder App',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                         ),
                       ],
@@ -163,7 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _changeProfilePhoto() async {
     final picker = ImagePicker();
-    
+
     try {
       final pickedFile = await picker.pickImage(
         source: ImageSource.gallery,
@@ -175,7 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (pickedFile != null) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('profile_photo', pickedFile.path);
-        
+
         setState(() {
           _profilePhotoPath = pickedFile.path;
         });
@@ -191,9 +196,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
       }
     }
   }
@@ -229,7 +234,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (result != null && result.trim().isNotEmpty) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('profile_name', result.trim());
-      
+
       setState(() {
         _userName = result.trim();
       });
@@ -270,11 +275,7 @@ class _StatCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 40,
-              color: color,
-            ),
+            Icon(icon, size: 40, color: color),
             const SizedBox(height: 12),
             Text(
               count.toString(),
@@ -287,7 +288,7 @@ class _StatCard extends StatelessWidget {
             Text(
               label,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ],

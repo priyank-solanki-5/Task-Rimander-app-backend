@@ -37,7 +37,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _isLoading = true;
       });
 
-      print('Registration form validated, attempting to register user...');
+      debugPrint('Registration form validated, attempting to register user...');
 
       // Attempt registration
       final result = await _authService.registerUser(
@@ -63,10 +63,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         if (result['success']) {
           // Registration successful - navigate to login
-          print('Registration successful, navigating to login');
+          debugPrint('Registration successful, navigating to login');
           Navigator.pushReplacementNamed(context, AppRoutes.login);
         } else {
-          print('Registration failed: ${result['message']}');
+          debugPrint('Registration failed: ${result['message']}');
         }
       }
     }
@@ -75,9 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Register'),
-      ),
+      appBar: AppBar(title: const Text('Register')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -96,7 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Name Field
                 CustomTextField(
                   label: 'Full Name',
@@ -111,7 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Mobile Field
                 CustomTextField(
                   label: 'Mobile Number',
@@ -134,7 +132,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Email Field
                 CustomTextField(
                   label: 'Email',
@@ -153,7 +151,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Password Field
                 CustomTextField(
                   label: 'Password',
@@ -163,7 +161,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   prefixIcon: const Icon(Icons.lock_outlined),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
                     onPressed: () {
                       setState(() {
@@ -182,14 +182,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Register Button
                 CustomButton(
                   text: _isLoading ? 'Registering...' : 'Register',
                   onPressed: _isLoading ? () {} : _handleRegister,
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Login Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

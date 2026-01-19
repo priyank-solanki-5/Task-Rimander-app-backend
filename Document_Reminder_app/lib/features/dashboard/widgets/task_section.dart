@@ -57,7 +57,9 @@ class TaskSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: (titleColor ?? theme.colorScheme.primary).withOpacity(0.1),
+                  color: (titleColor ?? theme.colorScheme.primary).withValues(
+                    alpha: 0.1,
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -71,7 +73,7 @@ class TaskSection extends StatelessWidget {
             ],
           ),
         ),
-        
+
         // Task list
         ListView.builder(
           shrinkWrap: true,
@@ -80,7 +82,7 @@ class TaskSection extends StatelessWidget {
           itemBuilder: (context, index) {
             final task = tasks[index];
             final memberName = memberNames[task.memberId] ?? 'Unknown';
-            
+
             return TaskCard(
               task: task,
               memberName: memberName,

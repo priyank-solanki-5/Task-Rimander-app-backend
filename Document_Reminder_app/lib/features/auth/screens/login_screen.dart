@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = true;
       });
 
-      print('Login form validated, attempting authentication...');
+      debugPrint('Login form validated, attempting authentication...');
 
       // Attempt login
       final result = await _authService.loginUser(
@@ -47,11 +47,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (result['success']) {
           // Login successful - navigate to main screen
-          print('Login successful, navigating to main screen');
+          debugPrint('Login successful, navigating to main screen');
           Navigator.pushReplacementNamed(context, AppRoutes.main);
         } else {
           // Login failed - show error message
-          print('Login failed: ${result['message']}');
+          debugPrint('Login failed: ${result['message']}');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(result['message']),
@@ -87,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 48),
-                
+
                 // Email Field
                 CustomTextField(
                   label: 'Email',
@@ -106,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Password Field
                 CustomTextField(
                   label: 'Password',
@@ -116,7 +116,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   prefixIcon: const Icon(Icons.lock_outlined),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
                     onPressed: () {
                       setState(() {
@@ -135,29 +137,32 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Forgot Password
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      print('Forgot Password button clicked');
-                      Navigator.pushNamed(context, AppRoutes.forgotPassword).then((_) {
-                        print('Returned from Forgot Password screen');
+                      debugPrint('Forgot Password button clicked');
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.forgotPassword,
+                      ).then((_) {
+                        debugPrint('Returned from Forgot Password screen');
                       });
                     },
                     child: const Text('Forgot Password?'),
                   ),
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Login Button
                 CustomButton(
                   text: _isLoading ? 'Logging in...' : 'Login',
                   onPressed: _isLoading ? () {} : _handleLogin,
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Register Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

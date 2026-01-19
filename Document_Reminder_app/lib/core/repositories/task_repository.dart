@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../database/tables.dart';
@@ -47,10 +48,11 @@ class TaskRepository {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
-    
+
     final List<Map<String, dynamic>> maps = await db.query(
       Tables.tasks,
-      where: '${Tables.taskDueDate} >= ? AND ${Tables.taskDueDate} < ? AND ${Tables.taskIsCompleted} = ?',
+      where:
+          '${Tables.taskDueDate} >= ? AND ${Tables.taskDueDate} < ? AND ${Tables.taskIsCompleted} = ?',
       whereArgs: [today.toIso8601String(), tomorrow.toIso8601String(), 0],
       orderBy: '${Tables.taskDueDate} ASC',
     );
@@ -63,10 +65,11 @@ class TaskRepository {
     final now = DateTime.now();
     final tomorrow = now.add(const Duration(days: 1));
     final futureDate = now.add(Duration(days: days + 1));
-    
+
     final List<Map<String, dynamic>> maps = await db.query(
       Tables.tasks,
-      where: '${Tables.taskDueDate} >= ? AND ${Tables.taskDueDate} < ? AND ${Tables.taskIsCompleted} = ?',
+      where:
+          '${Tables.taskDueDate} >= ? AND ${Tables.taskDueDate} < ? AND ${Tables.taskIsCompleted} = ?',
       whereArgs: [tomorrow.toIso8601String(), futureDate.toIso8601String(), 0],
       orderBy: '${Tables.taskDueDate} ASC',
     );
@@ -93,7 +96,7 @@ class TaskRepository {
       where: '${Tables.taskId} = ?',
       whereArgs: [id],
     );
-    
+
     if (maps.isEmpty) return null;
     return Task.fromMap(maps.first);
   }
@@ -116,7 +119,7 @@ class TaskRepository {
       );
       return count > 0;
     } catch (e) {
-      print('Error updating task: $e');
+      debugPrint('Error updating task: $e');
       return false;
     }
   }
@@ -136,7 +139,7 @@ class TaskRepository {
       );
       return count > 0;
     } catch (e) {
-      print('Error toggling task completion: $e');
+      debugPrint('Error toggling task completion: $e');
       return false;
     }
   }
@@ -152,7 +155,7 @@ class TaskRepository {
       );
       return count > 0;
     } catch (e) {
-      print('Error deleting task: $e');
+      debugPrint('Error deleting task: $e');
       return false;
     }
   }

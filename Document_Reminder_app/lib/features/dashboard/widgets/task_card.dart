@@ -47,7 +47,7 @@ class TaskCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              
+
               // Task details
               Expanded(
                 child: Column(
@@ -61,31 +61,35 @@ class TaskCard extends StatelessWidget {
                             ? TextDecoration.lineThrough
                             : null,
                         color: task.isCompleted
-                            ? theme.colorScheme.onSurface.withOpacity(0.5)
+                            ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
                             : null,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    
+
                     // Member name
                     Row(
                       children: [
                         Icon(
                           Icons.person_outline,
                           size: 16,
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           memberName,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    
+
                     // Due date
                     Row(
                       children: [
@@ -94,7 +98,9 @@ class TaskCard extends StatelessWidget {
                           size: 16,
                           color: isOverdue
                               ? theme.colorScheme.error
-                              : theme.colorScheme.onSurface.withOpacity(0.6),
+                              : theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.6,
+                                ),
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -102,7 +108,9 @@ class TaskCard extends StatelessWidget {
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: isOverdue
                                 ? theme.colorScheme.error
-                                : theme.colorScheme.onSurface.withOpacity(0.6),
+                                : theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.6,
+                                  ),
                             fontWeight: isOverdue ? FontWeight.w600 : null,
                           ),
                         ),
@@ -114,7 +122,9 @@ class TaskCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.error.withOpacity(0.1),
+                              color: theme.colorScheme.error.withValues(
+                                alpha: 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -129,7 +139,7 @@ class TaskCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    
+
                     // Task type badge
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -138,8 +148,8 @@ class TaskCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: task.taskType == TaskType.recurring
-                            ? theme.colorScheme.secondary.withOpacity(0.1)
-                            : theme.colorScheme.primary.withOpacity(0.1),
+                            ? theme.colorScheme.secondary.withValues(alpha: 0.1)
+                            : theme.colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(

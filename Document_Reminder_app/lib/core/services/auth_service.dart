@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 
@@ -9,20 +10,21 @@ class AuthService {
   // Get all registered users
   Future<List<User>> _getUsers() async {
     try {
-      final prefs = await SharedPreferences.getInstance()
-          .timeout(const Duration(seconds: 5));
+      final prefs = await SharedPreferences.getInstance().timeout(
+        const Duration(seconds: 5),
+      );
       final usersJson = prefs.getString(_usersKey);
-      
+
       if (usersJson == null || usersJson.isEmpty) {
-        print('No users found in storage');
+        debugPrint('No users found in storage');
         return [];
       }
 
       final List<dynamic> usersList = jsonDecode(usersJson);
-      print('Loaded ${usersList.length} users from storage');
+      debugPrint('Loaded ${usersList.length} users from storage');
       return usersList.map((json) => User.fromJson(json)).toList();
     } catch (e) {
-      print('Error loading users: $e');
+      debugPrint('Error loading users: $e');
       return [];
     }
   }
@@ -30,13 +32,14 @@ class AuthService {
   // Save users list
   Future<void> _saveUsers(List<User> users) async {
     try {
-      final prefs = await SharedPreferences.getInstance()
-          .timeout(const Duration(seconds: 5));
+      final prefs = await SharedPreferences.getInstance().timeout(
+        const Duration(seconds: 5),
+      );
       final usersJson = jsonEncode(users.map((u) => u.toJson()).toList());
       await prefs.setString(_usersKey, usersJson);
-      print('Saved ${users.length} users to storage');
+      debugPrint('Saved ${users.length} users to storage');
     } catch (e) {
-      print('Error saving users: $e');
+      debugPrint('Error saving users: $e');
       throw Exception('Failed to save users: $e');
     }
   }
@@ -67,11 +70,11 @@ class AuthService {
     required String password,
   }) async {
     try {
-      print('Attempting to register user: $email');
+      debugPrint('Attempting to register user: $email');
 
       // Check if user already exists
       if (await isUserRegistered(email)) {
-        print('Registration failed: Email already registered');
+        debugPrint('Registration failed: Email already registered');
         return {
           'success': false,
           'message': 'An account with this email already exists. Please login.',
@@ -91,13 +94,13 @@ class AuthService {
       users.add(newUser);
       await _saveUsers(users);
 
-      print('User registered successfully: $email');
+      debugPrint('User registered successfully: $email');
       return {
         'success': true,
         'message': 'Registration successful! Please login.',
       };
     } catch (e) {
-      print('Registration error: $e');
+      debugPrint('Registration error: $e');
       return {
         'success': false,
         'message': 'Registration failed. Please try again.',
@@ -111,13 +114,13 @@ class AuthService {
     required String password,
   }) async {
     try {
-      print('Attempting login for: $email');
+      debugPrint('Attempting login for: $email');
 
       // Check if user exists
       final user = await getUserByEmail(email);
-      
+
       if (user == null) {
-        print('Login failed: User not found');
+        debugPrint('Login failed: User not found');
         return {
           'success': false,
           'message': 'No account found with this email. Please register first.',
@@ -126,7 +129,7 @@ class AuthService {
 
       // Verify password
       if (user.password != password) {
-        print('Login failed: Incorrect password');
+        debugPrint('Login failed: Incorrect password');
         return {
           'success': false,
           'message': 'Incorrect password. Please try again.',
@@ -134,22 +137,16 @@ class AuthService {
       }
 
       // Save current user
-      final prefs = await SharedPreferences.getInstance()
-          .timeout(const Duration(seconds: 5));
+      final prefs = await SharedPreferences.getInstance().timeout(
+        const Duration(seconds: 5),
+      );
       await prefs.setString(_currentUserKey, user.toJsonString());
 
-      print('Login successful for: $email');
-      return {
-        'success': true,
-        'message': 'Login successful!',
-        'user': user,
-      };
+      debugPrint('Login successful for: $email');
+      return {'success': true, 'message': 'Login successful!', 'user': user};
     } catch (e) {
-      print('Login error: $e');
-      return {
-        'success': false,
-        'message': 'Login failed. Please try again.',
-      };
+      debugPrint('Login error: $e');
+      return {'success': false, 'message': 'Login failed. Please try again.'};
     }
   }
 
@@ -159,22 +156,19 @@ class AuthService {
     required String mobile,
     required String newPassword,
   }) async {
-    print('Attempting password reset for: $email');
+    debugPrint('Attempting password reset for: $email');
 
     // Get user
     final user = await getUserByEmail(email);
-    
+
     if (user == null) {
-      print('Password reset failed: User not found');
-      return {
-        'success': false,
-        'message': 'No account found with this email.',
-      };
+      debugPrint('Password reset failed: User not found');
+      return {'success': false, 'message': 'No account found with this email.'};
     }
 
     // Verify mobile number
     if (user.mobile != mobile) {
-      print('Password reset failed: Mobile number mismatch');
+      debugPrint('Password reset failed: Mobile number mismatch');
       return {
         'success': false,
         'message': 'Mobile number does not match our records.',
@@ -197,10 +191,11 @@ class AuthService {
 
     await _saveUsers(updatedUsers);
 
-    print('Password updated successfully for: $email');
+    debugPrint('Password updated successfully for: $email');
     return {
       'success': true,
-      'message': 'Password reset successful! Please login with your new password.',
+      'message':
+          'Password reset successful! Please login with your new password.',
     };
   }
 
@@ -208,7 +203,7 @@ class AuthService {
   Future<User?> getCurrentUser() async {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString(_currentUserKey);
-    
+
     if (userJson == null) {
       return null;
     }
@@ -216,7 +211,7 @@ class AuthService {
     try {
       return User.fromJsonString(userJson);
     } catch (e) {
-      print('Error loading current user: $e');
+      debugPrint('Error loading current user: $e');
       return null;
     }
   }
@@ -225,7 +220,7 @@ class AuthService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_currentUserKey);
-    print('User logged out');
+    debugPrint('User logged out');
   }
 
   // Clear all users (for testing)
@@ -233,6 +228,6 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_usersKey);
     await prefs.remove(_currentUserKey);
-    print('All users cleared');
+    debugPrint('All users cleared');
   }
 }

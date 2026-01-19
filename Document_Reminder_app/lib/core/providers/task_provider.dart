@@ -52,14 +52,14 @@ class TaskProvider extends ChangeNotifier {
 
     try {
       _tasks = await _taskRepository.getAllTasks();
-      
+
       // Load members for cache
       final members = await _memberRepository.getAllMembers();
       _membersCache = {for (var member in members) member.id!: member};
-      
-      print('Loaded ${_tasks.length} tasks');
+
+      debugPrint('Loaded ${_tasks.length} tasks');
     } catch (e) {
-      print('Error loading tasks: $e');
+      debugPrint('Error loading tasks: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -69,14 +69,17 @@ class TaskProvider extends ChangeNotifier {
   // Toggle task completion
   Future<void> toggleTaskCompletion(int taskId, bool isCompleted) async {
     try {
-      final success = await _taskRepository.toggleTaskCompletion(taskId, isCompleted);
+      final success = await _taskRepository.toggleTaskCompletion(
+        taskId,
+        isCompleted,
+      );
       if (success) {
         // Reload all tasks to ensure UI is in sync
         await loadTasks();
-        print('Task completion toggled: $isCompleted');
+        debugPrint('Task completion toggled: $isCompleted');
       }
     } catch (e) {
-      print('Error toggling task completion: $e');
+      debugPrint('Error toggling task completion: $e');
     }
   }
 
@@ -84,14 +87,12 @@ class TaskProvider extends ChangeNotifier {
   Future<int?> addTask(Task task) async {
     try {
       final id = await _taskRepository.insertTask(task);
-      if (id != null) {
-        // Reload all tasks to get the fresh data
-        await loadTasks();
-        print('Task added successfully with ID: $id');
-      }
+      // Reload all tasks to get the fresh data
+      await loadTasks();
+      debugPrint('Task added successfully with ID: $id');
       return id;
     } catch (e) {
-      print('Error adding task: $e');
+      debugPrint('Error adding task: $e');
       return null;
     }
   }
@@ -102,11 +103,11 @@ class TaskProvider extends ChangeNotifier {
       if (success) {
         // Reload all tasks to get the fresh data
         await loadTasks();
-        print('Task updated successfully');
+        debugPrint('Task updated successfully');
       }
       return success;
     } catch (e) {
-      print('Error updating task: $e');
+      debugPrint('Error updating task: $e');
       return false;
     }
   }
@@ -117,14 +118,15 @@ class TaskProvider extends ChangeNotifier {
       if (success) {
         // Reload all tasks
         await loadTasks();
-        print('Task deleted successfully');
+        debugPrint('Task deleted successfully');
       }
       return success;
     } catch (e) {
-      print('Error deleting task: $e');
+      debugPrint('Error deleting task: $e');
       return false;
     }
   }
+
   // Refresh tasks
   Future<void> refreshTasks() async {
     await loadTasks();

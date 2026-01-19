@@ -18,9 +18,9 @@ class MemberProvider extends ChangeNotifier {
 
     try {
       _members = await _memberRepository.getAllMembers();
-      print('Loaded ${_members.length} members');
+      debugPrint('Loaded ${_members.length} members');
     } catch (e) {
-      print('Error loading members: $e');
+      debugPrint('Error loading members: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -40,14 +40,12 @@ class MemberProvider extends ChangeNotifier {
   Future<int?> addMember(Member member) async {
     try {
       final id = await _memberRepository.insertMember(member);
-      if (id != null) {
-        // Reload all members to get fresh data
-        await loadMembers();
-        print('Member added successfully with ID: $id');
-      }
+      // Reload all members to get fresh data
+      await loadMembers();
+      debugPrint('Member added successfully with ID: $id');
       return id;
     } catch (e) {
-      print('Error adding member: $e');
+      debugPrint('Error adding member: $e');
       return null;
     }
   }
@@ -59,11 +57,11 @@ class MemberProvider extends ChangeNotifier {
       if (success) {
         // Reload all members
         await loadMembers();
-        print('Member updated successfully');
+        debugPrint('Member updated successfully');
       }
       return success;
     } catch (e) {
-      print('Error updating member: $e');
+      debugPrint('Error updating member: $e');
       return false;
     }
   }
@@ -75,11 +73,11 @@ class MemberProvider extends ChangeNotifier {
       if (success) {
         // Reload all members
         await loadMembers();
-        print('Member deleted successfully');
+        debugPrint('Member deleted successfully');
       }
       return success;
     } catch (e) {
-      print('Error deleting member: $e');
+      debugPrint('Error deleting member: $e');
       return false;
     }
   }
@@ -89,7 +87,7 @@ class MemberProvider extends ChangeNotifier {
     try {
       return await _memberRepository.getMemberCount();
     } catch (e) {
-      print('Error getting member count: $e');
+      debugPrint('Error getting member count: $e');
       return 0;
     }
   }
@@ -99,7 +97,7 @@ class MemberProvider extends ChangeNotifier {
     try {
       return await _memberRepository.searchMembers(query);
     } catch (e) {
-      print('Error searching members: $e');
+      debugPrint('Error searching members: $e');
       return [];
     }
   }

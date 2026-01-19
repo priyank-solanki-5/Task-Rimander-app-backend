@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 enum TaskType { oneTime, recurring }
 
@@ -56,7 +57,7 @@ class Task {
         docIds = List<int>.from(decoded);
       }
     } catch (e) {
-      print('Error parsing document IDs: $e');
+      debugPrint('Error parsing document IDs: $e');
     }
 
     return Task(
@@ -67,10 +68,14 @@ class Task {
       documentIds: docIds,
       dueDate: DateTime.parse(map['due_date'] as String),
       reminderDaysBefore: map['reminder_days_before'] as int?,
-      taskType: map['task_type'] == 'one-time' ? TaskType.oneTime : TaskType.recurring,
+      taskType: map['task_type'] == 'one-time'
+          ? TaskType.oneTime
+          : TaskType.recurring,
       isCompleted: map['is_completed'] == 1,
       isNotificationEnabled: map['is_notification_enabled'] == 1,
-      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'] as String) : null,
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'] as String)
+          : null,
     );
   }
 
@@ -98,7 +103,8 @@ class Task {
       reminderDaysBefore: reminderDaysBefore ?? this.reminderDaysBefore,
       taskType: taskType ?? this.taskType,
       isCompleted: isCompleted ?? this.isCompleted,
-      isNotificationEnabled: isNotificationEnabled ?? this.isNotificationEnabled,
+      isNotificationEnabled:
+          isNotificationEnabled ?? this.isNotificationEnabled,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -120,7 +126,9 @@ class Task {
   bool get isUpcoming {
     final now = DateTime.now();
     final tenDaysLater = now.add(const Duration(days: 10));
-    return !isCompleted && dueDate.isAfter(now) && dueDate.isBefore(tenDaysLater);
+    return !isCompleted &&
+        dueDate.isAfter(now) &&
+        dueDate.isBefore(tenDaysLater);
   }
 
   // Get task type display string
