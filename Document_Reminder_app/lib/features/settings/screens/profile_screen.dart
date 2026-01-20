@@ -28,7 +28,9 @@ class ProfileScreen extends StatelessWidget {
             // Profile Avatar
             CircleAvatar(
               radius: 50,
-              backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.1),
               child: Text(
                 DummyData.userName[0].toUpperCase(),
                 style: TextStyle(
@@ -44,7 +46,7 @@ class ProfileScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.displaySmall,
             ),
             const SizedBox(height: 32),
-            
+
             // Profile Information
             _buildInfoCard(
               context,
@@ -53,7 +55,7 @@ class ProfileScreen extends StatelessWidget {
               value: DummyData.userEmail,
             ),
             const SizedBox(height: 16),
-            
+
             _buildInfoCard(
               context,
               icon: Icons.phone_outlined,
@@ -61,7 +63,7 @@ class ProfileScreen extends StatelessWidget {
               value: DummyData.userMobile,
             ),
             const SizedBox(height: 32),
-            
+
             // Change Password Button
             OutlinedButton.icon(
               onPressed: () {
@@ -74,7 +76,7 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Logout Button
             CustomButton(
               text: 'Logout',
@@ -90,7 +92,8 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard(BuildContext context, {
+  Widget _buildInfoCard(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required String value,
@@ -111,15 +114,9 @@ class ProfileScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+                Text(label, style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text(value, style: Theme.of(context).textTheme.titleMedium),
               ],
             ),
           ),
@@ -164,7 +161,10 @@ class ProfileScreen extends StatelessWidget {
                 (route) => false,
               );
             },
-            child: const Text('Logout', style: TextStyle(color: Color(0xFFEF4444))),
+            child: const Text(
+              'Logout',
+              style: TextStyle(color: Color(0xFFEF4444)),
+            ),
           ),
         ],
       ),

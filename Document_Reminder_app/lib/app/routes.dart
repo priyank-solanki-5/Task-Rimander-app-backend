@@ -12,6 +12,11 @@ class AppRoutes {
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
   static const String main = '/main';
+  static const String notificationSettings = '/notification-settings';
+  static const String uploadDocument = '/upload-document';
+  static const String documentViewer = '/document-viewer';
+  static const String addMember = '/add-member';
+  static const String taskDetail = '/task-detail';
 
   // Route map
   static Map<String, WidgetBuilder> routes = {
