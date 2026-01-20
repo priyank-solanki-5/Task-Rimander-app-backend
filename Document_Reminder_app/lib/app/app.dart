@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/providers/theme_provider.dart';
-import '../core/responsive/breakpoints.dart';
 import 'routes.dart';
 import 'theme.dart';
 import 'package:flutter/gestures.dart';
@@ -24,7 +23,8 @@ class DocumentReminderApp extends StatelessWidget {
           builder: (context, child) {
             final mq = MediaQuery.of(context);
             // Clamp text scaling to keep UI legible across devices
-            final clampedScale = mq.textScaleFactor.clamp(0.85, 1.25);
+            final currentScale = mq.textScaler.scale(1.0);
+            final clampedScale = currentScale.clamp(0.85, 1.25).toDouble();
             return MediaQuery(
               data: mq.copyWith(textScaler: TextScaler.linear(clampedScale)),
               child: ScrollConfiguration(

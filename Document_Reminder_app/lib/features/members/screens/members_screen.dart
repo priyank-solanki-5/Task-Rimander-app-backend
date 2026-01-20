@@ -27,69 +27,75 @@ class _MembersScreenState extends State<MembersScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Members')),
-      body: Consumer<MemberProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Members')),
+        body: Consumer<MemberProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          final members = provider.members;
+            final members = provider.members;
 
-          if (members.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.people_outline,
-                    size: 64,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No members yet',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            if (members.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.people_outline,
+                      size: 64,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Add your first member',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No members yet',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.85,
-            ),
-            itemCount: members.length,
-            itemBuilder: (context, index) {
-              final member = members[index];
-              return MemberCard(
-                member: member,
-                onTap: () => _handleMemberTap(member),
-                onEdit: () => _editMember(member),
-                onDelete: () => _deleteMember(member),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Add your first member',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addMember,
-        child: const Icon(Icons.add),
+            }
+
+            return GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.85,
+              ),
+              itemCount: members.length,
+              itemBuilder: (context, index) {
+                final member = members[index];
+                return MemberCard(
+                  member: member,
+                  onTap: () => _handleMemberTap(member),
+                  onEdit: () => _editMember(member),
+                  onDelete: () => _deleteMember(member),
+                );
+              },
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _addMember,
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

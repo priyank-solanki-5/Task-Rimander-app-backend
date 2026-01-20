@@ -44,9 +44,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   void _handleSave() {
     if (_formKey.currentState!.validate()) {
       if (_selectedMember == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a member')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Please select a member')));
         return;
       }
       if (_selectedDocumentType == null) {
@@ -56,9 +56,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         return;
       }
       if (_selectedDate == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select due date')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Please select due date')));
         return;
       }
       if (_selectedReminderDays == null) {
@@ -69,21 +69,19 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       }
 
       // Mock save
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Task added successfully!')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Task added successfully!')));
       Navigator.pop(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Task'),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Add Task')),
+        body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
@@ -120,7 +118,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Task Title
                 CustomTextField(
                   label: 'Task Title',
@@ -135,7 +133,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Task Description
                 CustomTextField(
                   label: 'Task Description',
@@ -151,7 +149,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Document Type Dropdown
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,10 +166,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                         prefixIcon: Icon(Icons.insert_drive_file_outlined),
                       ),
                       items: AppConstants.documentTypes.map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(type),
-                        );
+                        return DropdownMenuItem(value: type, child: Text(type));
                       }).toList(),
                       onChanged: (value) {
                         setState(() {
@@ -182,7 +177,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Due Date Picker
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,7 +190,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     InkWell(
                       onTap: () => _selectDate(context),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
@@ -203,7 +201,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.calendar_today_outlined, color: Color(0xFF64748B)),
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              color: Color(0xFF64748B),
+                            ),
                             const SizedBox(width: 12),
                             Text(
                               _selectedDate == null
@@ -218,7 +219,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Reminder Days Dropdown
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,7 +250,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   ],
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Save Button
                 CustomButton(
                   text: 'Save Task',

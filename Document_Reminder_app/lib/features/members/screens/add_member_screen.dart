@@ -33,12 +33,10 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Member'),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Add Member')),
+        body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
@@ -59,7 +57,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Relation Dropdown
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,7 +88,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                   ],
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Save Button
                 CustomButton(
                   text: 'Save Member',

@@ -58,111 +58,113 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: _editProfile,
-            tooltip: 'Edit Profile',
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadData,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // Profile header
-                  Center(
-                    child: Column(
-                      children: [
-                        // Profile Photo
-                        Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 60,
-                              backgroundColor: theme.colorScheme.primary,
-                              backgroundImage: _profilePhotoPath != null
-                                  ? FileImage(File(_profilePhotoPath!))
-                                  : null,
-                              child: _profilePhotoPath == null
-                                  ? Icon(
-                                      Icons.person,
-                                      size: 60,
-                                      color: theme.colorScheme.onPrimary,
-                                    )
-                                  : null,
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: CircleAvatar(
-                                radius: 18,
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Profile'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: _editProfile,
+              tooltip: 'Edit Profile',
+            ),
+          ],
+        ),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: _loadData,
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    // Profile header
+                    Center(
+                      child: Column(
+                        children: [
+                          // Profile Photo
+                          Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 60,
                                 backgroundColor: theme.colorScheme.primary,
-                                child: IconButton(
-                                  icon: Icon(
-                                    Icons.camera_alt,
-                                    size: 18,
-                                    color: theme.colorScheme.onPrimary,
+                                backgroundImage: _profilePhotoPath != null
+                                    ? FileImage(File(_profilePhotoPath!))
+                                    : null,
+                                child: _profilePhotoPath == null
+                                    ? Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: theme.colorScheme.onPrimary,
+                                      )
+                                    : null,
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: theme.colorScheme.primary,
+                                  child: IconButton(
+                                    icon: Icon(
+                                      Icons.camera_alt,
+                                      size: 18,
+                                      color: theme.colorScheme.onPrimary,
+                                    ),
+                                    onPressed: _changeProfilePhoto,
+                                    padding: EdgeInsets.zero,
                                   ),
-                                  onPressed: _changeProfilePhoto,
-                                  padding: EdgeInsets.zero,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _userName,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Document Reminder App',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.6,
+                          const SizedBox(height: 16),
+                          Text(
+                            _userName,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Document Reminder App',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Stats grid
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.5,
+                      children: [
+                        _StatCard(
+                          icon: Icons.description_outlined,
+                          label: 'Documents',
+                          count: _documentCount,
+                          color: theme.colorScheme.primary,
+                        ),
+                        _StatCard(
+                          icon: Icons.people_outline,
+                          label: 'Members',
+                          count: _memberCount,
+                          color: theme.colorScheme.secondary,
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Stats grid
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.5,
-                    children: [
-                      _StatCard(
-                        icon: Icons.description_outlined,
-                        label: 'Documents',
-                        count: _documentCount,
-                        color: theme.colorScheme.primary,
-                      ),
-                      _StatCard(
-                        icon: Icons.people_outline,
-                        label: 'Members',
-                        count: _memberCount,
-                        color: theme.colorScheme.secondary,
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 

@@ -28,159 +28,163 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Documents'),
-        actions: [
-          // Sort menu
-          Consumer<DocumentProvider>(
-            builder: (context, provider, child) {
-              return PopupMenuButton<SortType>(
-                icon: const Icon(Icons.sort),
-                onSelected: (sortType) {
-                  provider.setSortType(sortType);
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: SortType.uploadDate,
-                    child: Row(
-                      children: [
-                        Icon(
-                          provider.sortType == SortType.uploadDate
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_unchecked,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text('Upload Date'),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: SortType.alphabetical,
-                    child: Row(
-                      children: [
-                        Icon(
-                          provider.sortType == SortType.alphabetical
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_unchecked,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text('Alphabetical'),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Member filter dropdown
-          Consumer2<DocumentProvider, MemberProvider>(
-            builder: (context, docProvider, memberProvider, child) {
-              return Container(
-                padding: const EdgeInsets.all(16),
-                color: theme.colorScheme.surface,
-                child: DropdownButtonFormField<int?>(
-                  value: docProvider.selectedMemberId,
-                  decoration: InputDecoration(
-                    labelText: 'Filter by Member',
-                    prefixIcon: const Icon(Icons.person_outline),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  items: [
-                    const DropdownMenuItem<int?>(
-                      value: null,
-                      child: Text('All Members'),
-                    ),
-                    ...memberProvider.members.map((member) {
-                      return DropdownMenuItem<int?>(
-                        value: member.id,
-                        child: Text(member.name),
-                      );
-                    }),
-                  ],
-                  onChanged: (value) {
-                    docProvider.setMemberFilter(value);
-                  },
-                ),
-              );
-            },
-          ),
-
-          // Document list
-          Expanded(
-            child: Consumer<DocumentProvider>(
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Documents'),
+          actions: [
+            // Sort menu
+            Consumer<DocumentProvider>(
               builder: (context, provider, child) {
-                if (provider.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final documents = provider.filteredDocuments;
-
-                if (documents.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.folder_open,
-                          size: 64,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No documents found',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: documents.length,
-                  itemBuilder: (context, index) {
-                    final document = documents[index];
-                    return _DocumentCard(
-                      document: document,
-                      memberName: provider.getMemberName(document.memberId),
-                      onView: () => _viewDocument(document),
-                      onDelete: () => _deleteDocument(document),
-                    );
+                return PopupMenuButton<SortType>(
+                  icon: const Icon(Icons.sort),
+                  onSelected: (sortType) {
+                    provider.setSortType(sortType);
                   },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: SortType.uploadDate,
+                      child: Row(
+                        children: [
+                          Icon(
+                            provider.sortType == SortType.uploadDate
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text('Upload Date'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: SortType.alphabetical,
+                      child: Row(
+                        children: [
+                          Icon(
+                            provider.sortType == SortType.alphabetical
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text('Alphabetical'),
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final result = await Navigator.push<bool>(
-            context,
-            MaterialPageRoute(builder: (context) => const AddDocumentScreen()),
-          );
-          if (!context.mounted) return;
-          if (result == true) {
-            context.read<DocumentProvider>().refreshDocuments();
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Add Document'),
+          ],
+        ),
+        body: Column(
+          children: [
+            // Member filter dropdown
+            Consumer2<DocumentProvider, MemberProvider>(
+              builder: (context, docProvider, memberProvider, child) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  color: theme.colorScheme.surface,
+                  child: DropdownButtonFormField<int?>(
+                    value: docProvider.selectedMemberId,
+                    decoration: InputDecoration(
+                      labelText: 'Filter by Member',
+                      prefixIcon: const Icon(Icons.person_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text('All Members'),
+                      ),
+                      ...memberProvider.members.map((member) {
+                        return DropdownMenuItem<int?>(
+                          value: member.id,
+                          child: Text(member.name),
+                        );
+                      }),
+                    ],
+                    onChanged: (value) {
+                      docProvider.setMemberFilter(value);
+                    },
+                  ),
+                );
+              },
+            ),
+
+            // Document list
+            Expanded(
+              child: Consumer<DocumentProvider>(
+                builder: (context, provider, child) {
+                  if (provider.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final documents = provider.filteredDocuments;
+
+                  if (documents.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.folder_open,
+                            size: 64,
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No documents found',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: documents.length,
+                    itemBuilder: (context, index) {
+                      final document = documents[index];
+                      return _DocumentCard(
+                        document: document,
+                        memberName: provider.getMemberName(document.memberId),
+                        onView: () => _viewDocument(document),
+                        onDelete: () => _deleteDocument(document),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () async {
+            final result = await Navigator.push<bool>(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AddDocumentScreen(),
+              ),
+            );
+            if (!context.mounted) return;
+            if (result == true) {
+              context.read<DocumentProvider>().refreshDocuments();
+            }
+          },
+          icon: const Icon(Icons.add),
+          label: const Text('Add Document'),
+        ),
       ),
     );
   }
