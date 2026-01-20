@@ -177,3 +177,10 @@ class AppTheme {
     );
   }
 }
+
+
+
+
+// primary color - #90EE90
+// secondary color - #2E8B57
+// tertiary color - #006241

@@ -5,6 +5,7 @@ import '../features/members/screens/members_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import 'package:provider/provider.dart';
 import '../core/providers/document_provider.dart';
+import '../core/responsive/breakpoints.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
@@ -46,7 +47,7 @@ class _MainScreenState extends State<MainScreen> {
   void _navigateToDocumentsWithFilter(int memberId) {
     // Set the member filter
     context.read<DocumentProvider>().setMemberFilter(memberId);
-    
+
     // Navigate to documents tab
     setState(() {
       _currentIndex = 1; // Documents tab index
@@ -56,6 +57,73 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = Responsive.isDesktop(context);
+    final pages = const [
+      DashboardScreen(),
+      DocumentsScreen(),
+      // Members needs callback
+      null,
+      ProfileScreen(),
+    ];
+
+    // Build page widgets array with the callback-injected member screen
+    final children = [
+      pages[0]!,
+      pages[1]!,
+      MembersScreen(onMemberTap: _navigateToDocumentsWithFilter),
+      pages[3]!,
+    ];
+
+    if (isDesktop) {
+      // Desktop/tablet: Use NavigationRail and side-by-side content
+      return Scaffold(
+        body: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) {
+                _onTabTapped(index);
+              },
+              labelType: NavigationRailLabelType.selected,
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.dashboard_outlined),
+                  selectedIcon: Icon(Icons.dashboard),
+                  label: Text('Dashboard'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.folder_outlined),
+                  selectedIcon: Icon(Icons.folder),
+                  label: Text('Documents'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.people_outline),
+                  selectedIcon: Icon(Icons.people),
+                  label: Text('Members'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: Text('Profile'),
+                ),
+              ],
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() => _currentIndex = index);
+                },
+                children: children,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Mobile: keep BottomNavigationBar
     return Scaffold(
       body: PageView(
         controller: _pageController,
@@ -64,12 +132,7 @@ class _MainScreenState extends State<MainScreen> {
             _currentIndex = index;
           });
         },
-        children: [
-          const DashboardScreen(),
-          const DocumentsScreen(),
-          MembersScreen(onMemberTap: _navigateToDocumentsWithFilter),
-          const ProfileScreen(),
-        ],
+        children: children,
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
