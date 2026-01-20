@@ -20,7 +20,7 @@ class AuthService {
     try {
       return jwt.verify(token, process.env.JWT_SECRET || "your-secret-key");
     } catch (error) {
-      return null;
+      return error;
     }
   }
 
