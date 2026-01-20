@@ -15,7 +15,7 @@ class AddDocumentScreen extends StatefulWidget {
 class _AddDocumentScreenState extends State<AddDocumentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  
+
   int? _selectedMemberId;
   String? _selectedFilePath;
   String? _selectedFileName;
@@ -40,9 +40,7 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Document'),
-      ),
+      appBar: AppBar(title: const Text('Add Document')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -73,7 +71,9 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
                   return const Card(
                     child: Padding(
                       padding: EdgeInsets.all(16),
-                      child: Text('No members available. Please add a member first.'),
+                      child: Text(
+                        'No members available. Please add a member first.',
+                      ),
                     ),
                   );
                 }
@@ -118,7 +118,9 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
             if (_selectedFileName != null) ...[
               const SizedBox(height: 8),
               Card(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                color: theme.colorScheme.primaryContainer.withValues(
+                  alpha: 0.3,
+                ),
                 child: ListTile(
                   leading: Icon(
                     Icons.check_circle,
@@ -159,7 +161,7 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
         setState(() {
           _selectedFilePath = result.files.first.path;
           _selectedFileName = result.files.first.name;
-          
+
           // Auto-fill document name if empty
           if (_nameController.text.isEmpty) {
             _nameController.text = result.files.first.name;
@@ -168,9 +170,9 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking file: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking file: $e')));
       }
     }
   }
@@ -179,9 +181,9 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedFilePath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a file')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a file')));
       return;
     }
 
@@ -189,7 +191,7 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
 
     try {
       final provider = context.read<DocumentProvider>();
-      
+
       final document = Document(
         name: _nameController.text.trim(),
         memberId: _selectedMemberId!,

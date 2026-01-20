@@ -21,14 +21,12 @@ class AppTheme {
         primary: primaryLight,
         secondary: secondaryLight,
         surface: surfaceLight,
-        background: backgroundLight,
         error: Colors.red.shade700,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: Colors.black87,
-        onBackground: Colors.black87,
       ),
-      
+
       // AppBar Theme
       appBarTheme: const AppBarTheme(
         elevation: 0,
@@ -41,9 +39,7 @@ class AppTheme {
       // Card Theme
       cardTheme: CardThemeData(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         color: Colors.white,
       ),
 
@@ -107,12 +103,10 @@ class AppTheme {
         primary: primaryDark,
         secondary: secondaryDark,
         surface: surfaceDark,
-        background: backgroundDark,
         error: Colors.red.shade400,
         onPrimary: Colors.black,
         onSecondary: Colors.black,
         onSurface: Colors.white,
-        onBackground: Colors.white,
       ),
 
       // AppBar Theme
@@ -127,9 +121,7 @@ class AppTheme {
       // Card Theme
       cardTheme: CardThemeData(
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         color: surfaceDark,
       ),
 

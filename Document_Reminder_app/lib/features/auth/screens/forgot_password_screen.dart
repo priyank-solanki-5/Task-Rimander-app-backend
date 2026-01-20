@@ -33,16 +33,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _handleSubmit() async {
-    print('Reset Password button clicked');
-    
+    debugPrint('Reset Password button clicked');
+
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      print('Form validated successfully');
-      print('Email: ${_emailController.text}');
-      print('Mobile: ${_mobileController.text}');
+      debugPrint('Form validated successfully');
+      debugPrint('Email: ${_emailController.text}');
+      debugPrint('Mobile: ${_mobileController.text}');
 
       // Attempt password reset
       final result = await _authService.updatePassword(
@@ -66,23 +66,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         );
 
         if (result['success']) {
-          print('Password reset successful, navigating back to login');
+          debugPrint('Password reset successful, navigating back to login');
           Navigator.pop(context);
         } else {
-          print('Password reset failed: ${result['message']}');
+          debugPrint('Password reset failed: ${result['message']}');
         }
       }
     } else {
-      print('Form validation failed');
+      debugPrint('Form validation failed');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Forgot Password'),
-      ),
+      appBar: AppBar(title: const Text('Forgot Password')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -101,7 +99,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Email Field
                 CustomTextField(
                   label: 'Email',
@@ -120,7 +118,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Mobile Field
                 CustomTextField(
                   label: 'Mobile Number',
@@ -143,7 +141,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                
+
                 // New Password Field
                 CustomTextField(
                   label: 'New Password',
@@ -153,7 +151,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   prefixIcon: const Icon(Icons.lock_outlined),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureNewPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscureNewPassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
                     onPressed: () {
                       setState(() {
@@ -172,7 +172,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Confirm Password Field
                 CustomTextField(
                   label: 'Confirm Password',
@@ -182,7 +182,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   prefixIcon: const Icon(Icons.lock_outlined),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscureConfirmPassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
                     onPressed: () {
                       setState(() {
@@ -201,7 +203,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   },
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Submit Button
                 CustomButton(
                   text: _isLoading ? 'Resetting...' : 'Reset Password',

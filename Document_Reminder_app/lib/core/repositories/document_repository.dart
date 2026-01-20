@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../database/tables.dart';
@@ -39,7 +40,9 @@ class DocumentRepository {
   }
 
   // Get documents by member sorted alphabetically
-  Future<List<Document>> getDocumentsByMemberAlphabetically(int memberId) async {
+  Future<List<Document>> getDocumentsByMemberAlphabetically(
+    int memberId,
+  ) async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query(
       Tables.documents,
@@ -58,7 +61,7 @@ class DocumentRepository {
       where: '${Tables.documentId} = ?',
       whereArgs: [id],
     );
-    
+
     if (maps.isEmpty) return null;
     return Document.fromMap(maps.first);
   }
@@ -81,7 +84,7 @@ class DocumentRepository {
       );
       return count > 0;
     } catch (e) {
-      print('Error updating document: $e');
+      debugPrint('Error updating document: $e');
       return false;
     }
   }
@@ -97,7 +100,7 @@ class DocumentRepository {
       );
       return count > 0;
     } catch (e) {
-      print('Error deleting document: $e');
+      debugPrint('Error deleting document: $e');
       return false;
     }
   }
@@ -105,7 +108,9 @@ class DocumentRepository {
   // Get document count
   Future<int> getDocumentCount() async {
     final db = await _dbHelper.database;
-    final result = await db.rawQuery('SELECT COUNT(*) FROM ${Tables.documents}');
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) FROM ${Tables.documents}',
+    );
     return Sqflite.firstIntValue(result) ?? 0;
   }
 

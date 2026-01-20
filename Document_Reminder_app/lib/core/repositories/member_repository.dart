@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../database/tables.dart';
@@ -24,7 +25,7 @@ class MemberRepository {
       where: '${Tables.memberId} = ?',
       whereArgs: [id],
     );
-    
+
     if (maps.isEmpty) return null;
     return Member.fromMap(maps.first);
   }
@@ -47,7 +48,7 @@ class MemberRepository {
       );
       return count > 0;
     } catch (e) {
-      print('Error updating member: $e');
+      debugPrint('Error updating member: $e');
       return false;
     }
   }
@@ -63,7 +64,7 @@ class MemberRepository {
       );
       return count > 0;
     } catch (e) {
-      print('Error deleting member: $e');
+      debugPrint('Error deleting member: $e');
       return false;
     }
   }

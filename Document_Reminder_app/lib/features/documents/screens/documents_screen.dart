@@ -27,7 +27,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Documents'),
@@ -132,13 +132,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         Icon(
                           Icons.folder_open,
                           size: 64,
-                          color: theme.colorScheme.onSurface.withOpacity(0.3),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.3,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No documents found',
                           style: theme.textTheme.titleLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.5),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                         ),
                       ],
@@ -155,7 +159,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       document: document,
                       memberName: provider.getMemberName(document.memberId),
                       onView: () => _viewDocument(document),
-                      onDelete: () => _deleteDocument(context, document),
+                      onDelete: () => _deleteDocument(document),
                     );
                   },
                 );
@@ -168,11 +172,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         onPressed: () async {
           final result = await Navigator.push<bool>(
             context,
-            MaterialPageRoute(
-              builder: (context) => const AddDocumentScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const AddDocumentScreen()),
           );
-          if (result == true && mounted) {
+          if (!context.mounted) return;
+          if (result == true) {
             context.read<DocumentProvider>().refreshDocuments();
           }
         },
@@ -187,14 +190,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       await OpenFile.open(document.filePath);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open document: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not open document: $e')));
       }
     }
   }
 
-  Future<void> _deleteDocument(BuildContext context, Document document) async {
+  Future<void> _deleteDocument(Document document) async {
+    final documentProvider = context.read<DocumentProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -216,13 +222,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       ),
     );
 
-    if (confirmed == true && mounted) {
-      await context.read<DocumentProvider>().deleteDocument(document.id!);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Document deleted')),
-        );
-      }
+    if (!context.mounted) return;
+    if (confirmed == true) {
+      await documentProvider.deleteDocument(document.id!);
+      if (!context.mounted) return;
+      messenger.showSnackBar(const SnackBar(content: Text('Document deleted')));
     }
   }
 }
@@ -254,10 +258,7 @@ class _DocumentCard extends StatelessWidget {
             color: theme.colorScheme.onPrimaryContainer,
           ),
         ),
-        title: Text(
-          document.name,
-          style: theme.textTheme.titleMedium,
-        ),
+        title: Text(document.name, style: theme.textTheme.titleMedium),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -267,7 +268,7 @@ class _DocumentCard extends StatelessWidget {
                 Icon(
                   Icons.person_outline,
                   size: 14,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 4),
                 Text(memberName),
@@ -279,7 +280,7 @@ class _DocumentCard extends StatelessWidget {
                 Icon(
                   Icons.calendar_today_outlined,
                   size: 14,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 4),
                 Text(DateFormat('MMM dd, yyyy').format(document.uploadDate)),
@@ -296,10 +297,7 @@ class _DocumentCard extends StatelessWidget {
               tooltip: 'View',
             ),
             IconButton(
-              icon: Icon(
-                Icons.delete_outline,
-                color: theme.colorScheme.error,
-              ),
+              icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
               onPressed: onDelete,
               tooltip: 'Delete',
             ),

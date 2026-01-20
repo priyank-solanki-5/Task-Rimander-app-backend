@@ -13,10 +13,7 @@ class MembersGridWidget extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Members',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          child: Text('Members', style: Theme.of(context).textTheme.titleLarge),
         ),
         const SizedBox(height: 12),
         Padding(
@@ -55,7 +52,7 @@ class MembersGridWidget extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
             width: 2,
             style: BorderStyle.solid,
           ),
@@ -72,8 +69,8 @@ class MembersGridWidget extends StatelessWidget {
             Text(
               'Add Member',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ],
         ),

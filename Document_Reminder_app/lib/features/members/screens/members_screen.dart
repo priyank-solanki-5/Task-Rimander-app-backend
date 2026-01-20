@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/member_provider.dart';
-import '../../../core/providers/document_provider.dart';
 import '../../../core/models/member.dart';
 import '../widgets/member_card.dart';
 import 'add_edit_member_screen.dart';
@@ -29,9 +28,7 @@ class _MembersScreenState extends State<MembersScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Members'),
-      ),
+      appBar: AppBar(title: const Text('Members')),
       body: Consumer<MemberProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
@@ -48,20 +45,20 @@ class _MembersScreenState extends State<MembersScreen> {
                   Icon(
                     Icons.people_outline,
                     size: 64,
-                    color: theme.colorScheme.onSurface.withOpacity(0.3),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'No members yet',
                     style: theme.textTheme.titleLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Add your first member',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.4),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
                   ),
                 ],
@@ -106,9 +103,7 @@ class _MembersScreenState extends State<MembersScreen> {
   Future<void> _addMember() async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (context) => const AddEditMemberScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const AddEditMemberScreen()),
     );
 
     if (result == true && mounted) {
@@ -155,11 +150,15 @@ class _MembersScreenState extends State<MembersScreen> {
     );
 
     if (confirmed == true && mounted) {
-      final success = await context.read<MemberProvider>().deleteMember(member.id!);
+      final success = await context.read<MemberProvider>().deleteMember(
+        member.id!,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success ? 'Member deleted' : 'Failed to delete member'),
+            content: Text(
+              success ? 'Member deleted' : 'Failed to delete member',
+            ),
             backgroundColor: success ? Colors.green : Colors.red,
           ),
         );

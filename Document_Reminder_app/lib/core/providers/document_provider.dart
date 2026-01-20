@@ -27,12 +27,16 @@ class DocumentProvider extends ChangeNotifier {
 
     // Filter by member if selected
     if (_selectedMemberId != null) {
-      filtered = filtered.where((doc) => doc.memberId == _selectedMemberId).toList();
+      filtered = filtered
+          .where((doc) => doc.memberId == _selectedMemberId)
+          .toList();
     }
 
     // Sort
     if (_sortType == SortType.alphabetical) {
-      filtered.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      filtered.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
     } else {
       filtered.sort((a, b) => b.uploadDate.compareTo(a.uploadDate));
     }
@@ -67,14 +71,14 @@ class DocumentProvider extends ChangeNotifier {
 
     try {
       _documents = await _documentRepository.getAllDocuments();
-      
+
       // Load members for cache
       final members = await _memberRepository.getAllMembers();
       _membersCache = {for (var member in members) member.id!: member};
-      
-      print('Loaded ${_documents.length} documents');
+
+      debugPrint('Loaded ${_documents.length} documents');
     } catch (e) {
-      print('Error loading documents: $e');
+      debugPrint('Error loading documents: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -85,14 +89,12 @@ class DocumentProvider extends ChangeNotifier {
   Future<int?> addDocument(Document document) async {
     try {
       final id = await _documentRepository.insertDocument(document);
-      if (id != null) {
-        // Reload all documents to get fresh data
-        await loadDocuments();
-        print('Document added successfully with ID: $id');
-      }
+      // Reload all documents to get fresh data
+      await loadDocuments();
+      debugPrint('Document added successfully with ID: $id');
       return id;
     } catch (e) {
-      print('Error adding document: $e');
+      debugPrint('Error adding document: $e');
       return null;
     }
   }
@@ -103,11 +105,11 @@ class DocumentProvider extends ChangeNotifier {
       if (success) {
         // Reload all documents
         await loadDocuments();
-        print('Document updated successfully');
+        debugPrint('Document updated successfully');
       }
       return success;
     } catch (e) {
-      print('Error updating document: $e');
+      debugPrint('Error updating document: $e');
       return false;
     }
   }
@@ -118,20 +120,21 @@ class DocumentProvider extends ChangeNotifier {
       if (success) {
         // Reload all documents
         await loadDocuments();
-        print('Document deleted successfully');
+        debugPrint('Document deleted successfully');
       }
       return success;
     } catch (e) {
-      print('Error deleting document: $e');
+      debugPrint('Error deleting document: $e');
       return false;
     }
   }
+
   // Get document count
   Future<int> getDocumentCount() async {
     try {
       return await _documentRepository.getDocumentCount();
     } catch (e) {
-      print('Error getting document count: $e');
+      debugPrint('Error getting document count: $e');
       return 0;
     }
   }

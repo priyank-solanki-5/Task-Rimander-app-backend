@@ -18,7 +18,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   int? _selectedMemberId;
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 7));
   int _reminderDays = 3;
@@ -38,7 +38,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       _reminderDays = widget.task!.reminderDaysBefore ?? 3;
       _taskType = widget.task!.taskType;
     }
-    
+
     // Load members
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MemberProvider>().loadMembers();
@@ -57,9 +57,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Edit Task' : 'Add Task'),
-      ),
+      appBar: AppBar(title: Text(isEditing ? 'Edit Task' : 'Add Task')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -90,7 +88,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                   return const Card(
                     child: Padding(
                       padding: EdgeInsets.all(16),
-                      child: Text('No members available. Please add a member first.'),
+                      child: Text(
+                        'No members available. Please add a member first.',
+                      ),
                     ),
                   );
                 }
@@ -146,7 +146,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               onTap: _selectDate,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.3)),
+                side: BorderSide(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -184,7 +186,10 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
             const SizedBox(height: 16),
 
             // Task Type
-            const Text('Task Type', style: TextStyle(fontWeight: FontWeight.w600)),
+            const Text(
+              'Task Type',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -203,7 +208,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                       side: BorderSide(
                         color: _taskType == TaskType.oneTime
                             ? theme.colorScheme.primary
-                            : theme.colorScheme.outline.withOpacity(0.3),
+                            : theme.colorScheme.outline.withValues(alpha: 0.3),
                       ),
                     ),
                   ),
@@ -224,7 +229,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                       side: BorderSide(
                         color: _taskType == TaskType.recurring
                             ? theme.colorScheme.primary
-                            : theme.colorScheme.outline.withOpacity(0.3),
+                            : theme.colorScheme.outline.withValues(alpha: 0.3),
                       ),
                     ),
                   ),
@@ -272,13 +277,13 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
 
     try {
       final provider = context.read<TaskProvider>();
-      
+
       final task = Task(
         id: isEditing ? widget.task!.id : null,
         title: _titleController.text.trim(),
         memberId: _selectedMemberId!,
-        description: _descriptionController.text.trim().isEmpty 
-            ? null 
+        description: _descriptionController.text.trim().isEmpty
+            ? null
             : _descriptionController.text.trim(),
         dueDate: _selectedDate,
         reminderDaysBefore: _reminderDays,
