@@ -66,6 +66,18 @@ class _MembersScreenState extends State<MembersScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 32),
+                    ElevatedButton.icon(
+                      onPressed: _addMember,
+                      icon: const Icon(Icons.person_add),
+                      label: const Text('Add Member'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -82,11 +94,22 @@ class _MembersScreenState extends State<MembersScreen> {
               itemCount: members.length,
               itemBuilder: (context, index) {
                 final member = members[index];
-                return MemberCard(
-                  member: member,
-                  onTap: () => _handleMemberTap(member),
-                  onEdit: () => _editMember(member),
-                  onDelete: () => _deleteMember(member),
+                return TweenAnimationBuilder<double>(
+                  duration: Duration(milliseconds: 300 + (index * 40)),
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Transform.scale(
+                      scale: 0.8 + (0.2 * value),
+                      child: Opacity(opacity: value, child: child),
+                    );
+                  },
+                  child: MemberCard(
+                    member: member,
+                    onTap: () => _handleMemberTap(member),
+                    onEdit: () => _editMember(member),
+                    onDelete: () => _deleteMember(member),
+                  ),
                 );
               },
             );

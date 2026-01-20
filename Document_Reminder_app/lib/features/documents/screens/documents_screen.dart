@@ -146,6 +146,41 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                               ),
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Upload your first document',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.4,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final result = await Navigator.push<bool>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const AddDocumentScreen(),
+                                ),
+                              );
+                              if (!context.mounted) return;
+                              if (result == true) {
+                                context
+                                    .read<DocumentProvider>()
+                                    .refreshDocuments();
+                              }
+                            },
+                            icon: const Icon(Icons.upload_file),
+                            label: const Text('Add Document'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 16,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -156,11 +191,22 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                     itemCount: documents.length,
                     itemBuilder: (context, index) {
                       final document = documents[index];
-                      return _DocumentCard(
-                        document: document,
-                        memberName: provider.getMemberName(document.memberId),
-                        onView: () => _viewDocument(document),
-                        onDelete: () => _deleteDocument(document),
+                      return TweenAnimationBuilder<double>(
+                        duration: Duration(milliseconds: 300 + (index * 50)),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 20 * (1 - value)),
+                            child: Opacity(opacity: value, child: child),
+                          );
+                        },
+                        child: _DocumentCard(
+                          document: document,
+                          memberName: provider.getMemberName(document.memberId),
+                          onView: () => _viewDocument(document),
+                          onDelete: () => _deleteDocument(document),
+                        ),
                       );
                     },
                   );

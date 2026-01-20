@@ -213,6 +213,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 32),
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                final taskProvider = context
+                                    .read<TaskProvider>();
+                                final result = await Navigator.push<bool>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const AddEditTaskScreen(),
+                                  ),
+                                );
+                                if (!context.mounted) return;
+                                if (result == true) {
+                                  taskProvider.refreshTasks();
+                                }
+                              },
+                              icon: const Icon(Icons.add),
+                              label: const Text('Create First Task'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32,
+                                  vertical: 16,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),

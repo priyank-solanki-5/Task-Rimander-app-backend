@@ -5,6 +5,7 @@ import '../features/members/screens/members_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import 'package:provider/provider.dart';
 import '../core/providers/document_provider.dart';
+import '../core/providers/task_provider.dart';
 import '../core/responsive/breakpoints.dart';
 
 class MainScreen extends StatefulWidget {
@@ -125,11 +126,12 @@ class _MainScreenState extends State<MainScreen> {
       );
     }
 
-    // Mobile: keep BottomNavigationBar
+    // Mobile: keep BottomNavigationBar with badges
     return SafeArea(
       child: Scaffold(
         body: PageView(
           controller: _pageController,
+          physics: const BouncingScrollPhysics(),
           onPageChanged: (index) {
             setState(() {
               _currentIndex = index;
@@ -137,31 +139,47 @@ class _MainScreenState extends State<MainScreen> {
           },
           children: children,
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: _onTabTapped,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard),
-              label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.folder_outlined),
-              activeIcon: Icon(Icons.folder),
-              label: 'Documents',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.people_outline),
-              activeIcon: Icon(Icons.people),
-              label: 'Members',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
+        bottomNavigationBar: Consumer<TaskProvider>(
+          builder: (context, taskProvider, child) {
+            final dueTasksCount = taskProvider.dueTasks.length;
+
+            return BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: _onTabTapped,
+              items: [
+                BottomNavigationBarItem(
+                  icon: dueTasksCount > 0
+                      ? Badge(
+                          label: Text('$dueTasksCount'),
+                          child: const Icon(Icons.dashboard_outlined),
+                        )
+                      : const Icon(Icons.dashboard_outlined),
+                  activeIcon: dueTasksCount > 0
+                      ? Badge(
+                          label: Text('$dueTasksCount'),
+                          child: const Icon(Icons.dashboard),
+                        )
+                      : const Icon(Icons.dashboard),
+                  label: 'Dashboard',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.folder_outlined),
+                  activeIcon: Icon(Icons.folder),
+                  label: 'Documents',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.people_outline),
+                  activeIcon: Icon(Icons.people),
+                  label: 'Members',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline),
+                  activeIcon: Icon(Icons.person),
+                  label: 'Profile',
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
