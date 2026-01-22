@@ -24,6 +24,9 @@ class SchedulerService {
     // 0 8 * * * (every day at 8am)
     this.scheduleDailyOverdueCheck();
 
+    // Keep-alive job for Render (ping every 10 minutes to prevent sleep)
+    this.scheduleKeepAlive();
+
     console.log("✅ Notification scheduler initialized successfully");
   }
 
@@ -36,7 +39,7 @@ class SchedulerService {
     // Run every 6 hours: at 12:00 AM, 6:00 AM, 12:00 PM, 6:00 PM
     const job = cron.schedule("0 0,6,12,18 * * *", async () => {
       console.log(
-        `\n⏰ [${new Date().toISOString()}] Running notification check...`
+        `\n⏰ [${new Date().toISOString()}] Running notification check...`,
       );
 
       try {
@@ -60,7 +63,7 @@ class SchedulerService {
     // Run every day at 8:00 AM
     const job = cron.schedule("0 8 * * *", async () => {
       console.log(
-        `\n⏰ [${new Date().toISOString()}] Running daily overdue check...`
+        `\n⏰ [${new Date().toISOString()}] Running daily overdue check...`,
       );
 
       try {
@@ -73,6 +76,28 @@ class SchedulerService {
 
     this.jobs.set(jobId, job);
     console.log("📅 Scheduled: Daily overdue check - every day at 8 AM");
+  }
+
+  /**
+   * Schedule keep-alive job for Render (prevent service from sleeping)
+   * Runs every 10 minutes to keep the service active
+   */
+  scheduleKeepAlive() {
+    const jobId = "keep-alive";
+
+    // Run every 10 minutes to prevent Render from spinning down
+    const job = cron.schedule("*/10 * * * *", async () => {
+      const now = new Date().toISOString();
+      console.log(`🔄 [${now}] Keep-alive ping - Service is active`);
+
+      // You can add logic here to ping your own /health endpoint if needed
+      // or just log to keep the process active
+    });
+
+    this.jobs.set(jobId, job);
+    console.log(
+      "📅 Scheduled: Keep-alive job - every 10 minutes (prevents Render sleep)",
+    );
   }
 
   /**
@@ -90,7 +115,7 @@ class SchedulerService {
 
       const job = cron.schedule(cronExpression, async () => {
         console.log(
-          `\n⏰ [${new Date().toISOString()}] Running custom job: ${jobId}`
+          `\n⏰ [${new Date().toISOString()}] Running custom job: ${jobId}`,
         );
         try {
           await callback();
