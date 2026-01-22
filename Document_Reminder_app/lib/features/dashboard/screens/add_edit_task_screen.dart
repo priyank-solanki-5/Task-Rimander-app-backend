@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/providers/task_provider.dart';
-import '../../../core/providers/member_provider.dart';
+import '../../../core/providers/category_provider.dart';
 import '../../../core/models/task.dart';
+import '../../../core/services/token_storage.dart';
+import '../../../core/providers/member_provider.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final Task? task;
@@ -19,29 +21,53 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  int? _selectedMemberId;
+  String? _selectedCategoryId;
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 7));
+  bool _isRecurring = false;
+  String? _recurrenceType;
+  bool _isLoading = false;
+  String? _userId;
+  int? _selectedMemberId;
   int _reminderDays = 3;
   TaskType _taskType = TaskType.oneTime;
-  bool _isLoading = false;
 
   bool get isEditing => widget.task != null;
+
+  final List<String> _recurrenceOptions = [
+    'Monthly',
+    'Every 3 months',
+    'Every 6 months',
+    'Yearly',
+  ];
 
   @override
   void initState() {
     super.initState();
+    _loadUserId();
+
     if (isEditing) {
       _titleController.text = widget.task!.title;
       _descriptionController.text = widget.task!.description ?? '';
-      _selectedMemberId = widget.task!.memberId;
-      _selectedDate = widget.task!.dueDate;
-      _reminderDays = widget.task!.reminderDaysBefore ?? 3;
+      _selectedCategoryId = widget.task!.categoryId;
+      _selectedDate = widget.task!.dueDate ?? DateTime.now().add(const Duration(days: 7));
+      _isRecurring = widget.task!.isRecurring;
+      _recurrenceType = widget.task!.recurrenceType;
       _taskType = widget.task!.taskType;
+      if (widget.task!.memberId != null) {
+        _selectedMemberId = int.tryParse(widget.task!.memberId!);
+      }
     }
 
-    // Load members
+    // Load categories
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MemberProvider>().loadMembers();
+      context.read<CategoryProvider>().loadCategories();
+    });
+  }
+
+  Future<void> _loadUserId() async {
+    final userId = await TokenStorage.getUserId();
+    setState(() {
+      _userId = userId;
     });
   }
 
@@ -289,31 +315,40 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       final task = Task(
         id: isEditing ? widget.task!.id : null,
         title: _titleController.text.trim(),
-        memberId: _selectedMemberId!,
+        userId: _userId!,
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
         dueDate: _selectedDate,
-        reminderDaysBefore: _reminderDays,
-        taskType: _taskType,
-        isCompleted: isEditing ? widget.task!.isCompleted : false,
-        isNotificationEnabled: true,
+        isRecurring: _isRecurring,
+        recurrenceType: _recurrenceType,
+        status: isEditing ? widget.task!.status : TaskStatus.pending,
+        categoryId: _selectedCategoryId,
       );
 
-      if (isEditing) {
-        await provider.updateTask(task);
-      } else {
-        await provider.addTask(task);
-      }
+      final success = isEditing
+          ? await provider.updateTask(task)
+          : await provider.addTask(task) != null;
 
       if (mounted) {
-        Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEditing ? 'Task updated' : 'Task added'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (success) {
+          Navigator.pop(context, true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isEditing ? 'Task updated' : 'Task added'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                provider.errorMessage ?? 'Failed to save task',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } finally {
       if (mounted) {

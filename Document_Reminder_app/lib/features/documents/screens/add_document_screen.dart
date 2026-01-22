@@ -16,7 +16,7 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
 
-  int? _selectedMemberId;
+  String? _selectedMemberId;
   String? _selectedFilePath;
   String? _selectedFileName;
   bool _isLoading = false;
@@ -194,14 +194,13 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
     try {
       final provider = context.read<DocumentProvider>();
 
-      final document = Document(
-        name: _nameController.text.trim(),
-        memberId: _selectedMemberId!,
+      await provider.uploadDocument(
         filePath: _selectedFilePath!,
-        uploadDate: DateTime.now(),
+        taskId: 'default-task-id', // TODO: Allow user to select task or handle general documents
+        onProgress: (count, total) {
+          // Optional: Handle progress
+        },
       );
-
-      await provider.addDocument(document);
 
       if (mounted) {
         Navigator.pop(context, true);

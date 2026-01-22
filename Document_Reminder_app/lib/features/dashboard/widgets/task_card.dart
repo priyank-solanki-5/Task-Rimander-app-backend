@@ -4,22 +4,22 @@ import '../../../core/models/task.dart';
 
 class TaskCard extends StatelessWidget {
   final Task task;
-  final String memberName;
   final Function(bool?) onCheckboxChanged;
   final VoidCallback? onTap;
+  final String? memberName;
 
   const TaskCard({
     super.key,
     required this.task,
-    required this.memberName,
     required this.onCheckboxChanged,
     this.onTap,
+    this.memberName,
   });
 
   Color _getTaskStatusColor(ThemeData theme) {
     if (task.isOverdue) {
       return theme.colorScheme.error; // Red for overdue
-    } else if (task.dueDate.difference(DateTime.now()).inDays <= 1) {
+    } else if ((task.dueDate?.difference(DateTime.now()).inDays ?? 999) <= 1) {
       return Colors.orange; // Orange for due today/tomorrow
     } else {
       return theme.colorScheme.primary; // Blue for upcoming
@@ -29,9 +29,9 @@ class TaskCard extends StatelessWidget {
   String _getTaskStatusLabel() {
     if (task.isOverdue) {
       return 'OVERDUE';
-    } else if (task.dueDate.difference(DateTime.now()).inDays == 0) {
+    } else if ((task.dueDate?.difference(DateTime.now()).inDays ?? 999) == 0) {
       return 'TODAY';
-    } else if (task.dueDate.difference(DateTime.now()).inDays == 1) {
+    } else if ((task.dueDate?.difference(DateTime.now()).inDays ?? 999) == 1) {
       return 'TOMORROW';
     } else {
       return 'UPCOMING';
@@ -91,29 +91,6 @@ class TaskCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
 
-                    // Member name
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 16,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.6,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          memberName,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.6,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-
                     // Due date
                     Row(
                       children: [
@@ -128,7 +105,9 @@ class TaskCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          DateFormat('MMM dd, yyyy').format(task.dueDate),
+                          task.dueDate != null
+                              ? DateFormat('MMM dd, yyyy').format(task.dueDate!)
+                              : 'No due date',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: isOverdue
                                 ? theme.colorScheme.error

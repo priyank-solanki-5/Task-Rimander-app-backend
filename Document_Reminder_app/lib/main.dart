@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/providers/task_provider.dart';
 import 'core/providers/document_provider.dart';
-import 'core/providers/member_provider.dart';
+import 'core/providers/category_provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'app/app.dart';
 
@@ -18,7 +18,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => TaskProvider()),
         ChangeNotifierProvider(create: (_) => DocumentProvider()),
-        ChangeNotifierProvider(create: (_) => MemberProvider()),
+        ChangeNotifierProvider(create: (_) => CategoryProvider()),
         ChangeNotifierProvider.value(value: themeProvider),
       ],
       child: const DocumentReminderApp(),
