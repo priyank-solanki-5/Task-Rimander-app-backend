@@ -1,21 +1,18 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
-import '../database/database_helper.dart';
 import '../models/member.dart';
+import 'mongo_service.dart';
 
 class MemberService {
-  final DatabaseHelper _dbHelper = DatabaseHelper();
+  final MongoService _mongoService = MongoService();
   final Uuid _uuid = const Uuid();
 
   /// Get all members
   Future<List<Member>> getAllMembers() async {
     try {
-      final db = await _dbHelper.database;
-      final List<Map<String, dynamic>> maps = await db.query('members');
+      final List<Map<String, dynamic>> maps = await _mongoService.findAll('members');
       
-      return List.generate(maps.length, (i) {
-        return Member.fromJson(_mapFromDb(maps[i]));
-      });
+      return maps.map((map) => Member.fromJson(map)).toList();
     } catch (e) {
       debugPrint('❌ Error getting all members: $e');
       return [];
@@ -25,9 +22,9 @@ class MemberService {
   /// Get member by ID
   Future<Member?> getMemberById(String id) async {
     try {
-      final map = await _dbHelper.queryById('members', 'id', id);
+      final map = await _mongoService.findById('members', id);
       if (map != null) {
-        return Member.fromJson(_mapFromDb(map));
+        return Member.fromJson(map);
       }
       return null;
     } catch (e) {
@@ -39,23 +36,19 @@ class MemberService {
   /// Create a new member
   Future<Member?> createMember(Member member) async {
     try {
-      final now = DateTime.now().toIso8601String();
-      final String id = _uuid.v4();
-      
       final newMember = member.copyWith(
-        id: id,
+        id: _uuid.v4(),
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
       final map = newMember.toJson();
-      map['_id'] = id; 
-      var dbMap = _mapToDb(map);
-
-      await _dbHelper.insert('members', dbMap);
+      map.remove('_id'); // Remove _id as MongoDB will generate it
       
-      debugPrint('✅ Member created locally: $id');
-      return newMember;
+      final memberId = await _mongoService.insertOne('members', map);
+      
+      debugPrint('✅ Member created: $memberId');
+      return newMember.copyWith(id: memberId);
     } catch (e) {
       debugPrint('❌ Error creating member: $e');
       return null;
@@ -65,18 +58,17 @@ class MemberService {
   /// Update an existing member
   Future<Member?> updateMember(String id, Member member) async {
     try {
-      final now = DateTime.now().toIso8601String();
       final updatedMember = member.copyWith(
         updatedAt: DateTime.now(),
       );
 
       final map = updatedMember.toJson();
-      var dbMap = _mapToDb(map);
+      map.remove('_id'); // Remove _id as it shouldn't be updated
       
-      await _dbHelper.update('members', dbMap, 'id', id);
+      await _mongoService.updateOne('members', id, map);
       
-      debugPrint('✅ Member updated locally: $id');
-      return updatedMember;
+      debugPrint('✅ Member updated: $id');
+      return updatedMember.copyWith(id: id);
     } catch (e) {
       debugPrint('❌ Error updating member: $e');
       return null;
@@ -86,8 +78,9 @@ class MemberService {
   /// Delete a member
   Future<bool> deleteMember(String id) async {
     try {
-      final count = await _dbHelper.delete('members', 'id', id);
-      return count > 0;
+      await _mongoService.deleteOne('members', id);
+      debugPrint('✅ Member deleted: $id');
+      return true;
     } catch (e) {
       debugPrint('❌ Error deleting member: $e');
       return false;
@@ -97,8 +90,7 @@ class MemberService {
   /// Get member count
   Future<int> getMemberCount() async {
     try {
-      final db = await _dbHelper.database;
-      return Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM members')) ?? 0;
+      return await _mongoService.count('members');
     } catch (e) {
       debugPrint('❌ Error getting member count: $e');
       return 0;
@@ -108,36 +100,19 @@ class MemberService {
   /// Search members
   Future<List<Member>> searchMembers(String query) async {
     try {
-      final db = await _dbHelper.database;
-      final List<Map<String, dynamic>> maps = await db.query(
+      final searchQuery = {
+        'name': {'\$regex': query, '\$options': 'i'}
+      };
+      
+      final List<Map<String, dynamic>> maps = await _mongoService.findAll(
         'members',
-        where: 'name LIKE ?',
-        whereArgs: ['%$query%'],
+        query: searchQuery,
       );
       
-      return List.generate(maps.length, (i) {
-        return Member.fromJson(_mapFromDb(maps[i]));
-      });
+      return maps.map((map) => Member.fromJson(map)).toList();
     } catch (e) {
       debugPrint('❌ Error searching members: $e');
       return [];
     }
-  }
-
-  Map<String, dynamic> _mapFromDb(Map<String, dynamic> dbMap) {
-    var map = Map<String, dynamic>.from(dbMap);
-    if (map['id'] != null) {
-      map['_id'] = map['id'];
-    }
-    return map;
-  }
-  
-  Map<String, dynamic> _mapToDb(Map<String, dynamic> jsonMap) {
-    var map = Map<String, dynamic>.from(jsonMap);
-    if (map['_id'] != null) {
-      map['id'] = map['_id'];
-      map.remove('_id');
-    }
-    return map;
   }
 }

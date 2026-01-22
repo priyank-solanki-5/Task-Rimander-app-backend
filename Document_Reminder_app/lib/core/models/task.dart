@@ -1,4 +1,5 @@
 enum TaskStatus { pending, completed }
+enum TaskType { oneTime, recurring }
 
 class Task {
   final String? id;
@@ -10,9 +11,11 @@ class Task {
   final String? recurrenceType; // "Monthly", "Every 3 months", "Every 6 months", "Yearly"
   final DateTime? nextOccurrence;
   final String userId;
+  final String? memberId;
   final String? categoryId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final TaskType taskType;
 
   Task({
     this.id,
@@ -24,9 +27,11 @@ class Task {
     this.recurrenceType,
     this.nextOccurrence,
     required this.userId,
+    this.memberId,
     this.categoryId,
     this.createdAt,
     this.updatedAt,
+    this.taskType = TaskType.oneTime,
   });
 
   /// Create Task from JSON (API response)
@@ -47,6 +52,7 @@ class Task {
           ? DateTime.parse(json['nextOccurrence'] as String)
           : null,
       userId: json['userId'] as String,
+      memberId: json['memberId'] as String?,
       categoryId: json['categoryId'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -54,6 +60,9 @@ class Task {
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'] as String)
           : null,
+      taskType: json['taskType'] == 'recurring'
+          ? TaskType.recurring
+          : TaskType.oneTime,
     );
   }
 
@@ -70,9 +79,11 @@ class Task {
       if (nextOccurrence != null)
         'nextOccurrence': nextOccurrence!.toIso8601String(),
       'userId': userId,
+      if (memberId != null) 'memberId': memberId,
       if (categoryId != null) 'categoryId': categoryId,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
+      'taskType': taskType == TaskType.recurring ? 'recurring' : 'oneTime',
     };
   }
 
@@ -87,9 +98,11 @@ class Task {
     String? recurrenceType,
     DateTime? nextOccurrence,
     String? userId,
+    String? memberId,
     String? categoryId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    TaskType? taskType,
   }) {
     return Task(
       id: id ?? this.id,
@@ -101,9 +114,11 @@ class Task {
       recurrenceType: recurrenceType ?? this.recurrenceType,
       nextOccurrence: nextOccurrence ?? this.nextOccurrence,
       userId: userId ?? this.userId,
+      memberId: memberId ?? this.memberId,
       categoryId: categoryId ?? this.categoryId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      taskType: taskType ?? this.taskType,
     );
   }
 
@@ -142,5 +157,10 @@ class Task {
   String? get recurrenceDisplay {
     if (!isRecurring || recurrenceType == null) return null;
     return recurrenceType;
+  }
+
+  /// Get task type display string
+  String get taskTypeDisplay {
+    return taskType == TaskType.recurring ? 'Recurring' : 'One Time';
   }
 }

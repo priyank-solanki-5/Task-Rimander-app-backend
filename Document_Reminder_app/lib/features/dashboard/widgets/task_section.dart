@@ -9,6 +9,7 @@ class TaskSection extends StatelessWidget {
   final Function(String, bool) onTaskToggle;
   final Color? titleColor;
   final IconData? titleIcon;
+  final Map<String, String>? memberNames;
 
   const TaskSection({
     super.key,
@@ -17,6 +18,7 @@ class TaskSection extends StatelessWidget {
     required this.onTaskToggle,
     this.titleColor,
     this.titleIcon,
+    this.memberNames,
   });
 
   @override
@@ -92,7 +94,7 @@ class TaskSection extends StatelessWidget {
               },
               child: TaskCard(
                 task: task,
-                memberName: memberName,
+                memberName: memberNames?[task.userId],
                 onCheckboxChanged: (value) {
                   if (value != null) {
                     onTaskToggle(task.id!, value);

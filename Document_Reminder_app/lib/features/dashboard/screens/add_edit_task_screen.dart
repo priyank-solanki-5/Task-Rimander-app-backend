@@ -5,6 +5,7 @@ import '../../../core/providers/task_provider.dart';
 import '../../../core/providers/category_provider.dart';
 import '../../../core/models/task.dart';
 import '../../../core/services/token_storage.dart';
+import '../../../core/providers/member_provider.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final Task? task;
@@ -26,6 +27,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   String? _recurrenceType;
   bool _isLoading = false;
   String? _userId;
+  int? _selectedMemberId;
+  int _reminderDays = 3;
+  TaskType _taskType = TaskType.oneTime;
 
   bool get isEditing => widget.task != null;
 
@@ -48,6 +52,10 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       _selectedDate = widget.task!.dueDate ?? DateTime.now().add(const Duration(days: 7));
       _isRecurring = widget.task!.isRecurring;
       _recurrenceType = widget.task!.recurrenceType;
+      _taskType = widget.task!.taskType;
+      if (widget.task!.memberId != null) {
+        _selectedMemberId = int.tryParse(widget.task!.memberId!);
+      }
     }
 
     // Load categories

@@ -107,6 +107,17 @@ class MemberProvider extends ChangeNotifier {
     }
   }
 
+  // Get member name by ID
+  String getMemberName(String? memberId) {
+    if (memberId == null) return 'Unknown';
+    try {
+      final member = _members.firstWhere((member) => member.id == memberId);
+      return member.name;
+    } catch (e) {
+      return 'Unknown';
+    }
+  }
+
   // Refresh members
   Future<void> refreshMembers() async {
     await loadMembers();

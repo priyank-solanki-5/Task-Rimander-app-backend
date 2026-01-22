@@ -6,6 +6,7 @@ class Document {
   final int fileSize;
   final String mimeType;
   final String userId;
+  final String? memberId;
   final String taskId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -18,6 +19,7 @@ class Document {
     required this.fileSize,
     required this.mimeType,
     required this.userId,
+    this.memberId,
     required this.taskId,
     this.createdAt,
     this.updatedAt,
@@ -33,6 +35,7 @@ class Document {
       fileSize: json['fileSize'] as int,
       mimeType: json['mimeType'] as String,
       userId: json['userId'] as String,
+      memberId: json['memberId'] as String?,
       taskId: json['taskId'] as String,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -53,6 +56,7 @@ class Document {
       'fileSize': fileSize,
       'mimeType': mimeType,
       'userId': userId,
+      if (memberId != null) 'memberId': memberId,
       'taskId': taskId,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
@@ -68,6 +72,7 @@ class Document {
     int? fileSize,
     String? mimeType,
     String? userId,
+    String? memberId,
     String? taskId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -80,6 +85,7 @@ class Document {
       fileSize: fileSize ?? this.fileSize,
       mimeType: mimeType ?? this.mimeType,
       userId: userId ?? this.userId,
+      memberId: memberId ?? this.memberId,
       taskId: taskId ?? this.taskId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

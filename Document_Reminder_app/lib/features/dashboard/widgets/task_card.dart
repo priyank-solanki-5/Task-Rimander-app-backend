@@ -6,18 +6,20 @@ class TaskCard extends StatelessWidget {
   final Task task;
   final Function(bool?) onCheckboxChanged;
   final VoidCallback? onTap;
+  final String? memberName;
 
   const TaskCard({
     super.key,
     required this.task,
     required this.onCheckboxChanged,
     this.onTap,
+    this.memberName,
   });
 
   Color _getTaskStatusColor(ThemeData theme) {
     if (task.isOverdue) {
       return theme.colorScheme.error; // Red for overdue
-    } else if (task.dueDate.difference(DateTime.now()).inDays <= 1) {
+    } else if ((task.dueDate?.difference(DateTime.now()).inDays ?? 999) <= 1) {
       return Colors.orange; // Orange for due today/tomorrow
     } else {
       return theme.colorScheme.primary; // Blue for upcoming
@@ -27,9 +29,9 @@ class TaskCard extends StatelessWidget {
   String _getTaskStatusLabel() {
     if (task.isOverdue) {
       return 'OVERDUE';
-    } else if (task.dueDate.difference(DateTime.now()).inDays == 0) {
+    } else if ((task.dueDate?.difference(DateTime.now()).inDays ?? 999) == 0) {
       return 'TODAY';
-    } else if (task.dueDate.difference(DateTime.now()).inDays == 1) {
+    } else if ((task.dueDate?.difference(DateTime.now()).inDays ?? 999) == 1) {
       return 'TOMORROW';
     } else {
       return 'UPCOMING';

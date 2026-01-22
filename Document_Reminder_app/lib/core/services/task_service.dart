@@ -1,26 +1,26 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
-import '../database/database_helper.dart';
 import '../models/task.dart';
+import 'mongo_service.dart';
 import 'token_storage.dart';
 
 class TaskService {
-  final DatabaseHelper _dbHelper = DatabaseHelper();
+  final MongoService _mongoService = MongoService();
   final Uuid _uuid = const Uuid();
 
   /// Get all tasks
   Future<List<Task>> getAllTasks() async {
     try {
-      final db = await _dbHelper.database;
-      // Filter by userId if using authentication
-      // final userId = await TokenStorage.getToken(); 
-      // For now, get all.
+      final userId = await TokenStorage.getUserId();
+      final query = userId != null ? {'userId': userId} : {};
       
-      final List<Map<String, dynamic>> maps = await db.query('tasks', orderBy: 'dueDate ASC');
+      final List<Map<String, dynamic>> maps = await _mongoService.findAll(
+        'tasks',
+        query: query,
+        sort: {'dueDate': 1},
+      );
       
-      return List.generate(maps.length, (i) {
-        return Task.fromJson(_mapFromDb(maps[i]));
-      });
+      return maps.map((map) => Task.fromJson(map)).toList();
     } catch (e) {
       debugPrint('❌ Error getting all tasks: $e');
       return [];
@@ -30,9 +30,9 @@ class TaskService {
   /// Get task by ID
   Future<Task?> getTaskById(String id) async {
     try {
-      final map = await _dbHelper.queryById('tasks', 'id', id);
+      final map = await _mongoService.findById('tasks', id);
       if (map != null) {
-        return Task.fromJson(_mapFromDb(map));
+        return Task.fromJson(map);
       }
       return null;
     } catch (e) {
@@ -44,32 +44,22 @@ class TaskService {
   /// Create a new task
   Future<Task?> createTask(Task task) async {
     try {
-      final now = DateTime.now().toIso8601String();
-      final String id = _uuid.v4();
-      
-      // Assign default userId if missing (assuming single user offline or checking token)
-      // Since auth is valid, we might want to store the real userId from token or defaults.
-      // Ideally we decode the token to get userId. For now, let's assume the passed task has it
-      // or we assign a placeholder.
+      final userId = await TokenStorage.getUserId() ?? task.userId;
       
       final newTask = task.copyWith(
-        id: id,
+        id: _uuid.v4(),
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        userId: userId,
       );
 
       final map = newTask.toJson();
-      map['_id'] = id; // Model expects _id for json, but we use id in db. 
-                       // Wait, toJson uses '_id' if id is not null.
-                       // DB expects 'id'.
+      map.remove('_id'); // Remove _id as MongoDB will generate it
       
-      // Adjust map for DB
-      var dbMap = _mapToDb(map);
+      final taskId = await _mongoService.insertOne('tasks', map);
       
-      await _dbHelper.insert('tasks', dbMap);
-      
-      debugPrint('✅ Task created locally: $id');
-      return newTask;
+      debugPrint('✅ Task created: $taskId');
+      return newTask.copyWith(id: taskId);
     } catch (e) {
       debugPrint('❌ Error creating task: $e');
       return null;
@@ -79,18 +69,17 @@ class TaskService {
   /// Update a task
   Future<Task?> updateTask(String id, Task task) async {
     try {
-      final now = DateTime.now().toIso8601String();
       final updatedTask = task.copyWith(
         updatedAt: DateTime.now(),
       );
 
       final map = updatedTask.toJson();
-      var dbMap = _mapToDb(map);
+      map.remove('_id'); // Remove _id as it shouldn't be updated
       
-      await _dbHelper.update('tasks', dbMap, 'id', id);
+      await _mongoService.updateOne('tasks', id, map);
       
-      debugPrint('✅ Task updated locally: $id');
-      return updatedTask;
+      debugPrint('✅ Task updated: $id');
+      return updatedTask.copyWith(id: id);
     } catch (e) {
       debugPrint('❌ Error updating task: $e');
       return null;
@@ -100,8 +89,9 @@ class TaskService {
   /// Delete a task
   Future<bool> deleteTask(String id) async {
     try {
-      final count = await _dbHelper.delete('tasks', 'id', id);
-      return count > 0;
+      await _mongoService.deleteOne('tasks', id);
+      debugPrint('✅ Task deleted: $id');
+      return true;
     } catch (e) {
       debugPrint('❌ Error deleting task: $e');
       return false;
@@ -141,17 +131,22 @@ class TaskService {
   /// Search tasks
   Future<List<Task>> searchTasks(String query) async {
     try {
-      final db = await _dbHelper.database;
-      final List<Map<String, dynamic>> maps = await db.query(
+      final userId = await TokenStorage.getUserId();
+      final searchQuery = {
+        if (userId != null) 'userId': userId,
+        '\$or': [
+          {'title': {'\$regex': query, '\$options': 'i'}},
+          {'description': {'\$regex': query, '\$options': 'i'}},
+        ],
+      };
+      
+      final List<Map<String, dynamic>> maps = await _mongoService.findAll(
         'tasks',
-        where: 'title LIKE ? OR description LIKE ?',
-        whereArgs: ['%$query%', '%$query%'],
-        orderBy: 'dueDate ASC',
+        query: searchQuery,
+        sort: {'dueDate': 1},
       );
       
-      return List.generate(maps.length, (i) {
-        return Task.fromJson(_mapFromDb(maps[i]));
-      });
+      return maps.map((map) => Task.fromJson(map)).toList();
     } catch (e) {
       debugPrint('❌ Error searching tasks: $e');
       return [];
@@ -161,56 +156,58 @@ class TaskService {
   /// Filter tasks by status, category, date
   Future<List<Task>> filterTasks({TaskStatus? status, String? categoryId, DateTime? date}) async {
     try {
-      final db = await _dbHelper.database;
+      final userId = await TokenStorage.getUserId();
+      Map<String, dynamic> query = {};
       
-      String whereClause = '';
-      List<dynamic> args = [];
+      if (userId != null) {
+        query['userId'] = userId;
+      }
       
       if (status != null) {
-        whereClause += 'status = ?';
-        args.add(status == TaskStatus.completed ? 'Completed' : 'Pending');
+        query['status'] = status == TaskStatus.completed ? 'Completed' : 'Pending';
       }
       
       if (categoryId != null) {
-        if (whereClause.isNotEmpty) whereClause += ' AND ';
-        whereClause += 'categoryId = ?';
-        args.add(categoryId);
+        query['categoryId'] = categoryId;
       }
       
-      // Date filtering might be tricky with string dates. 
-      // Assuming naive string comparison works if ISO8601 YYYY-MM-DD matches start.
       if (date != null) {
-        if (whereClause.isNotEmpty) whereClause += ' AND ';
-        // Compare date part only
-        // This is a simplification. Ideally check ranges.
-        whereClause += 'dueDate LIKE ?';
-        String dateStr = date.toIso8601String().split('T')[0];
-        args.add('$dateStr%');
+        final dateStr = date.toIso8601String().split('T')[0];
+        query['dueDate'] = {'\$regex': '^$dateStr'};
       }
 
-      final List<Map<String, dynamic>> maps = await db.query(
+      final List<Map<String, dynamic>> maps = await _mongoService.findAll(
         'tasks',
-        where: whereClause.isEmpty ? null : whereClause,
-        whereArgs: args.isEmpty ? null : args,
-        orderBy: 'dueDate ASC',
+        query: query,
+        sort: {'dueDate': 1},
       );
+      
+      return maps.map((map) => Task.fromJson(map)).toList();
+    } catch (e) {
+      debugPrint('❌ Error filtering tasks: $e');
+      return [];
+    }
+  }
       
   /// Get overdue tasks
   Future<List<Task>> getOverdueTasks() async {
     try {
-      final db = await _dbHelper.database;
+      final userId = await TokenStorage.getUserId();
       final now = DateTime.now().toIso8601String();
       
-      final List<Map<String, dynamic>> maps = await db.query(
+      final query = {
+        if (userId != null) 'userId': userId,
+        'dueDate': {'\$lt': now},
+        'status': {'\$ne': 'Completed'},
+      };
+      
+      final List<Map<String, dynamic>> maps = await _mongoService.findAll(
         'tasks',
-        where: 'dueDate < ? AND status != ?',
-        whereArgs: [now, 'Completed'], // Assuming 'Completed' is the string value stored
-        orderBy: 'dueDate ASC',
+        query: query,
+        sort: {'dueDate': 1},
       );
       
-      return List.generate(maps.length, (i) {
-        return Task.fromJson(_mapFromDb(maps[i]));
-      });
+      return maps.map((map) => Task.fromJson(map)).toList();
     } catch (e) {
       debugPrint('❌ Error getting overdue tasks: $e');
       return [];
@@ -220,55 +217,29 @@ class TaskService {
   /// Get upcoming tasks
   Future<List<Task>> getUpcomingTasks({int days = 7}) async {
     try {
-      final db = await _dbHelper.database;
+      final userId = await TokenStorage.getUserId();
       final now = DateTime.now();
       final end = now.add(Duration(days: days));
       
       final nowStr = now.toIso8601String();
       final endStr = end.toIso8601String();
 
-      final List<Map<String, dynamic>> maps = await db.query(
+      final query = {
+        if (userId != null) 'userId': userId,
+        'dueDate': {'\$gte': nowStr, '\$lte': endStr},
+        'status': {'\$ne': 'Completed'},
+      };
+
+      final List<Map<String, dynamic>> maps = await _mongoService.findAll(
         'tasks',
-        where: 'dueDate BETWEEN ? AND ? AND status != ?',
-        whereArgs: [nowStr, endStr, 'Completed'],
-        orderBy: 'dueDate ASC',
+        query: query,
+        sort: {'dueDate': 1},
       );
       
-      return List.generate(maps.length, (i) {
-        return Task.fromJson(_mapFromDb(maps[i]));
-      });
+      return maps.map((map) => Task.fromJson(map)).toList();
     } catch (e) {
       debugPrint('❌ Error getting upcoming tasks: $e');
       return [];
     }
-  }
-
-
-  // Helpers to convert DB map (Tasks table usually has 'isRecurring' as int) to JSON for Model
-  Map<String, dynamic> _mapFromDb(Map<String, dynamic> dbMap) {
-    var map = Map<String, dynamic>.from(dbMap);
-    // Convert id back to _id if needed by Model?
-    if (map['id'] != null) {
-      map['_id'] = map['id'];
-    }
-    // Boolean conversion
-    if (map['isRecurring'] is int) {
-      map['isRecurring'] = map['isRecurring'] == 1;
-    }
-    return map;
-  }
-  
-  Map<String, dynamic> _mapToDb(Map<String, dynamic> jsonMap) {
-    var map = Map<String, dynamic>.from(jsonMap);
-    // Ensure id exists
-    if (map['_id'] != null) {
-      map['id'] = map['_id'];
-      map.remove('_id');
-    }
-    // Boolean conversion
-    if (map['isRecurring'] is bool) {
-      map['isRecurring'] = (map['isRecurring'] as bool) ? 1 : 0;
-    }
-    return map;
   }
 }
