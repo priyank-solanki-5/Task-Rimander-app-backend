@@ -2,7 +2,13 @@ import userDao from "../dao/userDao.js";
 import authService from "./auth.service.js";
 
 class UserService {
-  async registerUser(username, mobilenumber, email, password) {
+  async registerUser(username, mobilenumber, email, password, adminKey) {
+    // Verify admin key
+    const validAdminKey = process.env.ADMIN_API_KEY;
+    if (adminKey !== validAdminKey) {
+      throw new Error("Invalid admin key. Please contact the administrator.");
+    }
+
     // Check if user already exists
     const existingUser = await userDao.findUserByEmail(email);
     if (existingUser) {
@@ -101,7 +107,7 @@ class UserService {
     ];
 
     const invalidKeys = Object.keys(preferences).filter(
-      (key) => !validKeys.includes(key)
+      (key) => !validKeys.includes(key),
     );
 
     if (invalidKeys.length > 0) {
@@ -110,7 +116,7 @@ class UserService {
 
     const user = await userDao.updateNotificationPreferences(
       userId,
-      preferences
+      preferences,
     );
 
     return {
@@ -155,7 +161,7 @@ class UserService {
     ];
 
     const invalidKeys = Object.keys(settings).filter(
-      (key) => !validKeys.includes(key)
+      (key) => !validKeys.includes(key),
     );
 
     if (invalidKeys.length > 0) {

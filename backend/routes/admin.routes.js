@@ -1,25 +1,16 @@
 import express from "express";
+import authMiddleware from "../utils/authMiddleware.js";
 import User from "../models/User.js";
 import Task from "../models/Task.js";
 import Notification from "../models/Notification.js";
 import Category from "../models/Category.js";
 import Reminder from "../models/Reminder.js";
+import Document from "../models/Document.js";
 
 const router = express.Router();
 
-// Simple admin key middleware for internal use
-const adminKeyMiddleware = (req, res, next) => {
-  const adminKey = req.headers["x-admin-key"];
-  const expectedKey = process.env.ADMIN_API_KEY || "admin-internal-key-2026";
-
-  if (adminKey !== expectedKey) {
-    return res.status(401).json({ error: "Unauthorized admin access" });
-  }
-  next();
-};
-
-// Apply admin key middleware to all routes
-router.use(adminKeyMiddleware);
+// Apply JWT authentication middleware to all admin routes
+router.use(authMiddleware);
 
 // ===== USER MANAGEMENT =====
 
@@ -231,18 +222,84 @@ router.delete("/notifications/:id", async (req, res) => {
   }
 });
 
+// ===== DOCUMENT MANAGEMENT =====
+
+// Get all documents
+router.get("/documents", async (req, res) => {
+  try {
+    const documents = await Document.find({})
+      .populate("userId", "username email")
+      .populate("taskId", "title")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: documents,
+      count: documents.length,
+    });
+  } catch (error) {
+    console.error("Admin get documents error:", error);
+    res.status(500).json({ error: "Failed to fetch documents" });
+  }
+});
+
+// Get document by ID
+router.get("/documents/:id", async (req, res) => {
+  try {
+    const document = await Document.findById(req.params.id)
+      .populate("userId", "username email")
+      .populate("taskId", "title")
+      .lean();
+
+    if (!document) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    res.status(200).json({ success: true, data: document });
+  } catch (error) {
+    console.error("Admin get document error:", error);
+    res.status(500).json({ error: "Failed to fetch document" });
+  }
+});
+
+// Delete document
+router.delete("/documents/:id", async (req, res) => {
+  try {
+    const document = await Document.findByIdAndDelete(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Document deleted",
+    });
+  } catch (error) {
+    console.error("Admin delete document error:", error);
+    res.status(500).json({ error: "Failed to delete document" });
+  }
+});
+
 // ===== DASHBOARD STATISTICS =====
 
 // Get dashboard statistics
 router.get("/dashboard/stats", async (req, res) => {
   try {
-    const [userCount, taskCount, notificationCount, categoryCount] =
-      await Promise.all([
-        User.countDocuments(),
-        Task.countDocuments(),
-        Notification.countDocuments(),
-        Category.countDocuments(),
-      ]);
+    const [
+      userCount,
+      taskCount,
+      notificationCount,
+      categoryCount,
+      documentCount,
+    ] = await Promise.all([
+      User.countDocuments(),
+      Task.countDocuments(),
+      Notification.countDocuments(),
+      Category.countDocuments(),
+      Document.countDocuments(),
+    ]);
 
     const tasks = await Task.find({}).lean();
 
@@ -259,6 +316,7 @@ router.get("/dashboard/stats", async (req, res) => {
       }).length,
       totalNotifications: notificationCount,
       totalCategories: categoryCount,
+      totalDocuments: documentCount,
     };
 
     res.status(200).json({ success: true, data: stats });

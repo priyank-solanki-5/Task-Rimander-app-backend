@@ -3,7 +3,7 @@ import userService from "../services/user.service.js";
 class UserController {
   async register(req, res) {
     try {
-      const { username, mobilenumber, email, password } = req.body;
+      const { username, mobilenumber, email, password, adminKey } = req.body;
 
       // Validate input
       if (!username || !mobilenumber || !email || !password) {
@@ -12,11 +12,19 @@ class UserController {
         });
       }
 
+      // Validate admin key
+      if (!adminKey) {
+        return res.status(400).json({
+          error: "Admin key is required",
+        });
+      }
+
       const user = await userService.registerUser(
         username,
         mobilenumber,
         email,
-        password
+        password,
+        adminKey,
       );
 
       res.status(201).json({
@@ -70,7 +78,7 @@ class UserController {
       const result = await userService.changePassword(
         email,
         mobilenumber,
-        newPassword
+        newPassword,
       );
 
       res.status(200).json(result);
@@ -116,7 +124,7 @@ class UserController {
 
       const result = await userService.updateNotificationPreferences(
         userId,
-        preferences
+        preferences,
       );
 
       res.status(200).json(result);
