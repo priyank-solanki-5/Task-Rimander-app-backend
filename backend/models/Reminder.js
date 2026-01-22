@@ -1,116 +1,65 @@
-import { DataTypes } from "sequelize";
-import sequelize from "../config/database.js";
-import User from "./User.js";
-import Task from "./Task.js";
+import mongoose from "mongoose";
 
-const Reminder = sequelize.define(
-  "Reminder",
+const reminderSchema = new mongoose.Schema(
   {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
     taskId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      unique: true, // One reminder per task (MVP)
-      references: {
-        model: Task,
-        key: "id",
-      },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Task",
+      required: true,
+      unique: true,
     },
     userId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: User,
-        key: "id",
-      },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    // How many days before due date to send reminder
     daysBeforeDue: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 1, // Default: 1 day before
+      type: Number,
+      default: 1,
     },
-    // When the reminder should be sent (calculated: dueDate - daysBeforeDue)
     reminderDate: {
-      type: DataTypes.DATE,
-      allowNull: true,
+      type: Date,
+      default: null,
     },
-    // Has the reminder been triggered?
     isTriggered: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      allowNull: false,
+      type: Boolean,
+      default: false,
     },
-    // Is reminder active?
     isActive: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-      allowNull: false,
+      type: Boolean,
+      default: true,
     },
-    // When was reminder actually sent
     triggeredAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
+      type: Date,
+      default: null,
     },
-    // Store metadata about task at reminder time
     metadata: {
-      type: DataTypes.JSON,
-      allowNull: true,
-      // e.g., { taskTitle, dueDate, category, description, priority }
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
     },
-    // Reminder history (stores all reminder events)
     history: {
-      type: DataTypes.JSON,
-      allowNull: true,
-      defaultValue: [],
-      // e.g., [
-      //   { triggeredAt: "2026-01-15T10:00:00Z", status: "sent" },
-      //   { triggeredAt: "2026-01-20T09:00:00Z", status: "snoozed" }
-      // ]
+      type: [
+        {
+          triggeredAt: Date,
+          status: String,
+        },
+      ],
+      default: [],
     },
-    // Reminder type: email, sms, push, in-app
     type: {
-      type: DataTypes.ENUM("email", "sms", "push", "in-app"),
-      defaultValue: "in-app",
-      allowNull: false,
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+      type: String,
+      enum: ["email", "sms", "push", "in-app"],
+      default: "in-app",
     },
   },
   {
-    // TTL Indexes for efficient cleanup
-    indexes: [
-      // Index for finding inactive reminders (TTL cleanup)
-      {
-        fields: ["isActive", "updatedAt"],
-        name: "idx_reminder_inactive_ttl",
-      },
-      // Index for finding triggered reminders
-      {
-        fields: ["isTriggered", "triggeredAt"],
-        name: "idx_reminder_triggered_ttl",
-      },
-      // Index for user-specific TTL queries
-      {
-        fields: ["userId", "createdAt"],
-        name: "idx_reminder_user_created_ttl",
-      },
-    ],
+    timestamps: true,
   }
 );
 
-// Associations
-Reminder.belongsTo(User, { foreignKey: "userId" });
-Reminder.belongsTo(Task, { foreignKey: "taskId" });
+reminderSchema.index({ userId: 1, isActive: 1 });
+reminderSchema.index({ reminderDate: 1 });
+
+const Reminder = mongoose.model("Reminder", reminderSchema);
 
 export default Reminder;

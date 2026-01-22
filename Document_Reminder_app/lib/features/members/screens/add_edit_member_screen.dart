@@ -35,42 +35,44 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Edit Member' : 'Add Member'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                hintText: 'Enter member name',
-                prefixIcon: Icon(Icons.person_outline),
+    final isEditing = widget.member != null;
+
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(title: Text(isEditing ? 'Edit Member' : 'Add Member')),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  hintText: 'Enter member name',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a name';
+                  }
+                  return null;
+                },
+                textCapitalization: TextCapitalization.words,
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter a name';
-                }
-                return null;
-              },
-              textCapitalization: TextCapitalization.words,
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _saveMember,
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(isEditing ? 'Update Member' : 'Add Member'),
-            ),
-          ],
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _saveMember,
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(isEditing ? 'Update Member' : 'Add Member'),
+              ),
+            ],
+          ),
         ),
       ),
     );

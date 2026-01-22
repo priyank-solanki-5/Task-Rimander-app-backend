@@ -8,85 +8,87 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.notificationSettings);
-            },
-            tooltip: 'Settings',
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            // Profile Avatar
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.1),
-              child: Text(
-                DummyData.userName[0].toUpperCase(),
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              DummyData.userName,
-              style: Theme.of(context).textTheme.displaySmall,
-            ),
-            const SizedBox(height: 32),
-
-            // Profile Information
-            _buildInfoCard(
-              context,
-              icon: Icons.email_outlined,
-              label: 'Email',
-              value: DummyData.userEmail,
-            ),
-            const SizedBox(height: 16),
-
-            _buildInfoCard(
-              context,
-              icon: Icons.phone_outlined,
-              label: 'Mobile Number',
-              value: DummyData.userMobile,
-            ),
-            const SizedBox(height: 32),
-
-            // Change Password Button
-            OutlinedButton.icon(
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Profile'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
               onPressed: () {
-                _showChangePasswordDialog(context);
+                Navigator.pushNamed(context, AppRoutes.notificationSettings);
               },
-              icon: const Icon(Icons.lock_outlined),
-              label: const Text('Change Password'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 56),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Logout Button
-            CustomButton(
-              text: 'Logout',
-              onPressed: () {
-                _showLogoutDialog(context);
-              },
-              backgroundColor: const Color(0xFFEF4444),
-              icon: Icons.logout,
+              tooltip: 'Settings',
             ),
           ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              // Profile Avatar
+              CircleAvatar(
+                radius: 50,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.1),
+                child: Text(
+                  DummyData.userName[0].toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                DummyData.userName,
+                style: Theme.of(context).textTheme.displaySmall,
+              ),
+              const SizedBox(height: 32),
+
+              // Profile Information
+              _buildInfoCard(
+                context,
+                icon: Icons.email_outlined,
+                label: 'Email',
+                value: DummyData.userEmail,
+              ),
+              const SizedBox(height: 16),
+
+              _buildInfoCard(
+                context,
+                icon: Icons.phone_outlined,
+                label: 'Mobile Number',
+                value: DummyData.userMobile,
+              ),
+              const SizedBox(height: 32),
+
+              // Change Password Button
+              OutlinedButton.icon(
+                onPressed: () {
+                  _showChangePasswordDialog(context);
+                },
+                icon: const Icon(Icons.lock_outlined),
+                label: const Text('Change Password'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 56),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Logout Button
+              CustomButton(
+                text: 'Logout',
+                onPressed: () {
+                  _showLogoutDialog(context);
+                },
+                backgroundColor: const Color(0xFFEF4444),
+                icon: Icons.logout,
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,55 +1,53 @@
-import mariadb from "mariadb";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 
 dotenv.config();
 
-// Create database initialization script
+// MongoDB initialization script
 async function initializeDatabase() {
-  let connection;
-
   try {
-    // Connect to MariaDB without specifying a database
-    connection = await mariadb.createConnection({
-      host: process.env.DB_HOST || "localhost",
-      port: process.env.DB_PORT || 3306,
-      user: process.env.DB_USER || "root",
-      password: process.env.DB_PASSWORD || "Priyank@123",
-    });
-
-    const dbName = process.env.DB_NAME || "task_management_db";
-
-    console.log(`🔍 Checking if database '${dbName}' exists...`);
-
-    // Check if database exists
-    const result = await connection.query(
-      `SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${dbName}'`
-    );
-
-    if (result.length === 0) {
-      console.log(`📝 Creating database '${dbName}'...`);
-
-      // Create database if it doesn't exist
-      await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
-
-      console.log(`✅ Database '${dbName}' created successfully!`);
-    } else {
-      console.log(`✅ Database '${dbName}' already exists!`);
+    const mongodbUrl = process.env.MongoDB_URL;
+    
+    if (!mongodbUrl) {
+      throw new Error("MongoDB_URL is not defined in .env file");
     }
 
-    await connection.end();
+    console.log("🔍 Connecting to MongoDB...");
+
+    await mongoose.connect(mongodbUrl, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+
+    console.log("✅ MongoDB connection successful!");
+    console.log(`📊 Connected to MongoDB Atlas`);
+
+    // Create indexes for optimal performance
+    const connection = mongoose.connection;
+    
+    // Get all collections and ensure indexes are created
+    const collections = await connection.db.listCollections().toArray();
+    console.log(`\n📁 Collections found: ${collections.length}`);
+    
+    if (collections.length > 0) {
+      collections.forEach((col) => {
+        console.log(`   ✓ ${col.name}`);
+      });
+    }
+
+    await mongoose.connection.close();
 
     console.log("\n🎉 Database initialization completed successfully!\n");
     return true;
   } catch (error) {
     console.error("❌ Database initialization failed:", error.message);
+    console.error("\n⚠️  To fix this issue:");
+    console.error("1. Make sure MongoDB_URL is set in your .env file");
+    console.error("2. Check your network connection to MongoDB Atlas");
+    console.error("3. Verify MongoDB credentials are correct");
+    console.error(`4. Example MongoDB_URL format:`);
     console.error(
-      "\n⚠️  Make sure MariaDB is running and credentials are correct:"
-    );
-    console.error(`   Host: ${process.env.DB_HOST || "localhost"}`);
-    console.error(`   Port: ${process.env.DB_PORT || 3306}`);
-    console.error(`   User: ${process.env.DB_USER || "root"}`);
-    console.error(
-      `   Database: ${process.env.DB_NAME || "task_management_db"}`
+      `   mongodb+srv://username:password@cluster.mongodb.net/database?appName=reminder-app`
     );
     return false;
   }

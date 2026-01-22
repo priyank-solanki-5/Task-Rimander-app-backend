@@ -1,89 +1,56 @@
-import { DataTypes } from "sequelize";
-import sequelize from "../config/database.js";
-import User from "./User.js";
-import Category from "./Category.js";
+import mongoose from "mongoose";
 
-const Task = sequelize.define(
-  "Task",
+const taskSchema = new mongoose.Schema(
   {
     title: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: String,
+      required: true,
     },
     description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
+      type: String,
+      default: null,
     },
     status: {
-      type: DataTypes.ENUM("Pending", "Completed"),
-      defaultValue: "Pending",
-      allowNull: false,
+      type: String,
+      enum: ["Pending", "Completed"],
+      default: "Pending",
     },
     dueDate: {
-      type: DataTypes.DATE,
-      allowNull: true,
+      type: Date,
+      default: null,
     },
     isRecurring: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      allowNull: false,
+      type: Boolean,
+      default: false,
     },
     recurrenceType: {
-      type: DataTypes.ENUM(
-        "Monthly",
-        "Every 3 months",
-        "Every 6 months",
-        "Yearly"
-      ),
-      allowNull: true,
+      type: String,
+      enum: ["Monthly", "Every 3 months", "Every 6 months", "Yearly"],
+      default: null,
     },
     nextOccurrence: {
-      type: DataTypes.DATE,
-      allowNull: true,
+      type: Date,
+      default: null,
     },
     userId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: User,
-        key: "id",
-      },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     categoryId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: Category,
-        key: "id",
-      },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      default: null,
     },
   },
   {
-    // TTL Indexes for efficient cleanup
-    indexes: [
-      // Index for finding completed tasks (TTL cleanup)
-      {
-        fields: ["status", "updatedAt"],
-        name: "idx_task_status_updated_ttl",
-      },
-      // Index for finding old tasks
-      {
-        fields: ["createdAt"],
-        name: "idx_task_created_ttl",
-      },
-      // Index for user-specific task queries
-      {
-        fields: ["userId", "status"],
-        name: "idx_task_user_status_ttl",
-      },
-    ],
+    timestamps: true,
   }
 );
 
-// Define associations
-Task.belongsTo(User, { foreignKey: "userId", as: "user" });
-Task.belongsTo(Category, { foreignKey: "categoryId", as: "category" });
-User.hasMany(Task, { foreignKey: "userId", as: "tasks" });
-Category.hasMany(Task, { foreignKey: "categoryId", as: "tasks" });
+taskSchema.index({ userId: 1, status: 1 });
+taskSchema.index({ dueDate: 1 });
+
+const Task = mongoose.model("Task", taskSchema);
 
 export default Task;

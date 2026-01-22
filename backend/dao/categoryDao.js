@@ -2,46 +2,37 @@ import Category from "../models/Category.js";
 
 class CategoryDao {
   async createCategory(categoryData) {
-    return await Category.create(categoryData);
+    const category = new Category(categoryData);
+    return await category.save();
   }
 
   async findAllCategories() {
-    return await Category.findAll({
-      order: [
-        ["isPredefined", "DESC"],
-        ["name", "ASC"],
-      ],
-    });
+    return await Category.find().sort({ isPredefined: -1, name: 1 });
   }
 
   async findCategoryById(id) {
-    return await Category.findByPk(id);
+    return await Category.findById(id);
   }
 
   async findCategoryByName(name) {
-    return await Category.findOne({ where: { name } });
+    return await Category.findOne({ name });
   }
 
   async findPredefinedCategories() {
-    return await Category.findAll({
-      where: { isPredefined: true },
-      order: [["name", "ASC"]],
-    });
+    return await Category.find({ isPredefined: true }).sort({ name: 1 });
   }
 
   async findCustomCategories() {
-    return await Category.findAll({
-      where: { isPredefined: false },
-      order: [["name", "ASC"]],
-    });
+    return await Category.find({ isPredefined: false }).sort({ name: 1 });
   }
 
   async updateCategory(category, data) {
-    return await category.update(data);
+    Object.assign(category, data);
+    return await category.save();
   }
 
   async deleteCategory(id) {
-    return await Category.destroy({ where: { id } });
+    return await Category.findByIdAndDelete(id);
   }
 
   async seedPredefinedCategories() {

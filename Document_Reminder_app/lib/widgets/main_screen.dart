@@ -5,6 +5,8 @@ import '../features/members/screens/members_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import 'package:provider/provider.dart';
 import '../core/providers/document_provider.dart';
+import '../core/providers/task_provider.dart';
+import '../core/responsive/breakpoints.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
@@ -46,7 +48,7 @@ class _MainScreenState extends State<MainScreen> {
   void _navigateToDocumentsWithFilter(String memberId) {
     // Set the member filter
     context.read<DocumentProvider>().setMemberFilter(memberId);
-    
+
     // Navigate to documents tab
     setState(() {
       _currentIndex = 1; // Documents tab index
@@ -56,46 +58,129 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        children: [
-          const DashboardScreen(),
-          const DocumentsScreen(),
-          MembersScreen(onMemberTap: _navigateToDocumentsWithFilter),
-          const ProfileScreen(),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
+    final isDesktop = Responsive.isDesktop(context);
+    final pages = const [
+      DashboardScreen(),
+      DocumentsScreen(),
+      // Members needs callback
+      null,
+      ProfileScreen(),
+    ];
+
+    // Build page widgets array with the callback-injected member screen
+    final children = [
+      pages[0]!,
+      pages[1]!,
+      MembersScreen(onMemberTap: _navigateToDocumentsWithFilter),
+      pages[3]!,
+    ];
+
+    if (isDesktop) {
+      // Desktop/tablet: Use NavigationRail and side-by-side content
+      return SafeArea(
+        child: Scaffold(
+          body: Row(
+            children: [
+              NavigationRail(
+                selectedIndex: _currentIndex,
+                onDestinationSelected: (index) {
+                  _onTabTapped(index);
+                },
+                labelType: NavigationRailLabelType.selected,
+                destinations: const [
+                  NavigationRailDestination(
+                    icon: Icon(Icons.dashboard_outlined),
+                    selectedIcon: Icon(Icons.dashboard),
+                    label: Text('Dashboard'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.folder_outlined),
+                    selectedIcon: Icon(Icons.folder),
+                    label: Text('Documents'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.people_outline),
+                    selectedIcon: Icon(Icons.people),
+                    label: Text('Members'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.person_outline),
+                    selectedIcon: Icon(Icons.person),
+                    label: Text('Profile'),
+                  ),
+                ],
+              ),
+              const VerticalDivider(width: 1),
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() => _currentIndex = index);
+                  },
+                  children: children,
+                ),
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.folder_outlined),
-            activeIcon: Icon(Icons.folder),
-            label: 'Documents',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            activeIcon: Icon(Icons.people),
-            label: 'Members',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+        ),
+      );
+    }
+
+    // Mobile: keep BottomNavigationBar with badges
+    return SafeArea(
+      child: Scaffold(
+        body: PageView(
+          controller: _pageController,
+          physics: const BouncingScrollPhysics(),
+          onPageChanged: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          children: children,
+        ),
+        bottomNavigationBar: Consumer<TaskProvider>(
+          builder: (context, taskProvider, child) {
+            final dueTasksCount = taskProvider.dueTasks.length;
+
+            return BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: _onTabTapped,
+              items: [
+                BottomNavigationBarItem(
+                  icon: dueTasksCount > 0
+                      ? Badge(
+                          label: Text('$dueTasksCount'),
+                          child: const Icon(Icons.dashboard_outlined),
+                        )
+                      : const Icon(Icons.dashboard_outlined),
+                  activeIcon: dueTasksCount > 0
+                      ? Badge(
+                          label: Text('$dueTasksCount'),
+                          child: const Icon(Icons.dashboard),
+                        )
+                      : const Icon(Icons.dashboard),
+                  label: 'Dashboard',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.folder_outlined),
+                  activeIcon: Icon(Icons.folder),
+                  label: 'Documents',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.people_outline),
+                  activeIcon: Icon(Icons.people),
+                  label: 'Members',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline),
+                  activeIcon: Icon(Icons.person),
+                  label: 'Profile',
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

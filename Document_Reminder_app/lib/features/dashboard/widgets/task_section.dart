@@ -72,7 +72,7 @@ class TaskSection extends StatelessWidget {
           ),
         ),
 
-        // Task list
+        // Task list with entrance animations
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -80,26 +80,38 @@ class TaskSection extends StatelessWidget {
           itemBuilder: (context, index) {
             final task = tasks[index];
 
-            return TaskCard(
-              task: task,
-              onCheckboxChanged: (value) {
-                if (value != null && task.id != null) {
-                  onTaskToggle(task.id!, value);
-                }
-              },
-              onTap: () async {
-                // Navigate to edit task screen
-                final result = await Navigator.push<bool>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddEditTaskScreen(task: task),
-                  ),
+            return TweenAnimationBuilder<double>(
+              duration: Duration(milliseconds: 300 + (index * 50)),
+              tween: Tween(begin: 0.0, end: 1.0),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) {
+                return Transform.translate(
+                  offset: Offset(0, 20 * (1 - value)),
+                  child: Opacity(opacity: value, child: child),
                 );
-                if (result == true && context.mounted && task.id != null) {
-                  // Refresh task list
-                  onTaskToggle(task.id!, task.isCompleted);
-                }
               },
+              child: TaskCard(
+                task: task,
+                memberName: memberName,
+                onCheckboxChanged: (value) {
+                  if (value != null) {
+                    onTaskToggle(task.id!, value);
+                  }
+                },
+                onTap: () async {
+                  // Navigate to edit task screen
+                  final result = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddEditTaskScreen(task: task),
+                    ),
+                  );
+                  if (result == true && context.mounted) {
+                    // Refresh task list
+                    onTaskToggle(task.id!, task.isCompleted);
+                  }
+                },
+              ),
             );
           },
         ),

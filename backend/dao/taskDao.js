@@ -1,81 +1,55 @@
-import { Op } from "sequelize";
 import Task from "../models/Task.js";
 import Category from "../models/Category.js";
 import User from "../models/User.js";
 
 class TaskDao {
   async createTask(taskData) {
-    return await Task.create(taskData);
+    const task = new Task(taskData);
+    return await task.save();
   }
 
   async findAllTasksByUser(userId, filters = {}) {
-    const whereClause = { userId };
+    const query = { userId };
 
     // Add status filter if provided
     if (filters.status) {
-      whereClause.status = filters.status;
+      query.status = filters.status;
     }
 
     // Add category filter if provided
     if (filters.categoryId) {
-      whereClause.categoryId = filters.categoryId;
+      query.categoryId = filters.categoryId;
     }
 
-    return await Task.findAll({
-      where: whereClause,
-      include: [
-        {
-          model: Category,
-          as: "category",
-          attributes: ["id", "name", "isPredefined"],
-        },
-      ],
-      order: [
-        ["dueDate", "ASC"],
-        ["createdAt", "DESC"],
-      ],
-    });
+    return await Task.find(query)
+      .populate("categoryId", "id name isPredefined")
+      .sort({ dueDate: 1, createdAt: -1 });
   }
 
   async findTaskById(id, userId) {
-    return await Task.findOne({
-      where: { id, userId },
-      include: [
-        {
-          model: Category,
-          as: "category",
-          attributes: ["id", "name", "isPredefined"],
-        },
-      ],
-    });
+    return await Task.findOne({ _id: id, userId }).populate(
+      "categoryId",
+      "id name isPredefined"
+    );
   }
 
   async updateTask(task, updateData) {
-    return await task.update(updateData);
+    Object.assign(task, updateData);
+    return await task.save();
   }
 
   async deleteTask(id, userId) {
-    return await Task.destroy({ where: { id, userId } });
+    return await Task.findOneAndDelete({ _id: id, userId });
   }
 
   async findOverdueTasks(userId) {
-    return await Task.findAll({
-      where: {
-        userId,
-        status: "Pending",
-        dueDate: {
-          [Op.lt]: new Date(),
-        },
-      },
-      include: [
-        {
-          model: Category,
-          as: "category",
-          attributes: ["id", "name"],
-        },
-      ],
-      order: [["dueDate", "ASC"]],
-    });
+    return await Task.find({
+      userId,
+      status: "Pending",
+      dueDate: { $lt: new Date() },
+    })
+      .populate("categoryId", "id name")
+      .sort({ dueDate: 1 });
   }
 
   async findUpcomingTasks(userId, days = 7) {
@@ -83,86 +57,44 @@ class TaskDao {
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + days);
 
-    return await Task.findAll({
-      where: {
-        userId,
-        status: "Pending",
-        dueDate: {
-          [Op.between]: [startDate, endDate],
-        },
-      },
-      include: [
-        {
-          model: Category,
-          as: "category",
-          attributes: ["id", "name"],
-        },
-      ],
-      order: [["dueDate", "ASC"]],
-    });
+    return await Task.find({
+      userId,
+      status: "Pending",
+      dueDate: { $gte: startDate, $lte: endDate },
+    })
+      .populate("categoryId", "id name")
+      .sort({ dueDate: 1 });
   }
 
   async findRecurringTasks(userId) {
-    return await Task.findAll({
-      where: {
-        userId,
-        isRecurring: true,
-      },
-      include: [
-        {
-          model: Category,
-          as: "category",
-          attributes: ["id", "name"],
-        },
-      ],
-      order: [["nextOccurrence", "ASC"]],
-    });
+    return await Task.find({
+      userId,
+      isRecurring: true,
+    })
+      .populate("categoryId", "id name")
+      .sort({ nextOccurrence: 1 });
   }
 
   async findTasksDueForRecurrence() {
     const now = new Date();
-    return await Task.findAll({
-      where: {
-        isRecurring: true,
-        status: "Completed",
-        nextOccurrence: {
-          [Op.lte]: now,
-        },
-      },
-      include: [
-        {
-          model: Category,
-          as: "category",
-          attributes: ["id", "name"],
-        },
-      ],
-    });
+    return await Task.find({
+      isRecurring: true,
+      status: "Completed",
+      nextOccurrence: { $lte: now },
+    }).populate("categoryId", "id name");
   }
 
   /**
    * Search tasks by name (title)
-   * Supports partial matching using LIKE
+   * Supports partial matching using regex
    */
   async searchTasksByName(userId, searchTerm) {
-    return await Task.findAll({
-      where: {
-        userId,
-        title: {
-          [Op.like]: `%${searchTerm}%`,
-        },
-      },
-      include: [
-        {
-          model: Category,
-          as: "category",
-          attributes: ["id", "name", "isPredefined"],
-        },
-      ],
-      order: [
-        ["dueDate", "ASC"],
-        ["createdAt", "DESC"],
-      ],
-    });
+    return await Task.find({
+      userId,
+      title: { $regex: searchTerm, $options: "i" },
+    })
+      .populate("categoryId", "id name isPredefined")
+      .sort({ dueDate: 1, createdAt: -1 });
   }
 
   /**
@@ -170,78 +102,63 @@ class TaskDao {
    * Supports: name search, category filter, status filter, date range
    */
   async filterTasks(userId, filters = {}) {
-    const whereClause = { userId };
+    const query = { userId };
 
     // Search by name (partial match)
     if (filters.search) {
-      whereClause.title = {
-        [Op.like]: `%${filters.search}%`,
-      };
+      query.title = { $regex: filters.search, $options: "i" };
     }
 
     // Filter by status (exact match)
     if (filters.status) {
-      whereClause.status = filters.status;
+      query.status = filters.status;
     }
 
     // Filter by category (exact match)
     if (filters.categoryId) {
-      whereClause.categoryId = filters.categoryId;
+      query.categoryId = filters.categoryId;
     }
 
     // Filter by date range
     if (filters.startDate || filters.endDate) {
-      whereClause.dueDate = {};
+      query.dueDate = {};
       if (filters.startDate) {
-        whereClause.dueDate[Op.gte] = new Date(filters.startDate);
+        query.dueDate.$gte = new Date(filters.startDate);
       }
       if (filters.endDate) {
-        whereClause.dueDate[Op.lte] = new Date(filters.endDate);
+        query.dueDate.$lte = new Date(filters.endDate);
       }
     }
 
     // Filter by recurring status
     if (filters.isRecurring !== undefined) {
-      whereClause.isRecurring = filters.isRecurring;
+      query.isRecurring = filters.isRecurring;
     }
 
-    return await Task.findAll({
-      where: whereClause,
-      include: [
-        {
-          model: Category,
-          as: "category",
-          attributes: ["id", "name", "isPredefined"],
-        },
-      ],
-      order: [
-        ["dueDate", "ASC"],
-        ["createdAt", "DESC"],
-      ],
-    });
+    return await Task.find(query)
+      .populate("categoryId", "id name isPredefined")
+      .sort({ dueDate: 1, createdAt: -1 });
   }
 
   /**
    * Get task count by filters
    */
   async getTaskCountByFilters(userId, filters = {}) {
-    const whereClause = { userId };
+    const query = { userId };
 
     if (filters.search) {
-      whereClause.title = {
-        [Op.like]: `%${filters.search}%`,
-      };
+      query.title = { $regex: filters.search, $options: "i" };
     }
 
     if (filters.status) {
-      whereClause.status = filters.status;
+      query.status = filters.status;
     }
 
     if (filters.categoryId) {
-      whereClause.categoryId = filters.categoryId;
+      query.categoryId = filters.categoryId;
     }
 
-    return await Task.count({ where: whereClause });
+    return await Task.countDocuments(query);
   }
 }
 
