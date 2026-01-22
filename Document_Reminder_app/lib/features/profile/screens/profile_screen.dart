@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import '../../../core/providers/document_provider.dart';
 import '../../../core/providers/member_provider.dart';
@@ -38,18 +37,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final docCount = await docProvider.getDocumentCount();
     final memCount = await memberProvider.getMemberCount();
 
-    // Load user info
+    // Load user info from API only
     final user = await _authService.getCurrentUser();
-    final prefs = await SharedPreferences.getInstance();
-    final photoPath = prefs.getString('profile_photo');
 
     if (!mounted) return;
 
     setState(() {
       _documentCount = docCount;
       _memberCount = memCount;
-      _userName = user?.name ?? 'User';
-      _profilePhotoPath = photoPath;
+      _userName = user?.username ?? 'User';
+      _profilePhotoPath = null; // No local storage for profile photo
       _isLoading = false;
     });
   }
@@ -178,9 +175,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       if (pickedFile != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('profile_photo', pickedFile.path);
-
+        // Note: Profile photo is no longer persisted locally
+        // This would need to be uploaded to the API server
         setState(() {
           _profilePhotoPath = pickedFile.path;
         });
@@ -188,8 +184,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Profile photo updated'),
-              backgroundColor: Colors.green,
+              content: Text('Profile photo selected (not persisted)'),
+              backgroundColor: Colors.orange,
             ),
           );
         }
@@ -232,9 +228,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (result != null && result.trim().isNotEmpty) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('profile_name', result.trim());
-
+      // Note: Profile name is no longer persisted locally
+      // This would need to be updated via the API
       setState(() {
         _userName = result.trim();
       });
@@ -242,8 +237,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Profile updated'),
-            backgroundColor: Colors.green,
+            content: Text('Profile updated (not persisted)'),
+            backgroundColor: Colors.orange,
           ),
         );
       }

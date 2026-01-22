@@ -4,14 +4,12 @@ import '../../../core/models/task.dart';
 
 class TaskCard extends StatelessWidget {
   final Task task;
-  final String memberName;
   final Function(bool?) onCheckboxChanged;
   final VoidCallback? onTap;
 
   const TaskCard({
     super.key,
     required this.task,
-    required this.memberName,
     required this.onCheckboxChanged,
     this.onTap,
   });
@@ -67,29 +65,6 @@ class TaskCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
 
-                    // Member name
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 16,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.6,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          memberName,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.6,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-
                     // Due date
                     Row(
                       children: [
@@ -104,7 +79,9 @@ class TaskCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          DateFormat('MMM dd, yyyy').format(task.dueDate),
+                          task.dueDate != null
+                              ? DateFormat('MMM dd, yyyy').format(task.dueDate!)
+                              : 'No due date',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: isOverdue
                                 ? theme.colorScheme.error
@@ -141,27 +118,35 @@ class TaskCard extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     // Task type badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: task.taskType == TaskType.recurring
-                            ? theme.colorScheme.secondary.withValues(alpha: 0.1)
-                            : theme.colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        task.taskTypeDisplay,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: task.taskType == TaskType.recurring
-                              ? theme.colorScheme.secondary
-                              : theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+                    if (task.isRecurring)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.repeat,
+                              size: 14,
+                              color: theme.colorScheme.secondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              task.recurrenceDisplay ?? 'Recurring',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.secondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),

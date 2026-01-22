@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import '../models/member.dart';
-import '../repositories/member_repository.dart';
+import '../services/member_service.dart';
 
 class MemberProvider extends ChangeNotifier {
-  final MemberRepository _memberRepository = MemberRepository();
+  final MemberService _memberService = MemberService();
 
   List<Member> _members = [];
   bool _isLoading = false;
@@ -17,7 +17,7 @@ class MemberProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _members = await _memberRepository.getAllMembers();
+      _members = await _memberService.getAllMembers();
       debugPrint('Loaded ${_members.length} members');
     } catch (e) {
       debugPrint('Error loading members: $e');
@@ -28,7 +28,7 @@ class MemberProvider extends ChangeNotifier {
   }
 
   // Get member by ID
-  Member? getMemberById(int id) {
+  Member? getMemberById(String id) {
     try {
       return _members.firstWhere((member) => member.id == id);
     } catch (e) {
@@ -37,13 +37,16 @@ class MemberProvider extends ChangeNotifier {
   }
 
   // Add member
-  Future<int?> addMember(Member member) async {
+  Future<String?> addMember(Member member) async {
     try {
-      final id = await _memberRepository.insertMember(member);
-      // Reload all members to get fresh data
-      await loadMembers();
-      debugPrint('Member added successfully with ID: $id');
-      return id;
+      final createdMember = await _memberService.createMember(member);
+      if (createdMember != null) {
+        // Reload all members to get fresh data
+        await loadMembers();
+        debugPrint('Member added successfully with ID: ${createdMember.id}');
+        return createdMember.id;
+      }
+      return null;
     } catch (e) {
       debugPrint('Error adding member: $e');
       return null;
@@ -53,13 +56,15 @@ class MemberProvider extends ChangeNotifier {
   // Update member
   Future<bool> updateMember(Member member) async {
     try {
-      final success = await _memberRepository.updateMember(member);
-      if (success) {
+      if (member.id == null) return false;
+      final updatedMember = await _memberService.updateMember(member.id!, member);
+      if (updatedMember != null) {
         // Reload all members
         await loadMembers();
         debugPrint('Member updated successfully');
+        return true;
       }
-      return success;
+      return false;
     } catch (e) {
       debugPrint('Error updating member: $e');
       return false;
@@ -67,9 +72,9 @@ class MemberProvider extends ChangeNotifier {
   }
 
   // Delete member
-  Future<bool> deleteMember(int id) async {
+  Future<bool> deleteMember(String id) async {
     try {
-      final success = await _memberRepository.deleteMember(id);
+      final success = await _memberService.deleteMember(id);
       if (success) {
         // Reload all members
         await loadMembers();
@@ -85,7 +90,7 @@ class MemberProvider extends ChangeNotifier {
   // Get member count
   Future<int> getMemberCount() async {
     try {
-      return await _memberRepository.getMemberCount();
+      return await _memberService.getMemberCount();
     } catch (e) {
       debugPrint('Error getting member count: $e');
       return 0;
@@ -95,7 +100,7 @@ class MemberProvider extends ChangeNotifier {
   // Search members
   Future<List<Member>> searchMembers(String query) async {
     try {
-      return await _memberRepository.searchMembers(query);
+      return await _memberService.searchMembers(query);
     } catch (e) {
       debugPrint('Error searching members: $e');
       return [];

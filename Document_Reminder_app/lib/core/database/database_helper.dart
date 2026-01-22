@@ -1,209 +1,192 @@
-import 'package:sqflite/sqflite.dart';
+import 'dart:async';
+import 'dart:io';
 import 'package:path/path.dart';
-import 'tables.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:flutter/foundation.dart';
 
 class DatabaseHelper {
-  static final DatabaseHelper instance = DatabaseHelper._init();
+  static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
 
-  DatabaseHelper._init();
+  factory DatabaseHelper() => _instance;
+
+  DatabaseHelper._internal();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('document_reminder.db');
+    _database = await _initDatabase();
     return _database!;
   }
 
-  Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+  Future<Database> _initDatabase() async {
+    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    String path = join(documentsDirectory.path, 'document_reminder.db');
+    
+    debugPrint('📂 Database Path: $path');
 
     return await openDatabase(
       path,
       version: 1,
-      onCreate: _createDB,
-      onConfigure: _onConfigure,
+      onCreate: _onCreate,
     );
   }
 
-  Future<void> _onConfigure(Database db) async {
-    // Enable foreign key constraints
-    await db.execute('PRAGMA foreign_keys = ON');
+  Future _onCreate(Database db, int version) async {
+    debugPrint('🛠️ Creating Database Tables...');
+
+    // TASKS TABLE
+    await db.execute('''
+      CREATE TABLE tasks (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT NOT NULL,
+        dueDate TEXT,
+        isRecurring INTEGER NOT NULL DEFAULT 0,
+        recurrenceType TEXT,
+        nextOccurrence TEXT,
+        userId TEXT NOT NULL,
+        categoryId TEXT,
+        createdAt TEXT,
+        updatedAt TEXT
+      )
+    ''');
+
+    // CATEGORIES TABLE
+    await db.execute('''
+      CREATE TABLE categories (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        icon TEXT,
+        color TEXT,
+        isPredefined INTEGER NOT NULL DEFAULT 0,
+        userId TEXT,
+        createdAt TEXT,
+        updatedAt TEXT
+      )
+    ''');
+    
+    // Seed predefined categories
+    await _seedCategories(db);
+
+    // DOCUMENTS TABLE
+    await db.execute('''
+      CREATE TABLE documents (
+        id TEXT PRIMARY KEY,
+        filename TEXT NOT NULL,
+        originalName TEXT NOT NULL,
+        filePath TEXT NOT NULL,
+        fileSize INTEGER NOT NULL,
+        mimeType TEXT NOT NULL,
+        userId TEXT NOT NULL,
+        taskId TEXT NOT NULL,
+        createdAt TEXT,
+        updatedAt TEXT
+      )
+    ''');
+
+    // MEMBERS TABLE
+    await db.execute('''
+      CREATE TABLE members (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        photoPath TEXT,
+        createdAt TEXT,
+        updatedAt TEXT
+      )
+    ''');
+    
+    debugPrint('✅ Database Tables Created');
   }
 
-  Future<void> _createDB(Database db, int version) async {
-    // Create tables in order (members first due to foreign keys)
-    await db.execute(Tables.createMembersTable);
-    await db.execute(Tables.createDocumentsTable);
-    await db.execute(Tables.createTasksTable);
-
-    // Insert seed data
-    await _insertSeedData(db);
-  }
-
-  Future<void> _insertSeedData(Database db) async {
+  Future<void> _seedCategories(Database db) async {
     final now = DateTime.now().toIso8601String();
+    // Example predefined categories
+    List<Map<String, dynamic>> categories = [
+      {
+        'id': 'cat_personal',
+        'name': 'Personal',
+        'icon': 'person',
+        'color': '#2196F3',
+        'isPredefined': 1,
+        'createdAt': now,
+        'updatedAt': now
+      },
+      {
+        'id': 'cat_work',
+        'name': 'Work',
+        'icon': 'work',
+        'color': '#4CAF50',
+        'isPredefined': 1,
+        'createdAt': now,
+        'updatedAt': now
+      },
+      {
+        'id': 'cat_health',
+        'name': 'Health',
+        'icon': 'favorite',
+        'color': '#F44336',
+        'isPredefined': 1,
+        'createdAt': now,
+        'updatedAt': now
+      },
+      {
+        'id': 'cat_finance',
+        'name': 'Finance',
+        'icon': 'attach_money',
+        'color': '#FFC107',
+        'isPredefined': 1,
+        'createdAt': now,
+        'updatedAt': now
+      },
+    ];
 
-    // Insert sample members
-    await db.insert(Tables.members, {
-      Tables.memberName: 'John Doe',
-      Tables.memberPhotoPath: null,
-      Tables.memberCreatedAt: now,
-    });
-
-    await db.insert(Tables.members, {
-      Tables.memberName: 'Jane Smith',
-      Tables.memberPhotoPath: null,
-      Tables.memberCreatedAt: now,
-    });
-
-    await db.insert(Tables.members, {
-      Tables.memberName: 'Bob Johnson',
-      Tables.memberPhotoPath: null,
-      Tables.memberCreatedAt: now,
-    });
-
-    await db.insert(Tables.members, {
-      Tables.memberName: 'Alice Williams',
-      Tables.memberPhotoPath: null,
-      Tables.memberCreatedAt: now,
-    });
-
-    // Insert sample documents
-    await db.insert(Tables.documents, {
-      Tables.documentName: 'Passport.pdf',
-      Tables.documentMemberId: 1,
-      Tables.documentFilePath: '/documents/passport.pdf',
-      Tables.documentUploadDate: DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-      Tables.documentCreatedAt: now,
-    });
-
-    await db.insert(Tables.documents, {
-      Tables.documentName: 'Drivers License.pdf',
-      Tables.documentMemberId: 1,
-      Tables.documentFilePath: '/documents/license.pdf',
-      Tables.documentUploadDate: DateTime.now().subtract(const Duration(days: 15)).toIso8601String(),
-      Tables.documentCreatedAt: now,
-    });
-
-    await db.insert(Tables.documents, {
-      Tables.documentName: 'Birth Certificate.pdf',
-      Tables.documentMemberId: 2,
-      Tables.documentFilePath: '/documents/birth_cert.pdf',
-      Tables.documentUploadDate: DateTime.now().subtract(const Duration(days: 45)).toIso8601String(),
-      Tables.documentCreatedAt: now,
-    });
-
-    await db.insert(Tables.documents, {
-      Tables.documentName: 'Insurance Policy.pdf',
-      Tables.documentMemberId: 3,
-      Tables.documentFilePath: '/documents/insurance.pdf',
-      Tables.documentUploadDate: DateTime.now().subtract(const Duration(days: 5)).toIso8601String(),
-      Tables.documentCreatedAt: now,
-    });
-
-    // Insert sample tasks
-    // Due task (overdue)
-    await db.insert(Tables.tasks, {
-      Tables.taskTitle: 'Renew Passport',
-      Tables.taskMemberId: 1,
-      Tables.taskDescription: 'Passport renewal required before expiry',
-      Tables.taskDocuments: '[1]', // JSON array of document IDs
-      Tables.taskDueDate: DateTime.now().subtract(const Duration(days: 2)).toIso8601String(),
-      Tables.taskReminderDaysBefore: 7,
-      Tables.taskType: 'one-time',
-      Tables.taskIsCompleted: 0,
-      Tables.taskIsNotificationEnabled: 1,
-      Tables.taskCreatedAt: now,
-    });
-
-    // Current task (today)
-    await db.insert(Tables.tasks, {
-      Tables.taskTitle: 'Submit Insurance Claim',
-      Tables.taskMemberId: 3,
-      Tables.taskDescription: 'File insurance claim for medical expenses',
-      Tables.taskDocuments: '[4]',
-      Tables.taskDueDate: DateTime.now().toIso8601String(),
-      Tables.taskReminderDaysBefore: 3,
-      Tables.taskType: 'one-time',
-      Tables.taskIsCompleted: 0,
-      Tables.taskIsNotificationEnabled: 1,
-      Tables.taskCreatedAt: now,
-    });
-
-    // Upcoming tasks
-    await db.insert(Tables.tasks, {
-      Tables.taskTitle: 'Update Drivers License',
-      Tables.taskMemberId: 1,
-      Tables.taskDescription: 'License renewal due next week',
-      Tables.taskDocuments: '[2]',
-      Tables.taskDueDate: DateTime.now().add(const Duration(days: 5)).toIso8601String(),
-      Tables.taskReminderDaysBefore: 5,
-      Tables.taskType: 'one-time',
-      Tables.taskIsCompleted: 0,
-      Tables.taskIsNotificationEnabled: 1,
-      Tables.taskCreatedAt: now,
-    });
-
-    await db.insert(Tables.tasks, {
-      Tables.taskTitle: 'Monthly Health Checkup',
-      Tables.taskMemberId: 2,
-      Tables.taskDescription: 'Regular monthly health checkup',
-      Tables.taskDocuments: '[]',
-      Tables.taskDueDate: DateTime.now().add(const Duration(days: 8)).toIso8601String(),
-      Tables.taskReminderDaysBefore: 2,
-      Tables.taskType: 'recurring',
-      Tables.taskIsCompleted: 0,
-      Tables.taskIsNotificationEnabled: 1,
-      Tables.taskCreatedAt: now,
-    });
-
-    await db.insert(Tables.tasks, {
-      Tables.taskTitle: 'Tax Document Submission',
-      Tables.taskMemberId: 4,
-      Tables.taskDescription: 'Submit annual tax documents',
-      Tables.taskDocuments: '[]',
-      Tables.taskDueDate: DateTime.now().add(const Duration(days: 15)).toIso8601String(),
-      Tables.taskReminderDaysBefore: 10,
-      Tables.taskType: 'one-time',
-      Tables.taskIsCompleted: 0,
-      Tables.taskIsNotificationEnabled: 1,
-      Tables.taskCreatedAt: now,
-    });
-
-    // Completed task (should not show in dashboard)
-    await db.insert(Tables.tasks, {
-      Tables.taskTitle: 'Completed Task Example',
-      Tables.taskMemberId: 2,
-      Tables.taskDescription: 'This task is already completed',
-      Tables.taskDocuments: '[]',
-      Tables.taskDueDate: DateTime.now().subtract(const Duration(days: 5)).toIso8601String(),
-      Tables.taskReminderDaysBefore: 3,
-      Tables.taskType: 'one-time',
-      Tables.taskIsCompleted: 1,
-      Tables.taskIsNotificationEnabled: 0,
-      Tables.taskCreatedAt: now,
-    });
+    for (var cat in categories) {
+      await db.insert('categories', cat);
+    }
+    debugPrint('🌱 Seeded ${categories.length} predefined categories');
   }
 
-  Future<void> close() async {
-    final db = await instance.database;
-    db.close();
+  // Helper Methods
+
+  // Insert
+  Future<int> insert(String table, Map<String, dynamic> row) async {
+    Database db = await database;
+    return await db.insert(table, row, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  // Clear all data (for testing)
-  Future<void> clearDatabase() async {
-    final db = await instance.database;
-    await db.delete(Tables.tasks);
-    await db.delete(Tables.documents);
-    await db.delete(Tables.members);
+  // Update
+  Future<int> update(String table, Map<String, dynamic> row, String idColumn, String idValue) async {
+    Database db = await database;
+    return await db.update(table, row, where: '$idColumn = ?', whereArgs: [idValue]);
   }
 
-  // Reset database (for testing)
-  Future<void> resetDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'document_reminder.db');
-    await deleteDatabase(path);
-    _database = null;
+  // Delete
+  Future<int> delete(String table, String idColumn, String idValue) async {
+    Database db = await database;
+    return await db.delete(table, where: '$idColumn = ?', whereArgs: [idValue]);
+  }
+
+  // Query All
+  Future<List<Map<String, dynamic>>> queryAll(String table, {String? where, List<Object?>? whereArgs, String? orderBy}) async {
+    Database db = await database;
+    return await db.query(table, where: where, whereArgs: whereArgs, orderBy: orderBy);
+  }
+
+  // Query by ID
+  Future<Map<String, dynamic>?> queryById(String table, String idColumn, String idValue) async {
+    Database db = await database;
+    List<Map<String, dynamic>> results = await db.query(
+      table,
+      where: '$idColumn = ?',
+      whereArgs: [idValue],
+      limit: 1,
+    );
+    if (results.isNotEmpty) {
+      return results.first;
+    }
+    return null;
   }
 }

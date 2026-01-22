@@ -6,8 +6,7 @@ import 'task_card.dart';
 class TaskSection extends StatelessWidget {
   final String title;
   final List<Task> tasks;
-  final Map<int, String> memberNames;
-  final Function(int, bool) onTaskToggle;
+  final Function(String, bool) onTaskToggle;
   final Color? titleColor;
   final IconData? titleIcon;
 
@@ -15,7 +14,6 @@ class TaskSection extends StatelessWidget {
     super.key,
     required this.title,
     required this.tasks,
-    required this.memberNames,
     required this.onTaskToggle,
     this.titleColor,
     this.titleIcon,
@@ -81,13 +79,11 @@ class TaskSection extends StatelessWidget {
           itemCount: tasks.length,
           itemBuilder: (context, index) {
             final task = tasks[index];
-            final memberName = memberNames[task.memberId] ?? 'Unknown';
 
             return TaskCard(
               task: task,
-              memberName: memberName,
               onCheckboxChanged: (value) {
-                if (value != null) {
+                if (value != null && task.id != null) {
                   onTaskToggle(task.id!, value);
                 }
               },
@@ -99,7 +95,7 @@ class TaskSection extends StatelessWidget {
                     builder: (context) => AddEditTaskScreen(task: task),
                   ),
                 );
-                if (result == true && context.mounted) {
+                if (result == true && context.mounted && task.id != null) {
                   // Refresh task list
                   onTaskToggle(task.id!, task.isCompleted);
                 }

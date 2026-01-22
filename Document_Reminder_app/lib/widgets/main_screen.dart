@@ -43,7 +43,7 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  void _navigateToDocumentsWithFilter(int memberId) {
+  void _navigateToDocumentsWithFilter(String memberId) {
     // Set the member filter
     context.read<DocumentProvider>().setMemberFilter(memberId);
     

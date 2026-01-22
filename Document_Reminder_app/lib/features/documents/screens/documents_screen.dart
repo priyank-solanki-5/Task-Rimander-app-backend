@@ -85,7 +85,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               return Container(
                 padding: const EdgeInsets.all(16),
                 color: theme.colorScheme.surface,
-                child: DropdownButtonFormField<int?>(
+                child: DropdownButtonFormField<String?>(
                   value: docProvider.selectedMemberId,
                   decoration: InputDecoration(
                     labelText: 'Filter by Member',
@@ -95,12 +95,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                     ),
                   ),
                   items: [
-                    const DropdownMenuItem<int?>(
+                    const DropdownMenuItem<String?>(
                       value: null,
                       child: Text('All Members'),
                     ),
                     ...memberProvider.members.map((member) {
-                      return DropdownMenuItem<int?>(
+                      return DropdownMenuItem<String?>(
                         value: member.id,
                         child: Text(member.name),
                       );
@@ -157,7 +157,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                     final document = documents[index];
                     return _DocumentCard(
                       document: document,
-                      memberName: provider.getMemberName(document.memberId),
+                      memberName: '', // Member info not available in document model
                       onView: () => _viewDocument(document),
                       onDelete: () => _deleteDocument(document),
                     );
@@ -205,7 +205,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Document'),
-        content: Text('Are you sure you want to delete "${document.name}"?'),
+        content: Text('Are you sure you want to delete "${document.originalName}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -258,7 +258,7 @@ class _DocumentCard extends StatelessWidget {
             color: theme.colorScheme.onPrimaryContainer,
           ),
         ),
-        title: Text(document.name, style: theme.textTheme.titleMedium),
+        title: Text(document.originalName, style: theme.textTheme.titleMedium),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -283,7 +283,7 @@ class _DocumentCard extends StatelessWidget {
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 4),
-                Text(DateFormat('MMM dd, yyyy').format(document.uploadDate)),
+                Text(document.createdAt != null ? DateFormat('MMM dd, yyyy').format(document.createdAt!) : 'N/A'),
               ],
             ),
           ],

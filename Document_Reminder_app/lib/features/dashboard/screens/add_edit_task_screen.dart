@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/providers/task_provider.dart';
-import '../../../core/providers/member_provider.dart';
+import '../../../core/providers/category_provider.dart';
 import '../../../core/models/task.dart';
+import '../../../core/services/token_storage.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final Task? task;
@@ -19,29 +20,46 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  int? _selectedMemberId;
+  String? _selectedCategoryId;
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 7));
-  int _reminderDays = 3;
-  TaskType _taskType = TaskType.oneTime;
+  bool _isRecurring = false;
+  String? _recurrenceType;
   bool _isLoading = false;
+  String? _userId;
 
   bool get isEditing => widget.task != null;
+
+  final List<String> _recurrenceOptions = [
+    'Monthly',
+    'Every 3 months',
+    'Every 6 months',
+    'Yearly',
+  ];
 
   @override
   void initState() {
     super.initState();
+    _loadUserId();
+
     if (isEditing) {
       _titleController.text = widget.task!.title;
       _descriptionController.text = widget.task!.description ?? '';
-      _selectedMemberId = widget.task!.memberId;
-      _selectedDate = widget.task!.dueDate;
-      _reminderDays = widget.task!.reminderDaysBefore ?? 3;
-      _taskType = widget.task!.taskType;
+      _selectedCategoryId = widget.task!.categoryId;
+      _selectedDate = widget.task!.dueDate ?? DateTime.now().add(const Duration(days: 7));
+      _isRecurring = widget.task!.isRecurring;
+      _recurrenceType = widget.task!.recurrenceType;
     }
 
-    // Load members
+    // Load categories
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MemberProvider>().loadMembers();
+      context.read<CategoryProvider>().loadCategories();
+    });
+  }
+
+  Future<void> _loadUserId() async {
+    final userId = await TokenStorage.getUserId();
+    setState(() {
+      _userId = userId;
     });
   }
 
@@ -55,6 +73,13 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (_userId == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Add Task')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: Text(isEditing ? 'Edit Task' : 'Add Task')),
@@ -81,42 +106,51 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Member Selection
-            Consumer<MemberProvider>(
-              builder: (context, memberProvider, child) {
-                if (memberProvider.members.isEmpty) {
+            // Category Selection
+            Consumer<CategoryProvider>(
+              builder: (context, categoryProvider, child) {
+                if (categoryProvider.isLoading) {
+                  return const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  );
+                }
+
+                if (categoryProvider.categories.isEmpty) {
                   return const Card(
                     child: Padding(
                       padding: EdgeInsets.all(16),
                       child: Text(
-                        'No members available. Please add a member first.',
+                        'No categories available. Categories will be loaded from the server.',
                       ),
                     ),
                   );
                 }
 
-                return DropdownButtonFormField<int>(
-                  value: _selectedMemberId,
+                return DropdownButtonFormField<String>(
+                  value: _selectedCategoryId,
                   decoration: const InputDecoration(
-                    labelText: 'Select Member',
-                    prefixIcon: Icon(Icons.person_outline),
+                    labelText: 'Category (Optional)',
+                    prefixIcon: Icon(Icons.category_outlined),
                   ),
-                  items: memberProvider.members.map((member) {
-                    return DropdownMenuItem<int>(
-                      value: member.id,
-                      child: Text(member.name),
-                    );
-                  }).toList(),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: null,
+                      child: Text('No Category'),
+                    ),
+                    ...categoryProvider.categories.map((category) {
+                      return DropdownMenuItem<String>(
+                        value: category.id,
+                        child: Text(category.name),
+                      );
+                    }).toList(),
+                  ],
                   onChanged: (value) {
                     setState(() {
-                      _selectedMemberId = value;
+                      _selectedCategoryId = value;
                     });
-                  },
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Please select a member';
-                    }
-                    return null;
                   },
                 );
               },
@@ -153,89 +187,50 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Reminder Days
-            Row(
-              children: [
-                const Icon(Icons.notifications_outlined),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Remind $_reminderDays days before',
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      Slider(
-                        value: _reminderDays.toDouble(),
-                        min: 1,
-                        max: 30,
-                        divisions: 29,
-                        label: '$_reminderDays days',
-                        onChanged: (value) {
-                          setState(() {
-                            _reminderDays = value.toInt();
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            // Recurring Task
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Recurring Task'),
+              subtitle: const Text('Task repeats automatically'),
+              value: _isRecurring,
+              onChanged: (value) {
+                setState(() {
+                  _isRecurring = value;
+                  if (!value) {
+                    _recurrenceType = null;
+                  }
+                });
+              },
             ),
-            const SizedBox(height: 16),
 
-            // Task Type
-            const Text(
-              'Task Type',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: RadioListTile<TaskType>(
-                    title: const Text('One-time'),
-                    value: TaskType.oneTime,
-                    groupValue: _taskType,
-                    onChanged: (value) {
-                      setState(() {
-                        _taskType = value!;
-                      });
-                    },
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: _taskType == TaskType.oneTime
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.outline.withValues(alpha: 0.3),
-                      ),
-                    ),
-                  ),
+            // Recurrence Type (only if recurring)
+            if (_isRecurring) ...[
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _recurrenceType,
+                decoration: const InputDecoration(
+                  labelText: 'Recurrence Pattern',
+                  prefixIcon: Icon(Icons.repeat),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: RadioListTile<TaskType>(
-                    title: const Text('Recurring'),
-                    value: TaskType.recurring,
-                    groupValue: _taskType,
-                    onChanged: (value) {
-                      setState(() {
-                        _taskType = value!;
-                      });
-                    },
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: _taskType == TaskType.recurring
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.outline.withValues(alpha: 0.3),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+                items: _recurrenceOptions.map((option) {
+                  return DropdownMenuItem<String>(
+                    value: option,
+                    child: Text(option),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _recurrenceType = value;
+                  });
+                },
+                validator: (value) {
+                  if (_isRecurring && value == null) {
+                    return 'Please select a recurrence pattern';
+                  }
+                  return null;
+                },
+              ),
+            ],
             const SizedBox(height: 32),
 
             // Save Button
@@ -281,31 +276,40 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       final task = Task(
         id: isEditing ? widget.task!.id : null,
         title: _titleController.text.trim(),
-        memberId: _selectedMemberId!,
+        userId: _userId!,
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
         dueDate: _selectedDate,
-        reminderDaysBefore: _reminderDays,
-        taskType: _taskType,
-        isCompleted: isEditing ? widget.task!.isCompleted : false,
-        isNotificationEnabled: true,
+        isRecurring: _isRecurring,
+        recurrenceType: _recurrenceType,
+        status: isEditing ? widget.task!.status : TaskStatus.pending,
+        categoryId: _selectedCategoryId,
       );
 
-      if (isEditing) {
-        await provider.updateTask(task);
-      } else {
-        await provider.addTask(task);
-      }
+      final success = isEditing
+          ? await provider.updateTask(task)
+          : await provider.addTask(task) != null;
 
       if (mounted) {
-        Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEditing ? 'Task updated' : 'Task added'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (success) {
+          Navigator.pop(context, true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isEditing ? 'Task updated' : 'Task added'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                provider.errorMessage ?? 'Failed to save task',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } finally {
       if (mounted) {

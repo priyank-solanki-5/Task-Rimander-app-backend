@@ -1,66 +1,107 @@
 class Document {
-  final int? id;
-  final String name;
-  final int memberId;
+  final String? id;
+  final String filename; // Stored filename on server
+  final String originalName; // Original filename from user
   final String filePath;
-  final DateTime uploadDate;
+  final int fileSize;
+  final String mimeType;
+  final String userId;
+  final String taskId;
   final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   Document({
     this.id,
-    required this.name,
-    required this.memberId,
+    required this.filename,
+    required this.originalName,
     required this.filePath,
-    required this.uploadDate,
+    required this.fileSize,
+    required this.mimeType,
+    required this.userId,
+    required this.taskId,
     this.createdAt,
+    this.updatedAt,
   });
 
-  // Convert Document to Map for SQLite
-  Map<String, dynamic> toMap() {
+  /// Create Document from JSON (API response)
+  factory Document.fromJson(Map<String, dynamic> json) {
+    return Document(
+      id: json['_id'] as String?,
+      filename: json['filename'] as String,
+      originalName: json['originalName'] as String,
+      filePath: json['filePath'] as String,
+      fileSize: json['fileSize'] as int,
+      mimeType: json['mimeType'] as String,
+      userId: json['userId'] as String,
+      taskId: json['taskId'] as String,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : null,
+    );
+  }
+
+  /// Convert Document to JSON (for API requests)
+  Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'name': name,
-      'member_id': memberId,
-      'file_path': filePath,
-      'upload_date': uploadDate.toIso8601String(),
-      'created_at': (createdAt ?? DateTime.now()).toIso8601String(),
+      if (id != null) '_id': id,
+      'filename': filename,
+      'originalName': originalName,
+      'filePath': filePath,
+      'fileSize': fileSize,
+      'mimeType': mimeType,
+      'userId': userId,
+      'taskId': taskId,
+      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+      if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };
   }
 
-  // Create Document from Map (SQLite)
-  factory Document.fromMap(Map<String, dynamic> map) {
-    return Document(
-      id: map['id'] as int?,
-      name: map['name'] as String,
-      memberId: map['member_id'] as int,
-      filePath: map['file_path'] as String,
-      uploadDate: DateTime.parse(map['upload_date'] as String),
-      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'] as String) : null,
-    );
-  }
-
-  // Create a copy with modified fields
+  /// Create a copy with modified fields
   Document copyWith({
-    int? id,
-    String? name,
-    int? memberId,
+    String? id,
+    String? filename,
+    String? originalName,
     String? filePath,
-    DateTime? uploadDate,
+    int? fileSize,
+    String? mimeType,
+    String? userId,
+    String? taskId,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Document(
       id: id ?? this.id,
-      name: name ?? this.name,
-      memberId: memberId ?? this.memberId,
+      filename: filename ?? this.filename,
+      originalName: originalName ?? this.originalName,
       filePath: filePath ?? this.filePath,
-      uploadDate: uploadDate ?? this.uploadDate,
+      fileSize: fileSize ?? this.fileSize,
+      mimeType: mimeType ?? this.mimeType,
+      userId: userId ?? this.userId,
+      taskId: taskId ?? this.taskId,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
-  // Get file extension
+  /// Get file size in human-readable format
+  String get fileSizeDisplay {
+    if (fileSize < 1024) {
+      return '$fileSize B';
+    } else if (fileSize < 1024 * 1024) {
+      return '${(fileSize / 1024).toStringAsFixed(2)} KB';
+    } else if (fileSize < 1024 * 1024 * 1024) {
+      return '${(fileSize / (1024 * 1024)).toStringAsFixed(2)} MB';
+    } else {
+      return '${(fileSize / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+    }
+  }
+
+  /// Get file extension
   String get fileExtension {
-    final parts = name.split('.');
+    final parts = originalName.split('.');
     return parts.length > 1 ? parts.last.toUpperCase() : '';
   }
 }

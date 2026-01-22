@@ -6,7 +6,7 @@ import '../widgets/member_card.dart';
 import 'add_edit_member_screen.dart';
 
 class MembersScreen extends StatefulWidget {
-  final Function(int)? onMemberTap;
+  final Function(String)? onMemberTap;
 
   const MembersScreen({super.key, this.onMemberTap});
 
