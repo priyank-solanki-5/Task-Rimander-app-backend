@@ -53,3 +53,9 @@ ios/Pods/
 linux/flutter/ephemeral/
 macos/flutter/ephemeral/
 windows/flutter/ephemeral/
+
+
+# Flutter generated plugin registrants
+**/generated_plugin_registrant.cc
+**/generated_plugins.cmake
+**/GeneratedPluginRegistrant.swift
