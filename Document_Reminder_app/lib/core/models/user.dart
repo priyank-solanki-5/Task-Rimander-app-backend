@@ -3,7 +3,8 @@ class User {
   final String username;
   final String email;
   final String mobilenumber;
-  final String? password; // Only used for registration/login, not stored locally
+  final String?
+  password; // Only used for registration/login, not stored locally
   final NotificationPreferences? notificationPreferences;
   final UserSettings? settings;
   final Map<String, dynamic>? metadata;
@@ -30,15 +31,17 @@ class User {
   /// Create User from JSON (API response)
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['_id'] as String?,
+      id: json['id'] as String? ?? json['_id'] as String?,
       username: json['username'] as String,
       email: json['email'] as String,
       mobilenumber: json['mobilenumber'] as String,
       notificationPreferences: json['notificationPreferences'] != null
-          ? NotificationPreferences.fromJson(json['notificationPreferences'])
+          ? NotificationPreferences.fromJson(
+              json['notificationPreferences'] as Map<String, dynamic>,
+            )
           : null,
       settings: json['settings'] != null
-          ? UserSettings.fromJson(json['settings'])
+          ? UserSettings.fromJson(json['settings'] as Map<String, dynamic>)
           : null,
       metadata: json['metadata'] as Map<String, dynamic>?,
       lastLogin: json['lastLogin'] != null

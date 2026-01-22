@@ -7,8 +7,8 @@ class MongoService {
   MongoService._internal();
 
   Db? _db;
-  static const String _connectionString = 'mongodb://localhost:27017/document_reminder';
-  static const String _dbName = 'document_reminder';
+  static const String _connectionString =
+      'mongodb://localhost:27017/document_reminder';
 
   Future<void> connect() async {
     try {
@@ -36,34 +36,70 @@ class MongoService {
   }
 
   // Generic CRUD operations
-  Future<List<Map<String, dynamic>>> findAll(String collectionName, {
+  Future<List<Map<String, dynamic>>> findAll(
+    String collectionName, {
     Map<String, dynamic>? query,
     Map<String, dynamic>? sort,
     int? limit,
   }) async {
     try {
       final collection = database.collection(collectionName);
-      var cursor = collection.find(query ?? {});
-      
-      if (sort != null) {
-        cursor = cursor.sort(sort);
+      final queryMap = query ?? {};
+
+      // Create a cursor and convert to list
+      var list = await collection.find(queryMap).toList();
+
+      // Apply sorting if provided
+      if (sort != null && list.isNotEmpty) {
+        for (var key in sort.keys) {
+          final sortOrder = sort[key];
+          if (sortOrder == 1) {
+            list.sort((a, b) {
+              final valA = a[key];
+              final valB = b[key];
+              if (valA == null) return 1;
+              if (valB == null) return -1;
+              if (valA is Comparable && valB is Comparable) {
+                return valA.compareTo(valB);
+              }
+              return 0;
+            });
+          } else if (sortOrder == -1) {
+            list.sort((a, b) {
+              final valA = a[key];
+              final valB = b[key];
+              if (valA == null) return -1;
+              if (valB == null) return 1;
+              if (valA is Comparable && valB is Comparable) {
+                return valB.compareTo(valA);
+              }
+              return 0;
+            });
+          }
+        }
       }
-      
-      if (limit != null) {
-        cursor = cursor.limit(limit);
+
+      // Apply limit if provided
+      if (limit != null && list.length > limit) {
+        list = list.sublist(0, limit);
       }
-      
-      return await cursor.toList();
+
+      return list;
     } catch (e) {
       debugPrint('❌ Error finding documents in $collectionName: $e');
       return [];
     }
   }
 
-  Future<Map<String, dynamic>?> findById(String collectionName, String id) async {
+  Future<Map<String, dynamic>?> findById(
+    String collectionName,
+    String id,
+  ) async {
     try {
       final collection = database.collection(collectionName);
-      final result = await collection.findOne(where.eq('_id', ObjectId.parse(id)));
+      final result = await collection.findOne(
+        where.eq('_id', ObjectId.parse(id)),
+      );
       return result;
     } catch (e) {
       debugPrint('❌ Error finding document by ID in $collectionName: $e');
@@ -71,7 +107,10 @@ class MongoService {
     }
   }
 
-  Future<String> insertOne(String collectionName, Map<String, dynamic> data) async {
+  Future<String> insertOne(
+    String collectionName,
+    Map<String, dynamic> data,
+  ) async {
     try {
       final collection = database.collection(collectionName);
       final result = await collection.insertOne(data);
@@ -83,12 +122,17 @@ class MongoService {
     }
   }
 
-  Future<void> updateOne(String collectionName, String id, Map<String, dynamic> data) async {
+  Future<void> updateOne(
+    String collectionName,
+    String id,
+    Map<String, dynamic> data,
+  ) async {
     try {
       final collection = database.collection(collectionName);
+      final updateData = <String, dynamic>{'\$set': data};
       await collection.updateOne(
         where.eq('_id', ObjectId.parse(id)),
-        modify.setAll(data),
+        updateData,
       );
       debugPrint('✅ Updated document in $collectionName: $id');
     } catch (e) {
@@ -108,7 +152,10 @@ class MongoService {
     }
   }
 
-  Future<int> count(String collectionName, {Map<String, dynamic>? query}) async {
+  Future<int> count(
+    String collectionName, {
+    Map<String, dynamic>? query,
+  }) async {
     try {
       final collection = database.collection(collectionName);
       return await collection.count(query ?? {});

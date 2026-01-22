@@ -27,18 +27,11 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   String? _recurrenceType;
   bool _isLoading = false;
   String? _userId;
-  int? _selectedMemberId;
+  String? _selectedMemberId;
   int _reminderDays = 3;
   TaskType _taskType = TaskType.oneTime;
 
   bool get isEditing => widget.task != null;
-
-  final List<String> _recurrenceOptions = [
-    'Monthly',
-    'Every 3 months',
-    'Every 6 months',
-    'Yearly',
-  ];
 
   @override
   void initState() {
@@ -49,12 +42,13 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       _titleController.text = widget.task!.title;
       _descriptionController.text = widget.task!.description ?? '';
       _selectedCategoryId = widget.task!.categoryId;
-      _selectedDate = widget.task!.dueDate ?? DateTime.now().add(const Duration(days: 7));
+      _selectedDate =
+          widget.task!.dueDate ?? DateTime.now().add(const Duration(days: 7));
       _isRecurring = widget.task!.isRecurring;
       _recurrenceType = widget.task!.recurrenceType;
       _taskType = widget.task!.taskType;
       if (widget.task!.memberId != null) {
-        _selectedMemberId = int.tryParse(widget.task!.memberId!);
+        _selectedMemberId = widget.task!.memberId;
       }
     }
 
@@ -122,14 +116,14 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                     );
                   }
 
-                  return DropdownButtonFormField<int>(
+                  return DropdownButtonFormField<String>(
                     value: _selectedMemberId,
                     decoration: const InputDecoration(
                       labelText: 'Select Member',
                       prefixIcon: Icon(Icons.person_outline),
                     ),
                     items: memberProvider.members.map((member) {
-                      return DropdownMenuItem<int>(
+                      return DropdownMenuItem<String>(
                         value: member.id,
                         child: Text(member.name),
                       );
@@ -342,9 +336,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                provider.errorMessage ?? 'Failed to save task',
-              ),
+              content: Text(provider.errorMessage ?? 'Failed to save task'),
               backgroundColor: Colors.red,
             ),
           );

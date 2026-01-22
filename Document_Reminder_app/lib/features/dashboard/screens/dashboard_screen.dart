@@ -108,9 +108,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       tasks: taskProvider.dueTasks,
                       memberNames: {
                         for (var task in taskProvider.tasks)
-                          task.memberId: taskProvider.getMemberName(
-                            task.memberId,
-                          ),
+                          task.memberId ?? '': task.memberId ?? 'Unknown',
                       },
                       onTaskToggle: (taskId, isCompleted) {
                         taskProvider.toggleTaskCompletion(taskId, isCompleted);
@@ -127,9 +125,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       tasks: taskProvider.currentTasks,
                       memberNames: {
                         for (var task in taskProvider.tasks)
-                          task.memberId: taskProvider.getMemberName(
-                            task.memberId,
-                          ),
+                          task.memberId ?? '': task.memberId ?? 'Unknown',
                       },
                       onTaskToggle: (taskId, isCompleted) {
                         taskProvider.toggleTaskCompletion(taskId, isCompleted);
@@ -146,9 +142,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       tasks: taskProvider.upcomingTasks,
                       memberNames: {
                         for (var task in taskProvider.tasks)
-                          task.memberId: taskProvider.getMemberName(
-                            task.memberId,
-                          ),
+                          task.memberId ?? '': task.memberId ?? 'Unknown',
                       },
                       onTaskToggle: (taskId, isCompleted) {
                         taskProvider.toggleTaskCompletion(taskId, isCompleted);

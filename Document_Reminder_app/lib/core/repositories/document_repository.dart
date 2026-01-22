@@ -1,8 +1,7 @@
-import 'package:flutter/foundation.dart';
-import '../models/document.dart';
+// Document repository for API-based document management
+// This repository handles all document-related API calls
 
 class DocumentRepository {
-  // Note: All database methods have been removed.
-  // This repository is now empty and ready for API-based implementation.
-  // The class is kept as a placeholder for future API integration.
+  // Repository methods for document operations are being implemented
+  // through the document API services
 }

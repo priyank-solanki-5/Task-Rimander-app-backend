@@ -1,17 +1,16 @@
 import 'package:flutter/foundation.dart';
 import '../config/api_config.dart';
 import '../models/user.dart';
-import '../models/api_response.dart';
 import '../utils/api_exception.dart';
 import 'api_client.dart';
 import 'token_storage.dart';
 
 /// Authentication API Service
-/// 
+///
 /// This service handles all authentication and user management operations.
 /// It communicates with the backend API for user registration, login, profile management,
 /// password changes, and user settings.
-/// 
+///
 /// Key Features:
 /// - User registration and login
 /// - JWT token management (automatic storage)
@@ -29,15 +28,15 @@ class AuthApiService {
   // ========================================
 
   /// Registers a new user account
-  /// 
+  ///
   /// Parameters:
   /// - [username]: User's display name
   /// - [email]: User's email address (must be unique)
   /// - [mobilenumber]: User's mobile number for account recovery
   /// - [password]: User's password (will be hashed on backend)
-  /// 
+  ///
   /// Returns: Map with 'success' (bool) and 'message' (String)
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// final result = await authService.register(
@@ -75,10 +74,7 @@ class AuthApiService {
       };
     } on ApiException catch (e) {
       debugPrint('Register error: ${e.message}');
-      return {
-        'success': false,
-        'message': e.message,
-      };
+      return {'success': false, 'message': e.message};
     } catch (e) {
       debugPrint('Register unexpected error: $e');
       return {
@@ -89,21 +85,21 @@ class AuthApiService {
   }
 
   /// Authenticates a user and stores the JWT token
-  /// 
+  ///
   /// This method logs in a user with their email and password.
   /// On success, it automatically stores the JWT token and user information
   /// in secure storage for subsequent authenticated requests.
-  /// 
+  ///
   /// Parameters:
   /// - [email]: User's email address
   /// - [password]: User's password
-  /// 
+  ///
   /// Returns: Map containing:
   /// - 'success' (bool): Whether login was successful
   /// - 'message' (String): Success or error message
   /// - 'user' (User): User object (only on success)
   /// - 'token' (String): JWT authentication token (only on success)
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// final result = await authService.login(
@@ -122,16 +118,13 @@ class AuthApiService {
     try {
       final response = await _apiClient.post(
         ApiConfig.login,
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
 
       debugPrint('Login response: ${response.data}');
 
       final token = response.data['token'] as String;
-      final userData = response.data['user'] as Map<String, dynamic>;
+      final userData = response.data['data'] as Map<String, dynamic>;
       final user = User.fromJson(userData);
 
       // Save token and user info
@@ -147,22 +140,13 @@ class AuthApiService {
       };
     } on UnauthorizedException catch (e) {
       debugPrint('Login unauthorized: ${e.message}');
-      return {
-        'success': false,
-        'message': e.message,
-      };
+      return {'success': false, 'message': e.message};
     } on ApiException catch (e) {
       debugPrint('Login error: ${e.message}');
-      return {
-        'success': false,
-        'message': e.message,
-      };
+      return {'success': false, 'message': e.message};
     } catch (e) {
       debugPrint('Login unexpected error: $e');
-      return {
-        'success': false,
-        'message': 'Login failed. Please try again.',
-      };
+      return {'success': false, 'message': 'Login failed. Please try again.'};
     }
   }
 
@@ -171,12 +155,12 @@ class AuthApiService {
   // ========================================
 
   /// Retrieves the current authenticated user's profile
-  /// 
+  ///
   /// This method fetches the user profile from the backend using the stored JWT token.
   /// If the token is invalid or expired (401 Unauthorized), it automatically logs out the user.
-  /// 
+  ///
   /// Returns: User object on success, null on error
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// final user = await authService.getProfile();
@@ -206,17 +190,17 @@ class AuthApiService {
   }
 
   /// Changes the user's password using email and mobile verification
-  /// 
+  ///
   /// This method allows users to change their password by verifying their
   /// email and mobile number. This provides a secure password reset mechanism.
-  /// 
+  ///
   /// Parameters:
   /// - [email]: User's email address (for verification)
   /// - [mobilenumber]: User's mobile number (for verification)
   /// - [newPassword]: The new password to set
-  /// 
+  ///
   /// Returns: Map with 'success' (bool) and 'message' (String)
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// final result = await authService.changePassword(
@@ -251,10 +235,7 @@ class AuthApiService {
       };
     } on ApiException catch (e) {
       debugPrint('Change password error: ${e.message}');
-      return {
-        'success': false,
-        'message': e.message,
-      };
+      return {'success': false, 'message': e.message};
     } catch (e) {
       debugPrint('Change password unexpected error: $e');
       return {
@@ -269,9 +250,9 @@ class AuthApiService {
   // ========================================
 
   /// Retrieves the user's notification preferences
-  /// 
+  ///
   /// Returns: NotificationPreferences object on success, null on error
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// final prefs = await authService.getNotificationPreferences();
@@ -281,13 +262,11 @@ class AuthApiService {
   /// ```
   Future<NotificationPreferences?> getNotificationPreferences() async {
     try {
-      final response =
-          await _apiClient.get(ApiConfig.notificationPreferences);
+      final response = await _apiClient.get(ApiConfig.notificationPreferences);
 
       debugPrint('Notification preferences response: ${response.data}');
 
-      final prefsData =
-          response.data['preferences'] as Map<String, dynamic>;
+      final prefsData = response.data['preferences'] as Map<String, dynamic>;
       return NotificationPreferences.fromJson(prefsData);
     } on ApiException catch (e) {
       debugPrint('Get notification preferences error: ${e.message}');
@@ -299,12 +278,12 @@ class AuthApiService {
   }
 
   /// Updates the user's notification preferences
-  /// 
+  ///
   /// Parameters:
   /// - [preferences]: NotificationPreferences object with updated settings
-  /// 
+  ///
   /// Returns: true on success, false on error
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// final prefs = NotificationPreferences(
@@ -338,9 +317,9 @@ class AuthApiService {
   // ========================================
 
   /// Retrieves the user's application settings
-  /// 
+  ///
   /// Returns: UserSettings object on success, null on error
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// final settings = await authService.getUserSettings();
@@ -366,12 +345,12 @@ class AuthApiService {
   }
 
   /// Updates the user's application settings
-  /// 
+  ///
   /// Parameters:
   /// - [settings]: UserSettings object with updated settings
-  /// 
+  ///
   /// Returns: true on success, false on error
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// final settings = UserSettings(
@@ -399,14 +378,14 @@ class AuthApiService {
   }
 
   /// Updates user metadata (custom key-value data)
-  /// 
+  ///
   /// This method allows storing arbitrary metadata associated with the user.
-  /// 
+  ///
   /// Parameters:
   /// - [metadata]: Map of key-value pairs to store
-  /// 
+  ///
   /// Returns: true on success, false on error
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// final success = await authService.updateMetadata({
@@ -437,10 +416,10 @@ class AuthApiService {
   // ========================================
 
   /// Logs out the current user by clearing all stored authentication data
-  /// 
+  ///
   /// This method removes the JWT token, user ID, and email from secure storage.
   /// After logout, the user will need to login again to access protected resources.
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// await authService.logout();
@@ -452,9 +431,9 @@ class AuthApiService {
   }
 
   /// Checks if a user is currently authenticated
-  /// 
+  ///
   /// Returns: true if a valid JWT token exists in storage, false otherwise
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// final isLoggedIn = await authService.isAuthenticated();

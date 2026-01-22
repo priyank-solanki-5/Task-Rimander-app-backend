@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/task.dart';
 import '../services/task_service.dart';
-import '../services/token_storage.dart';
 
 class TaskProvider extends ChangeNotifier {
   final TaskService _taskService = TaskService();
@@ -178,11 +177,16 @@ class TaskProvider extends ChangeNotifier {
 
     try {
       _tasks = await _taskService.filterTasks(
-        status: status != null ? (status == 'Completed' ? TaskStatus.completed : TaskStatus.pending) : null, // Convert string to enum if needed, or update filterTasks to accept enum
+        status: status != null
+            ? (status == 'Completed'
+                  ? TaskStatus.completed
+                  : TaskStatus.pending)
+            : null, // Convert string to enum if needed, or update filterTasks to accept enum
         categoryId: categoryId,
         // startDate: startDate, // TaskService filterTasks might need update for date range or we pass date
         // endDate: endDate,
-        date: startDate, // Mapping startDate to date for simple check? Or update TaskService?
+        date:
+            startDate, // Mapping startDate to date for simple check? Or update TaskService?
       );
       debugPrint('✅ Filter completed: ${_tasks.length} results');
     } catch (e) {

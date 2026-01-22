@@ -1,8 +1,7 @@
-import 'package:flutter/foundation.dart';
-import '../models/task.dart';
+// Task repository for API-based task management
+// This repository handles all task-related API calls
 
 class TaskRepository {
-  // Note: All database methods have been removed.
-  // This repository is now empty and ready for API-based implementation.
-  // The class is kept as a placeholder for future API integration.
+  // Repository methods for task operations are being implemented
+  // through the task API services
 }

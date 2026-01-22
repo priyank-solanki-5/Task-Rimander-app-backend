@@ -34,8 +34,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final docProvider = context.read<DocumentProvider>();
     final memberProvider = context.read<MemberProvider>();
 
-    final docCount = await docProvider.getDocumentCount();
-    final memCount = await memberProvider.getMemberCount();
+    final docCount = docProvider.getDocumentCount() as int? ?? 0;
+    final memCount = memberProvider.getMemberCount() as int? ?? 0;
 
     // Load user info from API only
     final user = await _authService.getCurrentUser();

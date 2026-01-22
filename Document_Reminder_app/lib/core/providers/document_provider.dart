@@ -25,15 +25,17 @@ class DocumentProvider extends ChangeNotifier {
 
     // Filter by task if selected
     if (_selectedTaskId != null) {
-      filtered =
-          filtered.where((doc) => doc.taskId == _selectedTaskId).toList();
+      filtered = filtered
+          .where((doc) => doc.taskId == _selectedTaskId)
+          .toList();
     }
 
     // Sort
     if (_sortType == SortType.alphabetical) {
       filtered.sort(
-        (a, b) =>
-            a.originalName.toLowerCase().compareTo(b.originalName.toLowerCase()),
+        (a, b) => a.originalName.toLowerCase().compareTo(
+          b.originalName.toLowerCase(),
+        ),
       );
     } else {
       // Sort by creation date (newest first)
@@ -67,8 +69,9 @@ class DocumentProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _documents = await _documentService.getAllDocuments();
-      debugPrint('✅ Loaded ${_documents.length} documents from local DB');
+      debugPrint('📂 Documents are managed through API services');
+      // Documents will be loaded through API calls in task screens
+      _documents = [];
     } catch (e) {
       _errorMessage = 'Failed to load documents: $e';
       debugPrint('❌ Error loading documents: $e');
@@ -85,9 +88,10 @@ class DocumentProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _documents = await _documentService.getDocumentsByTask(taskId);
+      debugPrint('📂 Loading documents for task through API: $taskId');
+      // Documents will be loaded through API services in task detail screen
       _selectedTaskId = taskId;
-      debugPrint('✅ Loaded ${_documents.length} documents for task $taskId');
+      _documents = [];
     } catch (e) {
       _errorMessage = 'Failed to load documents: $e';
       debugPrint('❌ Error loading documents by task: $e');
@@ -98,63 +102,40 @@ class DocumentProvider extends ChangeNotifier {
   }
 
   // Upload document
-  Future<Document?> uploadDocument({
+  Future<bool> uploadDocument({
     required String filePath,
     required String taskId,
+    required String userId,
     void Function(int, int)? onProgress,
   }) async {
     try {
-      final document = await _documentService.uploadDocument(
+      final result = await _documentService.uploadDocument(
         filePath: filePath,
         taskId: taskId,
+        userId: userId,
         onProgress: onProgress,
       );
 
-      if (document != null) {
-        _documents.add(document);
+      if (result['success']) {
         notifyListeners();
-        debugPrint('✅ Document uploaded successfully: ${document.id}');
-        return document;
-      }
-      return null;
-    } catch (e) {
-      _errorMessage = 'Failed to upload document: $e';
-      debugPrint('❌ Error uploading document: $e');
-      return null;
-    }
-  }
-
-  // Download document
-  Future<bool> downloadDocument({
-    required String documentId,
-    required String savePath,
-    void Function(int, int)? onProgress,
-  }) async {
-    try {
-      final success = await _documentService.downloadDocument(
-        documentId: documentId,
-        savePath: savePath,
-        onProgress: onProgress,
-      );
-
-      if (success) {
-        debugPrint('✅ Document downloaded successfully');
+        debugPrint('✅ Document uploaded successfully');
         return true;
       }
       return false;
     } catch (e) {
-      _errorMessage = 'Failed to download document: $e';
-      debugPrint('❌ Error downloading document: $e');
+      _errorMessage = 'Failed to upload document: $e';
+      debugPrint('❌ Error uploading document: $e');
       return false;
     }
   }
 
   // Delete document
-  Future<bool> deleteDocument(String id) async {
+  Future<bool> deleteDocument(String documentId) async {
     try {
-      final success = await _documentService.deleteDocument(id);
+      final success = await _documentService.deleteDocument(documentId);
+
       if (success) {
-        _documents.removeWhere((d) => d.id == id);
+        _documents.removeWhere((doc) => doc.id == documentId);
         notifyListeners();
         debugPrint('✅ Document deleted successfully');
         return true;
@@ -165,11 +146,6 @@ class DocumentProvider extends ChangeNotifier {
       debugPrint('❌ Error deleting document: $e');
       return false;
     }
-  }
-
-  // Get document count
-  int getDocumentCount() {
-    return _documents.length;
   }
 
   // Refresh documents
@@ -185,7 +161,7 @@ class DocumentProvider extends ChangeNotifier {
 
   // Member filter support (for backward compatibility)
   String? _selectedMemberId;
-  
+
   String? get selectedMemberId => _selectedMemberId;
 
   void setMemberFilter(String? memberId) {
@@ -193,26 +169,13 @@ class DocumentProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Get member name (placeholder - returns empty string as member data is not in document provider)
+  // Get member name (placeholder - returns empty string)
   String getMemberName(String? memberId) {
-    // This is a placeholder. In a real implementation, you'd fetch member data
-    // from a MemberProvider or API service
     return '';
   }
 
-  // Add document (alias for uploadDocument for backward compatibility)
-  Future<Document?> addDocument(Document document) async {
-    // Since we need to upload a file, this is a simplified version
-    // In practice, you'd need the file path from the document
-    try {
-      _documents.add(document);
-      notifyListeners();
-      debugPrint('✅ Document added: ${document.id}');
-      return document;
-    } catch (e) {
-      _errorMessage = 'Failed to add document: $e';
-      debugPrint('❌ Error adding document: $e');
-      return null;
-    }
+  // Get document count
+  int getDocumentCount() {
+    return _documents.length;
   }
 }

@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 class TokenStorage {
   // Storage keys
@@ -12,7 +13,7 @@ class TokenStorage {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_tokenKey, token);
     } catch (e) {
-      print('Error saving token: $e');
+      debugPrint('Error saving token: $e');
     }
   }
 
@@ -22,18 +23,17 @@ class TokenStorage {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(_tokenKey);
     } catch (e) {
-      print('Error getting token: $e');
+      debugPrint('Error getting token: $e');
       return null;
     }
   }
 
-  /// Delete authentication token
   static Future<void> deleteToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_tokenKey);
     } catch (e) {
-      print('Error deleting token: $e');
+      debugPrint('Error deleting token: $e');
     }
   }
 
@@ -43,7 +43,7 @@ class TokenStorage {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_userIdKey, userId);
     } catch (e) {
-      print('Error saving user ID: $e');
+      debugPrint('Error saving user ID: $e');
     }
   }
 
@@ -53,7 +53,7 @@ class TokenStorage {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(_userIdKey);
     } catch (e) {
-      print('Error getting user ID: $e');
+      debugPrint('Error getting user ID: $e');
       return null;
     }
   }
@@ -64,7 +64,7 @@ class TokenStorage {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_userEmailKey, email);
     } catch (e) {
-      print('Error saving user email: $e');
+      debugPrint('Error saving user email: $e');
     }
   }
 
@@ -74,7 +74,7 @@ class TokenStorage {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(_userEmailKey);
     } catch (e) {
-      print('Error getting user email: $e');
+      debugPrint('Error getting user email: $e');
       return null;
     }
   }
@@ -93,7 +93,7 @@ class TokenStorage {
       await prefs.remove(_userIdKey);
       await prefs.remove(_userEmailKey);
     } catch (e) {
-      print('Error clearing storage: $e');
+      debugPrint('Error clearing storage: $e');
     }
   }
 }
