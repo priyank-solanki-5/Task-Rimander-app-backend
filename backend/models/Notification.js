@@ -1,113 +1,61 @@
-import { DataTypes } from "sequelize";
-import sequelize from "../config/database.js";
-import User from "./User.js";
-import Task from "./Task.js";
+import mongoose from "mongoose";
 
-const Notification = sequelize.define(
-  "Notification",
+const notificationSchema = new mongoose.Schema(
   {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
     userId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: User,
-        key: "id",
-      },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     taskId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: Task,
-        key: "id",
-      },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Task",
+      required: true,
     },
-    // Notification type: email, sms, push, in-app
     type: {
-      type: DataTypes.ENUM("email", "sms", "push", "in-app"),
-      defaultValue: "in-app",
-      allowNull: false,
+      type: String,
+      enum: ["email", "sms", "push", "in-app"],
+      default: "in-app",
     },
-    // Message to display
     message: {
-      type: DataTypes.TEXT,
-      allowNull: false,
+      type: String,
+      required: true,
     },
-    // Has the user read/seen this notification?
     isRead: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      allowNull: false,
+      type: Boolean,
+      default: false,
     },
-    // Status: pending, sent, failed
     status: {
-      type: DataTypes.ENUM("pending", "sent", "failed"),
-      defaultValue: "pending",
-      allowNull: false,
+      type: String,
+      enum: ["pending", "sent", "failed"],
+      default: "pending",
     },
-    // When the notification was sent
     sentAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
+      type: Date,
+      default: null,
     },
-    // If failed, store the reason
     errorMessage: {
-      type: DataTypes.TEXT,
-      allowNull: true,
+      type: String,
+      default: null,
     },
-    // When user read/dismissed the notification
     readAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
+      type: Date,
+      default: null,
     },
-    // Store metadata about the task at notification time
     metadata: {
-      type: DataTypes.JSON,
-      allowNull: true, // e.g., { taskTitle: "...", dueDate: "...", category: "..." }
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
     },
   },
   {
-    // TTL Indexes for efficient cleanup
-    indexes: [
-      // Index for finding read notifications (TTL cleanup)
-      {
-        fields: ["isRead", "readAt"],
-        name: "idx_notification_read_ttl",
-      },
-      // Index for finding unread old notifications
-      {
-        fields: ["isRead", "createdAt"],
-        name: "idx_notification_unread_ttl",
-      },
-      // Index for user-specific TTL queries
-      {
-        fields: ["userId", "createdAt"],
-        name: "idx_notification_user_created_ttl",
-      },
-      // Index for status-based cleanup
-      {
-        fields: ["status", "sentAt"],
-        name: "idx_notification_status_sent_ttl",
-      },
-    ],
+    timestamps: true,
   }
 );
 
-// Associations
-Notification.belongsTo(User, { foreignKey: "userId" });
-Notification.belongsTo(Task, { foreignKey: "taskId" });
+notificationSchema.index({ userId: 1, isRead: 1 });
+notificationSchema.index({ taskId: 1 });
+notificationSchema.index({ createdAt: 1 });
+
+const Notification = mongoose.model("Notification", notificationSchema);
 
 export default Notification;

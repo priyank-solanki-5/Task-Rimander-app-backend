@@ -1,9 +1,8 @@
 import cron from "node-cron";
 import notificationService from "../services/notification.service.js";
-import ttlService from "../services/ttl.service.js";
 
 /**
- * Scheduler service for handling notification jobs and TTL cleanup
+ * Scheduler service for handling notification jobs
  * Uses node-cron for scheduling recurring tasks
  */
 class SchedulerService {
@@ -24,10 +23,6 @@ class SchedulerService {
     // Run daily check for overdue tasks at 8 AM
     // 0 8 * * * (every day at 8am)
     this.scheduleDailyOverdueCheck();
-
-    // Run TTL cleanup every day at 2 AM
-    // 0 2 * * * (every day at 2am)
-    this.scheduleTTLCleanup();
 
     console.log("✅ Notification scheduler initialized successfully");
   }
@@ -78,33 +73,6 @@ class SchedulerService {
 
     this.jobs.set(jobId, job);
     console.log("📅 Scheduled: Daily overdue check - every day at 8 AM");
-  }
-
-  /**
-   * Schedule TTL cleanup every day at 2 AM
-   * Automatically deletes expired records based on retention policies
-   */
-  scheduleTTLCleanup() {
-    const jobId = "ttl-cleanup";
-
-    // Run every day at 2:00 AM (optimal time for cleanup)
-    const job = cron.schedule("0 2 * * *", async () => {
-      console.log(`\n⏰ [${new Date().toISOString()}] Running TTL cleanup...`);
-
-      try {
-        const result = await ttlService.cleanExpiredRecords();
-        if (result.status === "success") {
-          console.log(`✅ TTL cleanup completed:`, result.summary);
-        } else {
-          console.warn(`⚠️  TTL cleanup completed with errors:`, result.error);
-        }
-      } catch (error) {
-        console.error(`❌ Error in TTL cleanup:`, error.message);
-      }
-    });
-
-    this.jobs.set(jobId, job);
-    console.log("📅 Scheduled: TTL cleanup - every day at 2 AM");
   }
 
   /**

@@ -1,7 +1,8 @@
 import express from "express";
 import bodyParser from "body-parser";
+import cors from "cors";
 import dotenv from "dotenv";
-import sequelize from "./config/database.js";
+import connectDB from "./config/mongodb.js";
 import userRoutes from "./routes/user.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import taskRoutes from "./routes/task.routes.js";
@@ -9,10 +10,12 @@ import documentRoutes from "./routes/document.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import reminderRoutes from "./routes/reminder.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
-import ttlRoutes from "./routes/ttl.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 import categoryService from "./services/category.service.js";
 import schedulerService from "./services/scheduler.service.js";
+import "./models/User.js";
 import "./models/Task.js";
+import "./models/Category.js";
 import "./models/Document.js";
 import "./models/Notification.js";
 import "./models/NotificationRule.js";
@@ -25,6 +28,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -36,7 +40,7 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/ttl", ttlRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {
@@ -49,9 +53,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Something went wrong!" });
 });
 
-// Sync database and start server
-sequelize
-  .sync()
+// Connect to MongoDB and start server
+connectDB()
   .then(async () => {
     // Seed predefined categories
     await categoryService.seedPredefinedCategories();
@@ -68,7 +71,7 @@ sequelize
       console.log(`   Tasks:        http://localhost:${PORT}/api/tasks`);
       console.log(`   Documents:    http://localhost:${PORT}/api/documents`);
       console.log(
-        `   Notifications: http://localhost:${PORT}/api/notifications`
+        `   Notifications: http://localhost:${PORT}/api/notifications`,
       );
       console.log(`   Reminders:    http://localhost:${PORT}/api/reminders`);
       console.log(`   Dashboard:    http://localhost:${PORT}/api/dashboard`);
@@ -76,5 +79,5 @@ sequelize
     });
   })
   .catch((err) => {
-    console.error("❌ Unable to connect to the database:", err);
+    console.error("❌ Unable to connect to MongoDB:", err);
   });

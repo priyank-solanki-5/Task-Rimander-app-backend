@@ -1,69 +1,69 @@
-import { DataTypes } from "sequelize";
-import sequelize from "../config/database.js";
+import mongoose from "mongoose";
 
-const User = sequelize.define("User", {
-  username: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  mobilenumber: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  // Notification Preferences
-  notificationPreferences: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: {
-      email: true,
-      push: true,
-      sms: false,
-      inApp: true,
-      remindersBefore: 1, // days before due date
-      overdueNotifications: true,
-      completionNotifications: true,
-      recurringNotifications: true,
+const userSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: true,
     },
-    comment: "User notification preferences stored as JSON",
-  },
-  // User Settings
-  settings: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: {
-      theme: "light",
-      language: "en",
-      timezone: "UTC",
-      dateFormat: "YYYY-MM-DD",
-      timeFormat: "24h",
-      weekStartsOn: "monday",
+    mobilenumber: {
+      type: String,
+      required: true,
     },
-    comment: "User settings and preferences stored as JSON",
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    notificationPreferences: {
+      type: {
+        email: { type: Boolean, default: true },
+        push: { type: Boolean, default: true },
+        sms: { type: Boolean, default: false },
+        inApp: { type: Boolean, default: true },
+        remindersBefore: { type: Number, default: 1 },
+        overdueNotifications: { type: Boolean, default: true },
+        completionNotifications: { type: Boolean, default: true },
+        recurringNotifications: { type: Boolean, default: true },
+      },
+      default: {},
+    },
+    settings: {
+      type: {
+        theme: { type: String, default: "light" },
+        language: { type: String, default: "en" },
+        timezone: { type: String, default: "UTC" },
+        dateFormat: { type: String, default: "YYYY-MM-DD" },
+        timeFormat: { type: String, default: "24h" },
+        weekStartsOn: { type: String, default: "monday" },
+      },
+      default: {},
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    lastLogin: {
+      type: Date,
+      default: null,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  // Additional metadata
-  metadata: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: {},
-    comment: "Additional user metadata",
-  },
-  lastLogin: {
-    type: DataTypes.DATE,
-    allowNull: true,
-  },
-  isActive: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
+
+userSchema.index({ email: 1 }, { unique: true });
+
+const User = mongoose.model("User", userSchema);
 
 export default User;
