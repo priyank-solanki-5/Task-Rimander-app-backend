@@ -1,138 +1,166 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-
+enum TaskStatus { pending, completed }
 enum TaskType { oneTime, recurring }
 
 class Task {
-  final int? id;
+  final String? id;
   final String title;
-  final int memberId;
   final String? description;
-  final List<int> documentIds;
-  final DateTime dueDate;
-  final int? reminderDaysBefore;
-  final TaskType taskType;
-  final bool isCompleted;
-  final bool isNotificationEnabled;
+  final TaskStatus status;
+  final DateTime? dueDate;
+  final bool isRecurring;
+  final String? recurrenceType; // "Monthly", "Every 3 months", "Every 6 months", "Yearly"
+  final DateTime? nextOccurrence;
+  final String userId;
+  final String? memberId;
+  final String? categoryId;
   final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final TaskType taskType;
 
   Task({
     this.id,
     required this.title,
-    required this.memberId,
     this.description,
-    this.documentIds = const [],
-    required this.dueDate,
-    this.reminderDaysBefore,
-    required this.taskType,
-    this.isCompleted = false,
-    this.isNotificationEnabled = true,
+    this.status = TaskStatus.pending,
+    this.dueDate,
+    this.isRecurring = false,
+    this.recurrenceType,
+    this.nextOccurrence,
+    required this.userId,
+    this.memberId,
+    this.categoryId,
     this.createdAt,
+    this.updatedAt,
+    this.taskType = TaskType.oneTime,
   });
 
-  // Convert Task to Map for SQLite
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'title': title,
-      'member_id': memberId,
-      'description': description,
-      'documents': jsonEncode(documentIds),
-      'due_date': dueDate.toIso8601String(),
-      'reminder_days_before': reminderDaysBefore,
-      'task_type': taskType == TaskType.oneTime ? 'one-time' : 'recurring',
-      'is_completed': isCompleted ? 1 : 0,
-      'is_notification_enabled': isNotificationEnabled ? 1 : 0,
-      'created_at': (createdAt ?? DateTime.now()).toIso8601String(),
-    };
-  }
-
-  // Create Task from Map (SQLite)
-  factory Task.fromMap(Map<String, dynamic> map) {
-    List<int> docIds = [];
-    try {
-      final docString = map['documents'] as String?;
-      if (docString != null && docString.isNotEmpty) {
-        final decoded = jsonDecode(docString);
-        docIds = List<int>.from(decoded);
-      }
-    } catch (e) {
-      debugPrint('Error parsing document IDs: $e');
-    }
-
+  /// Create Task from JSON (API response)
+  factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
-      id: map['id'] as int?,
-      title: map['title'] as String,
-      memberId: map['member_id'] as int,
-      description: map['description'] as String?,
-      documentIds: docIds,
-      dueDate: DateTime.parse(map['due_date'] as String),
-      reminderDaysBefore: map['reminder_days_before'] as int?,
-      taskType: map['task_type'] == 'one-time'
-          ? TaskType.oneTime
-          : TaskType.recurring,
-      isCompleted: map['is_completed'] == 1,
-      isNotificationEnabled: map['is_notification_enabled'] == 1,
-      createdAt: map['created_at'] != null
-          ? DateTime.parse(map['created_at'] as String)
+      id: json['_id'] as String?,
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      status: json['status'] == 'Completed'
+          ? TaskStatus.completed
+          : TaskStatus.pending,
+      dueDate: json['dueDate'] != null
+          ? DateTime.parse(json['dueDate'] as String)
           : null,
+      isRecurring: json['isRecurring'] as bool? ?? false,
+      recurrenceType: json['recurrenceType'] as String?,
+      nextOccurrence: json['nextOccurrence'] != null
+          ? DateTime.parse(json['nextOccurrence'] as String)
+          : null,
+      userId: json['userId'] as String,
+      memberId: json['memberId'] as String?,
+      categoryId: json['categoryId'] as String?,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : null,
+      taskType: json['taskType'] == 'recurring'
+          ? TaskType.recurring
+          : TaskType.oneTime,
     );
   }
 
-  // Create a copy with modified fields
+  /// Convert Task to JSON (for API requests)
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) '_id': id,
+      'title': title,
+      if (description != null) 'description': description,
+      'status': status == TaskStatus.completed ? 'Completed' : 'Pending',
+      if (dueDate != null) 'dueDate': dueDate!.toIso8601String(),
+      'isRecurring': isRecurring,
+      if (recurrenceType != null) 'recurrenceType': recurrenceType,
+      if (nextOccurrence != null)
+        'nextOccurrence': nextOccurrence!.toIso8601String(),
+      'userId': userId,
+      if (memberId != null) 'memberId': memberId,
+      if (categoryId != null) 'categoryId': categoryId,
+      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+      if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
+      'taskType': taskType == TaskType.recurring ? 'recurring' : 'oneTime',
+    };
+  }
+
+  /// Create a copy with modified fields
   Task copyWith({
-    int? id,
+    String? id,
     String? title,
-    int? memberId,
     String? description,
-    List<int>? documentIds,
+    TaskStatus? status,
     DateTime? dueDate,
-    int? reminderDaysBefore,
-    TaskType? taskType,
-    bool? isCompleted,
-    bool? isNotificationEnabled,
+    bool? isRecurring,
+    String? recurrenceType,
+    DateTime? nextOccurrence,
+    String? userId,
+    String? memberId,
+    String? categoryId,
     DateTime? createdAt,
+    DateTime? updatedAt,
+    TaskType? taskType,
   }) {
     return Task(
       id: id ?? this.id,
       title: title ?? this.title,
-      memberId: memberId ?? this.memberId,
       description: description ?? this.description,
-      documentIds: documentIds ?? this.documentIds,
+      status: status ?? this.status,
       dueDate: dueDate ?? this.dueDate,
-      reminderDaysBefore: reminderDaysBefore ?? this.reminderDaysBefore,
-      taskType: taskType ?? this.taskType,
-      isCompleted: isCompleted ?? this.isCompleted,
-      isNotificationEnabled:
-          isNotificationEnabled ?? this.isNotificationEnabled,
+      isRecurring: isRecurring ?? this.isRecurring,
+      recurrenceType: recurrenceType ?? this.recurrenceType,
+      nextOccurrence: nextOccurrence ?? this.nextOccurrence,
+      userId: userId ?? this.userId,
+      memberId: memberId ?? this.memberId,
+      categoryId: categoryId ?? this.categoryId,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      taskType: taskType ?? this.taskType,
     );
   }
 
-  // Check if task is overdue
+  /// Check if task is completed
+  bool get isCompleted => status == TaskStatus.completed;
+
+  /// Check if task is overdue
   bool get isOverdue {
-    return !isCompleted && dueDate.isBefore(DateTime.now());
+    if (dueDate == null || isCompleted) return false;
+    return dueDate!.isBefore(DateTime.now());
   }
 
-  // Check if task is due today
+  /// Check if task is due today
   bool get isDueToday {
+    if (dueDate == null || isCompleted) return false;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final taskDate = DateTime(dueDate.year, dueDate.month, dueDate.day);
-    return !isCompleted && taskDate.isAtSameMomentAs(today);
+    final taskDate = DateTime(dueDate!.year, dueDate!.month, dueDate!.day);
+    return taskDate.isAtSameMomentAs(today);
   }
 
-  // Check if task is upcoming (within next 10 days)
+  /// Check if task is upcoming (within next 10 days)
   bool get isUpcoming {
+    if (dueDate == null || isCompleted) return false;
     final now = DateTime.now();
     final tenDaysLater = now.add(const Duration(days: 10));
-    return !isCompleted &&
-        dueDate.isAfter(now) &&
-        dueDate.isBefore(tenDaysLater);
+    return dueDate!.isAfter(now) && dueDate!.isBefore(tenDaysLater);
   }
 
-  // Get task type display string
+  /// Get status display string
+  String get statusDisplay {
+    return status == TaskStatus.completed ? 'Completed' : 'Pending';
+  }
+
+  /// Get recurrence display string
+  String? get recurrenceDisplay {
+    if (!isRecurring || recurrenceType == null) return null;
+    return recurrenceType;
+  }
+
+  /// Get task type display string
   String get taskTypeDisplay {
-    return taskType == TaskType.oneTime ? 'One-time' : 'Recurring';
+    return taskType == TaskType.recurring ? 'Recurring' : 'One Time';
   }
 }

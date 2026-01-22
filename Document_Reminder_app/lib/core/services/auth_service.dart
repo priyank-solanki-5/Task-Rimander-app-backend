@@ -1,156 +1,55 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
+import 'auth_api_service.dart';
+import 'token_storage.dart';
 
+/// Authentication service that wraps the API service
+/// Provides a simplified interface for authentication operations
 class AuthService {
-  static const String _usersKey = 'registered_users';
-  static const String _currentUserKey = 'current_user';
+  final AuthApiService _authApiService = AuthApiService();
 
-  // Get all registered users
-  Future<List<User>> _getUsers() async {
-    try {
-      final prefs = await SharedPreferences.getInstance().timeout(
-        const Duration(seconds: 5),
-      );
-      final usersJson = prefs.getString(_usersKey);
-
-      if (usersJson == null || usersJson.isEmpty) {
-        debugPrint('No users found in storage');
-        return [];
-      }
-
-      final List<dynamic> usersList = jsonDecode(usersJson);
-      debugPrint('Loaded ${usersList.length} users from storage');
-      return usersList.map((json) => User.fromJson(json)).toList();
-    } catch (e) {
-      debugPrint('Error loading users: $e');
-      return [];
-    }
-  }
-
-  // Save users list
-  Future<void> _saveUsers(List<User> users) async {
-    try {
-      final prefs = await SharedPreferences.getInstance().timeout(
-        const Duration(seconds: 5),
-      );
-      final usersJson = jsonEncode(users.map((u) => u.toJson()).toList());
-      await prefs.setString(_usersKey, usersJson);
-      debugPrint('Saved ${users.length} users to storage');
-    } catch (e) {
-      debugPrint('Error saving users: $e');
-      throw Exception('Failed to save users: $e');
-    }
-  }
-
-  // Check if user with email exists
-  Future<bool> isUserRegistered(String email) async {
-    final users = await _getUsers();
-    return users.any((user) => user.email.toLowerCase() == email.toLowerCase());
-  }
-
-  // Get user by email
-  Future<User?> getUserByEmail(String email) async {
-    final users = await _getUsers();
-    try {
-      return users.firstWhere(
-        (user) => user.email.toLowerCase() == email.toLowerCase(),
-      );
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // Register new user
+  /// Register a new user
   Future<Map<String, dynamic>> registerUser({
     required String name,
     required String email,
     required String mobile,
     required String password,
   }) async {
-    try {
-      debugPrint('Attempting to register user: $email');
+    debugPrint('Attempting to register user: $email');
 
-      // Check if user already exists
-      if (await isUserRegistered(email)) {
-        debugPrint('Registration failed: Email already registered');
-        return {
-          'success': false,
-          'message': 'An account with this email already exists. Please login.',
-        };
-      }
-
-      // Create new user
-      final newUser = User(
-        name: name,
-        email: email,
-        mobile: mobile,
-        password: password,
-      );
-
-      // Add to users list
-      final users = await _getUsers();
-      users.add(newUser);
-      await _saveUsers(users);
-
-      debugPrint('User registered successfully: $email');
-      return {
-        'success': true,
-        'message': 'Registration successful! Please login.',
-      };
-    } catch (e) {
-      debugPrint('Registration error: $e');
-      return {
-        'success': false,
-        'message': 'Registration failed. Please try again.',
-      };
-    }
+    return await _authApiService.register(
+      username: name,
+      email: email,
+      mobilenumber: mobile,
+      password: password,
+    );
   }
 
-  // Login user
+  /// Login user
   Future<Map<String, dynamic>> loginUser({
     required String email,
     required String password,
   }) async {
-    try {
-      debugPrint('Attempting login for: $email');
+    debugPrint('Attempting login for: $email');
 
-      // Check if user exists
-      final user = await getUserByEmail(email);
-
-      if (user == null) {
-        debugPrint('Login failed: User not found');
-        return {
-          'success': false,
-          'message': 'No account found with this email. Please register first.',
-        };
-      }
-
-      // Verify password
-      if (user.password != password) {
-        debugPrint('Login failed: Incorrect password');
-        return {
-          'success': false,
-          'message': 'Incorrect password. Please try again.',
-        };
-      }
-
-      // Save current user
-      final prefs = await SharedPreferences.getInstance().timeout(
-        const Duration(seconds: 5),
-      );
-      await prefs.setString(_currentUserKey, user.toJsonString());
-
-      debugPrint('Login successful for: $email');
-      return {'success': true, 'message': 'Login successful!', 'user': user};
-    } catch (e) {
-      debugPrint('Login error: $e');
-      return {'success': false, 'message': 'Login failed. Please try again.'};
-    }
+    return await _authApiService.login(
+      email: email,
+      password: password,
+    );
   }
 
-  // Update user password (for forgot password)
+  /// Get current logged-in user
+  Future<User?> getCurrentUser() async {
+    final isAuth = await TokenStorage.isAuthenticated();
+    if (!isAuth) {
+      debugPrint('User not authenticated');
+      return null;
+    }
+
+    return await _authApiService.getProfile();
+  }
+
+  /// Update user password (for forgot password)
   Future<Map<String, dynamic>> updatePassword({
     required String email,
     required String mobile,
@@ -158,76 +57,48 @@ class AuthService {
   }) async {
     debugPrint('Attempting password reset for: $email');
 
-    // Get user
-    final user = await getUserByEmail(email);
-
-    if (user == null) {
-      debugPrint('Password reset failed: User not found');
-      return {'success': false, 'message': 'No account found with this email.'};
-    }
-
-    // Verify mobile number
-    if (user.mobile != mobile) {
-      debugPrint('Password reset failed: Mobile number mismatch');
-      return {
-        'success': false,
-        'message': 'Mobile number does not match our records.',
-      };
-    }
-
-    // Update password
-    final users = await _getUsers();
-    final updatedUsers = users.map((u) {
-      if (u.email.toLowerCase() == email.toLowerCase()) {
-        return User(
-          name: u.name,
-          email: u.email,
-          mobile: u.mobile,
-          password: newPassword,
-        );
-      }
-      return u;
-    }).toList();
-
-    await _saveUsers(updatedUsers);
-
-    debugPrint('Password updated successfully for: $email');
-    return {
-      'success': true,
-      'message':
-          'Password reset successful! Please login with your new password.',
-    };
+    return await _authApiService.changePassword(
+      email: email,
+      mobilenumber: mobile,
+      newPassword: newPassword,
+    );
   }
 
-  // Get current logged-in user
-  Future<User?> getCurrentUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userJson = prefs.getString(_currentUserKey);
-
-    if (userJson == null) {
-      return null;
-    }
-
-    try {
-      return User.fromJsonString(userJson);
-    } catch (e) {
-      debugPrint('Error loading current user: $e');
-      return null;
-    }
-  }
-
-  // Logout user
+  /// Logout user
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_currentUserKey);
+    await _authApiService.logout();
     debugPrint('User logged out');
   }
 
-  // Clear all users (for testing)
-  Future<void> clearAllUsers() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_usersKey);
-    await prefs.remove(_currentUserKey);
-    debugPrint('All users cleared');
+  /// Check if user is authenticated
+  Future<bool> isAuthenticated() async {
+    return await _authApiService.isAuthenticated();
+  }
+
+  /// Get notification preferences
+  Future<NotificationPreferences?> getNotificationPreferences() async {
+    return await _authApiService.getNotificationPreferences();
+  }
+
+  /// Update notification preferences
+  Future<bool> updateNotificationPreferences(
+    NotificationPreferences preferences,
+  ) async {
+    return await _authApiService.updateNotificationPreferences(preferences);
+  }
+
+  /// Get user settings
+  Future<UserSettings?> getUserSettings() async {
+    return await _authApiService.getUserSettings();
+  }
+
+  /// Update user settings
+  Future<bool> updateUserSettings(UserSettings settings) async {
+    return await _authApiService.updateUserSettings(settings);
+  }
+
+  /// Update user metadata
+  Future<bool> updateMetadata(Map<String, dynamic> metadata) async {
+    return await _authApiService.updateMetadata(metadata);
   }
 }

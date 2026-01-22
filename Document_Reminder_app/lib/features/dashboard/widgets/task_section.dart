@@ -6,19 +6,19 @@ import 'task_card.dart';
 class TaskSection extends StatelessWidget {
   final String title;
   final List<Task> tasks;
-  final Map<int, String> memberNames;
-  final Function(int, bool) onTaskToggle;
+  final Function(String, bool) onTaskToggle;
   final Color? titleColor;
   final IconData? titleIcon;
+  final Map<String, String>? memberNames;
 
   const TaskSection({
     super.key,
     required this.title,
     required this.tasks,
-    required this.memberNames,
     required this.onTaskToggle,
     this.titleColor,
     this.titleIcon,
+    this.memberNames,
   });
 
   @override
@@ -81,7 +81,6 @@ class TaskSection extends StatelessWidget {
           itemCount: tasks.length,
           itemBuilder: (context, index) {
             final task = tasks[index];
-            final memberName = memberNames[task.memberId] ?? 'Unknown';
 
             return TweenAnimationBuilder<double>(
               duration: Duration(milliseconds: 300 + (index * 50)),
@@ -95,7 +94,7 @@ class TaskSection extends StatelessWidget {
               },
               child: TaskCard(
                 task: task,
-                memberName: memberName,
+                memberName: memberNames?[task.userId],
                 onCheckboxChanged: (value) {
                   if (value != null) {
                     onTaskToggle(task.id!, value);

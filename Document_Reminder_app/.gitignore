@@ -43,3 +43,19 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+
+
+# Flutter platform generated files
+.android/
+ios/Flutter/
+ios/Pods/
+linux/flutter/ephemeral/
+macos/flutter/ephemeral/
+windows/flutter/ephemeral/
+
+
+# Flutter generated plugin registrants
+**/generated_plugin_registrant.cc
+**/generated_plugins.cmake
+**/GeneratedPluginRegistrant.swift

@@ -1,60 +1,58 @@
 import 'package:flutter/foundation.dart';
 import '../models/document.dart';
-import '../models/member.dart';
-import '../repositories/document_repository.dart';
-import '../repositories/member_repository.dart';
+import '../services/document_service.dart';
 
 enum SortType { alphabetical, uploadDate }
 
 class DocumentProvider extends ChangeNotifier {
-  final DocumentRepository _documentRepository = DocumentRepository();
-  final MemberRepository _memberRepository = MemberRepository();
+  final DocumentService _documentService = DocumentService();
 
   List<Document> _documents = [];
-  Map<int, Member> _membersCache = {};
-  int? _selectedMemberId;
+  String? _selectedTaskId;
   SortType _sortType = SortType.uploadDate;
   bool _isLoading = false;
+  String? _errorMessage;
 
   List<Document> get documents => _documents;
-  int? get selectedMemberId => _selectedMemberId;
+  String? get selectedTaskId => _selectedTaskId;
   SortType get sortType => _sortType;
   bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
   // Get filtered and sorted documents
   List<Document> get filteredDocuments {
     List<Document> filtered = _documents;
 
-    // Filter by member if selected
-    if (_selectedMemberId != null) {
+    // Filter by task if selected
+    if (_selectedTaskId != null) {
       filtered = filtered
-          .where((doc) => doc.memberId == _selectedMemberId)
+          .where((doc) => doc.taskId == _selectedTaskId)
           .toList();
     }
 
     // Sort
     if (_sortType == SortType.alphabetical) {
       filtered.sort(
-        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+        (a, b) => a.originalName.toLowerCase().compareTo(
+          b.originalName.toLowerCase(),
+        ),
       );
     } else {
-      filtered.sort((a, b) => b.uploadDate.compareTo(a.uploadDate));
+      // Sort by creation date (newest first)
+      filtered.sort((a, b) {
+        if (a.createdAt == null && b.createdAt == null) return 0;
+        if (a.createdAt == null) return 1;
+        if (b.createdAt == null) return -1;
+        return b.createdAt!.compareTo(a.createdAt!);
+      });
     }
 
     return filtered;
   }
 
-  // Get member name by ID from cache
-  String getMemberName(int memberId) {
-    return _membersCache[memberId]?.name ?? 'Unknown';
-  }
-
-  // Get all members for dropdown
-  List<Member> get members => _membersCache.values.toList();
-
-  // Set member filter
-  void setMemberFilter(int? memberId) {
-    _selectedMemberId = memberId;
+  // Set task filter
+  void setTaskFilter(String? taskId) {
+    _selectedTaskId = taskId;
     notifyListeners();
   }
 
@@ -64,83 +62,120 @@ class DocumentProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Load all documents
+  // Load all documents from API
   Future<void> loadDocuments() async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      _documents = await _documentRepository.getAllDocuments();
-
-      // Load members for cache
-      final members = await _memberRepository.getAllMembers();
-      _membersCache = {for (var member in members) member.id!: member};
-
-      debugPrint('Loaded ${_documents.length} documents');
+      debugPrint('📂 Documents are managed through API services');
+      // Documents will be loaded through API calls in task screens
+      _documents = [];
     } catch (e) {
-      debugPrint('Error loading documents: $e');
+      _errorMessage = 'Failed to load documents: $e';
+      debugPrint('❌ Error loading documents: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Add document
-  Future<int?> addDocument(Document document) async {
+  // Load documents by task
+  Future<void> loadDocumentsByTask(String taskId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
     try {
-      final id = await _documentRepository.insertDocument(document);
-      // Reload all documents to get fresh data
-      await loadDocuments();
-      debugPrint('Document added successfully with ID: $id');
-      return id;
+      debugPrint('📂 Loading documents for task through API: $taskId');
+      // Documents will be loaded through API services in task detail screen
+      _selectedTaskId = taskId;
+      _documents = [];
     } catch (e) {
-      debugPrint('Error adding document: $e');
-      return null;
+      _errorMessage = 'Failed to load documents: $e';
+      debugPrint('❌ Error loading documents by task: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  Future<bool> updateDocument(Document document) async {
+  // Upload document
+  Future<bool> uploadDocument({
+    required String filePath,
+    required String taskId,
+    required String userId,
+    void Function(int, int)? onProgress,
+  }) async {
     try {
-      final success = await _documentRepository.updateDocument(document);
-      if (success) {
-        // Reload all documents
-        await loadDocuments();
-        debugPrint('Document updated successfully');
+      final result = await _documentService.uploadDocument(
+        filePath: filePath,
+        taskId: taskId,
+        userId: userId,
+        onProgress: onProgress,
+      );
+
+      if (result['success']) {
+        notifyListeners();
+        debugPrint('✅ Document uploaded successfully');
+        return true;
       }
-      return success;
+      return false;
     } catch (e) {
-      debugPrint('Error updating document: $e');
+      _errorMessage = 'Failed to upload document: $e';
+      debugPrint('❌ Error uploading document: $e');
       return false;
     }
   }
 
-  Future<bool> deleteDocument(int id) async {
+  // Delete document
+  Future<bool> deleteDocument(String documentId) async {
     try {
-      final success = await _documentRepository.deleteDocument(id);
-      if (success) {
-        // Reload all documents
-        await loadDocuments();
-        debugPrint('Document deleted successfully');
-      }
-      return success;
-    } catch (e) {
-      debugPrint('Error deleting document: $e');
-      return false;
-    }
-  }
+      final success = await _documentService.deleteDocument(documentId);
 
-  // Get document count
-  Future<int> getDocumentCount() async {
-    try {
-      return await _documentRepository.getDocumentCount();
+      if (success) {
+        _documents.removeWhere((doc) => doc.id == documentId);
+        notifyListeners();
+        debugPrint('✅ Document deleted successfully');
+        return true;
+      }
+      return false;
     } catch (e) {
-      debugPrint('Error getting document count: $e');
-      return 0;
+      _errorMessage = 'Failed to delete document: $e';
+      debugPrint('❌ Error deleting document: $e');
+      return false;
     }
   }
 
   // Refresh documents
   Future<void> refreshDocuments() async {
     await loadDocuments();
+  }
+
+  // Clear error message
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  // Member filter support (for backward compatibility)
+  String? _selectedMemberId;
+
+  String? get selectedMemberId => _selectedMemberId;
+
+  void setMemberFilter(String? memberId) {
+    _selectedMemberId = memberId;
+    notifyListeners();
+  }
+
+  // Get member name (placeholder - returns empty string)
+  String getMemberName(String? memberId) {
+    return '';
+  }
+
+  // Get document count
+  int getDocumentCount() {
+    return _documents.length;
   }
 }

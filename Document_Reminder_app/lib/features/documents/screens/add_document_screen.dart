@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../core/providers/document_provider.dart';
 import '../../../core/providers/member_provider.dart';
-import '../../../core/models/document.dart';
 
 class AddDocumentScreen extends StatefulWidget {
   const AddDocumentScreen({super.key});
@@ -16,7 +15,7 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
 
-  int? _selectedMemberId;
+  String? _selectedMemberId;
   String? _selectedFilePath;
   String? _selectedFileName;
   bool _isLoading = false;
@@ -79,14 +78,14 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
                     );
                   }
 
-                  return DropdownButtonFormField<int>(
+                  return DropdownButtonFormField<String>(
                     value: _selectedMemberId,
                     decoration: const InputDecoration(
                       labelText: 'Select Member',
                       prefixIcon: Icon(Icons.person_outline),
                     ),
                     items: memberProvider.members.map((member) {
-                      return DropdownMenuItem<int>(
+                      return DropdownMenuItem<String>(
                         value: member.id,
                         child: Text(member.name),
                       );
@@ -194,14 +193,15 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
     try {
       final provider = context.read<DocumentProvider>();
 
-      final document = Document(
-        name: _nameController.text.trim(),
-        memberId: _selectedMemberId!,
+      await provider.uploadDocument(
         filePath: _selectedFilePath!,
-        uploadDate: DateTime.now(),
+        taskId:
+            'default-task-id', // TODO: Allow user to select task or handle general documents
+        userId: '', // Will be populated by the service/API layer
+        onProgress: (count, total) {
+          // Optional: Handle progress
+        },
       );
-
-      await provider.addDocument(document);
 
       if (mounted) {
         Navigator.pop(context, true);
