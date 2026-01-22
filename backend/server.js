@@ -44,7 +44,21 @@ app.use("/api/admin", adminRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {
-  res.status(200).json({ status: "OK", message: "Server is running" });
+  res.status(200).json({
+    status: "OK",
+    message: "Server is running",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+
+// Keep-alive endpoint for preventing Render sleep
+app.get("/keep-alive", (req, res) => {
+  res.status(200).json({
+    status: "alive",
+    message: "Service is active",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Error handling middleware
