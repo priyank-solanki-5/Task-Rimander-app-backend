@@ -3,7 +3,8 @@ import userService from "../services/user.service.js";
 class UserController {
   async register(req, res) {
     try {
-      const { username, mobilenumber, email, password, adminKey } = req.body;
+      const { username, mobilenumber, email, password, adminKey, isAdmin } =
+        req.body;
 
       // Validate input
       if (!username || !mobilenumber || !email || !password) {
@@ -12,10 +13,10 @@ class UserController {
         });
       }
 
-      // Validate admin key
-      if (!adminKey) {
+      // Validate admin key only if registering as admin
+      if (isAdmin && !adminKey) {
         return res.status(400).json({
-          error: "Admin key is required",
+          error: "Admin key is required for admin registration",
         });
       }
 
@@ -25,6 +26,7 @@ class UserController {
         email,
         password,
         adminKey,
+        isAdmin,
       );
 
       res.status(201).json({

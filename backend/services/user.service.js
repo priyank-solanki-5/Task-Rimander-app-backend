@@ -2,11 +2,20 @@ import userDao from "../dao/userDao.js";
 import authService from "./auth.service.js";
 
 class UserService {
-  async registerUser(username, mobilenumber, email, password, adminKey) {
-    // Verify admin key
-    const validAdminKey = process.env.ADMIN_API_KEY;
-    if (adminKey !== validAdminKey) {
-      throw new Error("Invalid admin key. Please contact the administrator.");
+  async registerUser(
+    username,
+    mobilenumber,
+    email,
+    password,
+    adminKey,
+    isAdmin = false,
+  ) {
+    // Verify admin key only if registering as admin
+    if (isAdmin) {
+      const validAdminKey = process.env.ADMIN_API_KEY;
+      if (!adminKey || adminKey !== validAdminKey) {
+        throw new Error("Invalid admin key. Please contact the administrator.");
+      }
     }
 
     // Check if user already exists
@@ -21,6 +30,7 @@ class UserService {
       mobilenumber,
       email,
       password,
+      isAdmin: isAdmin || false,
     });
 
     return user;
