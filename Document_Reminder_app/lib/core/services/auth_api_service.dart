@@ -266,7 +266,8 @@ class AuthApiService {
 
       debugPrint('Notification preferences response: ${response.data}');
 
-      final prefsData = response.data['preferences'] as Map<String, dynamic>;
+      final prefsData =
+          response.data['notificationPreferences'] as Map<String, dynamic>;
       return NotificationPreferences.fromJson(prefsData);
     } on ApiException catch (e) {
       debugPrint('Get notification preferences error: ${e.message}');

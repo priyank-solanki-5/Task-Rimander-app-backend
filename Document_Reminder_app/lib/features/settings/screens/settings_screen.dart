@@ -13,23 +13,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _authService = AuthService();
   bool _isLoading = true;
   UserSettings _settings = UserSettings();
+  NotificationPreferences? _notificationPreferences;
 
   @override
   void initState() {
     super.initState();
-    _loadSettings();
+    _loadData();
   }
 
-  Future<void> _loadSettings() async {
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final settings = await _authService.getUserSettings();
-    if (mounted) {
-      setState(() {
-        if (settings != null) {
-          _settings = settings;
-        }
-        _isLoading = false;
-      });
+
+    try {
+      // Load both settings and notification preferences in parallel
+      final results = await Future.wait([
+        _authService.getUserSettings(),
+        _authService.getNotificationPreferences(),
+      ]);
+
+      final settings = results[0] as UserSettings?;
+      final prefs = results[1] as NotificationPreferences?;
+
+      if (mounted) {
+        setState(() {
+          if (settings != null) {
+            _settings = settings;
+          }
+          if (prefs != null) {
+            _notificationPreferences = prefs;
+          }
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading settings: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -56,7 +76,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         );
         // Revert on failure
-        _loadSettings();
+        _loadData();
+      }
+    }
+  }
+
+  Future<void> _updateNotificationPreferences(
+    NotificationPreferences newPrefs,
+  ) async {
+    // Optimistic update
+    setState(() => _notificationPreferences = newPrefs);
+
+    final success = await _authService.updateNotificationPreferences(newPrefs);
+
+    if (mounted) {
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Preferences updated'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update preferences'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        // Revert on failure
+        _loadData();
       }
     }
   }
@@ -71,6 +121,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
             : ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  _buildSectionHeader('Notifications'),
+                  for (final pref in [
+                    (
+                      'Push Notifications',
+                      _notificationPreferences?.push ?? true,
+                      (val) => _updateNotificationPreferences(
+                        _notificationPreferences?.copyWith(push: val) ??
+                            NotificationPreferences(push: val),
+                      ),
+                    ),
+                    (
+                      'In-App Notifications',
+                      _notificationPreferences?.inApp ?? true,
+                      (val) => _updateNotificationPreferences(
+                        _notificationPreferences?.copyWith(inApp: val) ??
+                            NotificationPreferences(inApp: val),
+                      ),
+                    ),
+                  ])
+                    SwitchListTile(
+                      title: Text(pref.$1),
+                      value: pref.$2,
+                      onChanged: pref.$3,
+                    ),
+                  const Divider(),
                   _buildSectionHeader('Appearance'),
                   _buildDropdownTile(
                     title: 'Theme',

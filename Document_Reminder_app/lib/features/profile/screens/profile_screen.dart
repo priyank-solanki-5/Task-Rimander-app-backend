@@ -32,26 +32,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
 
-    // Load counts
     final docProvider = context.read<DocumentProvider>();
     final memberProvider = context.read<MemberProvider>();
 
-    final docCount = docProvider.getDocumentCount() as int? ?? 0;
-    final memCount = memberProvider.getMemberCount() as int? ?? 0;
+    try {
+      // Run API calls in parallel to reduce loading time
+      final results = await Future.wait([
+        _authService.getCurrentUser(),
+        memberProvider.getMemberCount(),
+      ]);
 
-    // Load user info from API only
-    final user = await _authService.getCurrentUser();
+      final user = results[0] as User?;
+      final memCount = results[1] as int;
+      final docCount = docProvider.getDocumentCount(); // Synchronous
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _documentCount = docCount;
-      _memberCount = memCount;
-      _currentUser = user;
-      _userName = user?.username ?? 'User';
-      _profilePhotoPath = null; // No local storage for profile photo
-      _isLoading = false;
-    });
+      setState(() {
+        _documentCount = docCount;
+        _memberCount = memCount;
+        _currentUser = user;
+        _userName = user?.username ?? 'User';
+        _profilePhotoPath = null;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading profile data: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -156,6 +166,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                           ),
+                          if (_currentUser?.createdAt != null) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primaryContainer
+                                    .withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                'Member Since: ${_currentUser!.createdAt!.year}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onPrimaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
