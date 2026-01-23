@@ -256,8 +256,8 @@ export const validateNotificationPreferences = [
 export const validateUserSettings = [
   body("theme")
     .optional()
-    .isIn(["light", "dark"])
-    .withMessage("Theme must be 'light' or 'dark'"),
+    .isIn(["light", "dark", "system"])
+    .withMessage("Theme must be 'light', 'dark', or 'system'"),
   body("language")
     .optional()
     .isLength({ min: 2, max: 5 })

@@ -186,28 +186,50 @@ Base path: `/api/dashboard` (all routes require auth)
 - GET `/upcoming` — Upcoming tasks (query: `limit?`)
 - GET `/overdue` — Overdue tasks (query: `limit?`)
 
-## Admin
+## Members
+Base path: `/api/members` (all routes require auth)
+
+- GET `/` — List all members for the user
+- POST `/` — Add a new member
+- GET `/stats/overview` — Get member statistics
+- GET `/emergency/contacts` — Get emergency contacts
+- GET `/search` — Search members
+- GET `/:id` — Get specific member details
+- PUT `/:id` — Update member
+- DELETE `/:id` — Delete member
+- GET `/:id/documents` — Get member's documents
+- POST `/:id/upload-document` — Upload document for a member
+  - File field: `document`
+
+---
+
+# 🛡️ Admin APIs
 Base path: `/api/admin` (secured via `x-admin-key` header)
 
 Header: `x-admin-key: <ADMIN_API_KEY>`
 
-Users
+### Users
 - GET `/users` — List users
 - GET `/users/:id` — Get user
 - PUT `/users/:id` — Update user `{ username?, email?, mobile?, isActive? }`
 - DELETE `/users/:id` — Delete user (and related data)
 
-Tasks
+### Tasks
 - GET `/tasks` — List tasks (populated)
 - GET `/tasks/:id` — Get task
 - PUT `/tasks/:id/status` — Update task status `{ status }`
 - DELETE `/tasks/:id` — Delete task (and related reminders)
 
-Notifications
+### Notifications
 - GET `/notifications` — List notifications
 - DELETE `/notifications/:id` — Delete notification
 
-Stats & System
+### Documents
+- GET `/documents` — List all documents
+- GET `/documents/:id` — Get document by ID
+- DELETE `/documents/:id` — Delete document
+
+### Stats & System
 - GET `/dashboard/stats` — Aggregated statistics
 - GET `/system/info` — DB and server info
 

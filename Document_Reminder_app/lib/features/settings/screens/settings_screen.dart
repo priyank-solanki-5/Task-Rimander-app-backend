@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/models/user.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/providers/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -153,6 +155,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     items: const ['light', 'dark', 'system'],
                     onChanged: (val) {
                       if (val != null) {
+                        // Update local theme provider immediately
+                        final provider = context.read<ThemeProvider>();
+                        switch (val) {
+                          case 'light':
+                            provider.setThemeMode(ThemeMode.light);
+                            break;
+                          case 'dark':
+                            provider.setThemeMode(ThemeMode.dark);
+                            break;
+                          case 'system':
+                          default:
+                            provider.setThemeMode(ThemeMode.system);
+                            break;
+                        }
+
                         _updateSettings(
                           UserSettings.fromJson({
                             ..._settings.toJson(),
@@ -163,22 +180,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   const Divider(),
+                  // Removed Localization section as requested
+                  /*
                   _buildSectionHeader('Localization'),
                   _buildDropdownTile(
                     title: 'Language',
                     value: _settings.language,
                     items: const ['en', 'es', 'fr', 'de'],
                     onChanged: (val) {
-                      if (val != null) {
-                        _updateSettings(
-                          UserSettings.fromJson({
-                            ..._settings.toJson(),
-                            'language': val,
-                          }),
-                        );
-                      }
+                       ...
                     },
                   ),
+                  */
                   _buildDropdownTile(
                     title: 'Date Format',
                     value: _settings.dateFormat,
@@ -236,7 +249,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Text(
         title,
         style: TextStyle(
-          color: Theme.of(context).primaryColor,
+          color: Theme.of(context).colorScheme.secondary,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -250,7 +263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required ValueChanged<String?> onChanged,
   }) {
     return ListTile(
-      title: Text(title),
+      title: Text(title, style: TextStyle(fontWeight: FontWeight.w100)),
       trailing: DropdownButton<String>(
         value: items.contains(value) ? value : items.first,
         underline: const SizedBox(),

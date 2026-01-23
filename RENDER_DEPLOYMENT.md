@@ -57,7 +57,7 @@ The backend includes built-in cron jobs that run automatically:
 ### 1. Keep-Alive Job (Every 10 minutes)
 - **Purpose**: Prevents Render free tier from sleeping
 - **Schedule**: `*/10 * * * *` (every 10 minutes)
-- **Action**: Logs activity to keep service active
+- **Action**: Logs activity to keep service active 
 
 ### 2. Notification Check (Every 6 hours)
 - **Schedule**: `0 0,6,12,18 * * *`

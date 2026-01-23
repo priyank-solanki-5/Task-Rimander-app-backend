@@ -92,6 +92,20 @@ class ApiConfig {
   static const String taskRecurring = '$tasks/recurring';
 
   // ===================================
+  // 👥 MEMBER MANAGEMENT ENDPOINTS
+  // ===================================
+  static const String members = '$apiPrefix/members';
+
+  /// Get member statistics: /api/members/stats/overview
+  static const String memberStats = '$members/stats/overview';
+
+  /// Search members: /api/members/search?q=query
+  static const String searchMembers = '$members/search';
+
+  /// Get member by ID: /api/members/:id
+  static String memberById(String id) => '$members/$id';
+
+  // ===================================
   // 🏥 HEALTH CHECK ENDPOINT
   // ===================================
   static const String healthCheck = '$apiPrefix/health';
