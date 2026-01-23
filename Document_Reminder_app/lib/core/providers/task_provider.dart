@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import '../models/task.dart';
-import '../services/task_service.dart';
+import '../services/task_api_service.dart';
 
 class TaskProvider extends ChangeNotifier {
-  final TaskService _taskService = TaskService();
+  final TaskApiService _taskApiService = TaskApiService();
 
   List<Task> _tasks = [];
   bool _isLoading = false;
@@ -53,8 +53,8 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _tasks = await _taskService.getAllTasks();
-      debugPrint('✅ Loaded ${_tasks.length} tasks from local DB');
+      _tasks = await _taskApiService.getAllTasks();
+      debugPrint('✅ Loaded ${_tasks.length} tasks from API');
     } catch (e) {
       _errorMessage = 'Failed to load tasks: $e';
       debugPrint('❌ Error loading tasks: $e');
@@ -67,19 +67,31 @@ class TaskProvider extends ChangeNotifier {
   // Toggle task completion
   Future<bool> toggleTaskCompletion(String taskId, bool isCompleted) async {
     try {
-      final updatedTask = isCompleted
-          ? await _taskService.markTaskComplete(taskId)
-          : await _taskService.markTaskPending(taskId);
+      // Optimistic update
+      final index = _tasks.indexWhere((t) => t.id == taskId);
+      if (index != -1) {
+        final originalTask = _tasks[index];
+        _tasks[index] = originalTask.copyWith(
+          status: isCompleted ? TaskStatus.completed : TaskStatus.pending,
+        );
+        notifyListeners();
 
-      if (updatedTask != null) {
-        // Update local list
-        final index = _tasks.indexWhere((t) => t.id == taskId);
-        if (index != -1) {
+        try {
+          final updatedTask = isCompleted
+              ? await _taskApiService.markTaskComplete(taskId)
+              : await _taskApiService.markTaskPending(taskId);
+
+          // Update with server data to be sure
           _tasks[index] = updatedTask;
           notifyListeners();
+          debugPrint('✅ Task completion toggled on server: $isCompleted');
+          return true;
+        } catch (e) {
+          // Revert optimistic update on failure
+          _tasks[index] = originalTask;
+          notifyListeners();
+          rethrow;
         }
-        debugPrint('✅ Task completion toggled: $isCompleted');
-        return true;
       }
       return false;
     } catch (e) {
@@ -92,14 +104,11 @@ class TaskProvider extends ChangeNotifier {
   // Add task
   Future<Task?> addTask(Task task) async {
     try {
-      final createdTask = await _taskService.createTask(task);
-      if (createdTask != null) {
-        _tasks.add(createdTask);
-        notifyListeners();
-        debugPrint('✅ Task added successfully: ${createdTask.id}');
-        return createdTask;
-      }
-      return null;
+      final createdTask = await _taskApiService.createTask(task);
+      _tasks.add(createdTask);
+      notifyListeners();
+      debugPrint('✅ Task added successfully: ${createdTask.id}');
+      return createdTask;
     } catch (e) {
       _errorMessage = 'Failed to add task: $e';
       debugPrint('❌ Error adding task: $e');
@@ -110,17 +119,15 @@ class TaskProvider extends ChangeNotifier {
   // Update task
   Future<bool> updateTask(Task task) async {
     try {
-      final updatedTask = await _taskService.updateTask(task.id!, task);
-      if (updatedTask != null) {
-        final index = _tasks.indexWhere((t) => t.id == task.id);
-        if (index != -1) {
-          _tasks[index] = updatedTask;
-          notifyListeners();
-        }
-        debugPrint('✅ Task updated successfully');
-        return true;
+      if (task.id == null) return false;
+      final updatedTask = await _taskApiService.updateTask(task.id!, task);
+      final index = _tasks.indexWhere((t) => t.id == task.id);
+      if (index != -1) {
+        _tasks[index] = updatedTask;
+        notifyListeners();
       }
-      return false;
+      debugPrint('✅ Task updated successfully');
+      return true;
     } catch (e) {
       _errorMessage = 'Failed to update task: $e';
       debugPrint('❌ Error updating task: $e');
@@ -131,7 +138,7 @@ class TaskProvider extends ChangeNotifier {
   // Delete task
   Future<bool> deleteTask(String id) async {
     try {
-      final success = await _taskService.deleteTask(id);
+      final success = await _taskApiService.deleteTask(id);
       if (success) {
         _tasks.removeWhere((t) => t.id == id);
         notifyListeners();
@@ -153,7 +160,7 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _tasks = await _taskService.searchTasks(query);
+      _tasks = await _taskApiService.searchTasks(query);
       debugPrint('✅ Search completed: ${_tasks.length} results');
     } catch (e) {
       _errorMessage = 'Search failed: $e';
@@ -176,17 +183,11 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _tasks = await _taskService.filterTasks(
-        status: status != null
-            ? (status == 'Completed'
-                  ? TaskStatus.completed
-                  : TaskStatus.pending)
-            : null, // Convert string to enum if needed, or update filterTasks to accept enum
+      _tasks = await _taskApiService.filterTasks(
+        status: status,
         categoryId: categoryId,
-        // startDate: startDate, // TaskService filterTasks might need update for date range or we pass date
-        // endDate: endDate,
-        date:
-            startDate, // Mapping startDate to date for simple check? Or update TaskService?
+        startDate: startDate,
+        endDate: endDate,
       );
       debugPrint('✅ Filter completed: ${_tasks.length} results');
     } catch (e) {
@@ -205,7 +206,7 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _tasks = await _taskService.getOverdueTasks();
+      _tasks = await _taskApiService.getOverdueTasks();
       debugPrint('✅ Loaded ${_tasks.length} overdue tasks');
     } catch (e) {
       _errorMessage = 'Failed to load overdue tasks: $e';
@@ -223,7 +224,7 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _tasks = await _taskService.getUpcomingTasks(days: days);
+      _tasks = await _taskApiService.getUpcomingTasks(days: days);
       debugPrint('✅ Loaded ${_tasks.length} upcoming tasks');
     } catch (e) {
       _errorMessage = 'Failed to load upcoming tasks: $e';

@@ -81,9 +81,15 @@ class ApiConfig {
   static const String userMetadata = '$apiPrefix/users/metadata';
 
   // ===================================
-  // ✅ TASK MANAGEMENT ENDPOINTS (REMOVED - Local Storage)
+  // ✅ TASK MANAGEMENT ENDPOINTS
   // ===================================
-  // ...
+  static const String tasks = '$apiPrefix/tasks';
+  static const String taskSearch = '$tasks/search';
+  static const String taskFilter = '$tasks/filter';
+  static const String taskSearchFilter = '$tasks/search-filter';
+  static const String taskOverdue = '$tasks/overdue';
+  static const String taskUpcoming = '$tasks/upcoming';
+  static const String taskRecurring = '$tasks/recurring';
 
   // ===================================
   // 🏥 HEALTH CHECK ENDPOINT

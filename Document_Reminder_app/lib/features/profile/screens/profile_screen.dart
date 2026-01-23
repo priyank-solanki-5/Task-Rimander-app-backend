@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../../../core/models/user.dart';
 import '../../../core/providers/document_provider.dart';
 import '../../../core/providers/member_provider.dart';
 import '../../../core/services/auth_service.dart';
@@ -18,6 +19,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _memberCount = 0;
   bool _isLoading = true;
   String _userName = 'User';
+  User? _currentUser;
   String? _profilePhotoPath;
   final _authService = AuthService();
 
@@ -45,6 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _documentCount = docCount;
       _memberCount = memCount;
+      _currentUser = user;
       _userName = user?.username ?? 'User';
       _profilePhotoPath = null; // No local storage for profile photo
       _isLoading = false;
@@ -61,9 +64,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
           title: const Text('Profile'),
           actions: [
             IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: _editProfile,
-              tooltip: 'Edit Profile',
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Navigator.pushNamed(context, '/settings');
+              },
+              tooltip: 'Settings',
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () async {
+                await _authService.logout();
+                if (context.mounted) {
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (route) => false);
+                }
+              },
+              tooltip: 'Logout',
             ),
           ],
         ),
@@ -122,6 +139,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
+                          Text(
+                            _currentUser?.email ?? '',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.8,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
                           Text(
                             'Document Reminder App',
                             style: theme.textTheme.bodyMedium?.copyWith(
@@ -198,52 +224,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
-      }
-    }
-  }
-
-  Future<void> _editProfile() async {
-    final nameController = TextEditingController(text: _userName);
-
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Profile'),
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Name',
-            hintText: 'Enter your name',
-          ),
-          textCapitalization: TextCapitalization.words,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, nameController.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-
-    if (result != null && result.trim().isNotEmpty) {
-      // Note: Profile name is no longer persisted locally
-      // This would need to be updated via the API
-      setState(() {
-        _userName = result.trim();
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated (not persisted)'),
-            backgroundColor: Colors.orange,
-          ),
-        );
       }
     }
   }
