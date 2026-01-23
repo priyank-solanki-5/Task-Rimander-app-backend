@@ -25,21 +25,28 @@ const documentSchema = new mongoose.Schema(
     taskId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
-      required: true,
+      required: false,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+    // Optional member reference for member documents
+    memberId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Member",
+      required: false,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 documentSchema.index({ taskId: 1 });
 documentSchema.index({ userId: 1 });
+documentSchema.index({ memberId: 1 });
 
 const Document = mongoose.model("Document", documentSchema);
 
