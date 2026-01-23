@@ -11,6 +11,7 @@ import notificationRoutes from "./routes/notification.routes.js";
 import reminderRoutes from "./routes/reminder.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import memberRoutes from "./routes/member.routes.js";
 import categoryService from "./services/category.service.js";
 import schedulerService from "./services/scheduler.service.js";
 import "./models/User.js";
@@ -20,6 +21,7 @@ import "./models/Document.js";
 import "./models/Notification.js";
 import "./models/NotificationRule.js";
 import "./models/Reminder.js";
+import "./models/Member.js";
 
 // Load environment variables
 dotenv.config();
@@ -40,6 +42,7 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/members", memberRoutes);
 app.use("/api/admin", adminRoutes);
 
 // Health check route
@@ -88,6 +91,7 @@ connectDB()
         `   Notifications: http://localhost:${PORT}/api/notifications`,
       );
       console.log(`   Reminders:    http://localhost:${PORT}/api/reminders`);
+      console.log(`   Members:      http://localhost:${PORT}/api/members`);
       console.log(`   Dashboard:    http://localhost:${PORT}/api/dashboard`);
       console.log(`   Health Check: http://localhost:${PORT}/health\n`);
     });
