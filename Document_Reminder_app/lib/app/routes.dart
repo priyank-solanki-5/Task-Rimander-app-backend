@@ -7,6 +7,7 @@ import '../features/documents/screens/document_viewer_screen.dart';
 import '../features/documents/screens/upload_document_screen.dart';
 import '../features/members/screens/add_member_screen.dart';
 import '../features/settings/screens/notification_settings_screen.dart';
+import '../features/settings/screens/settings_screen.dart';
 import '../features/tasks/screens/task_detail_screen.dart';
 import '../widgets/main_screen.dart';
 
@@ -22,6 +23,7 @@ class AppRoutes {
   static const String uploadDocument = '/upload-document';
   static const String documentViewer = '/document-viewer';
   static const String notificationSettings = '/notification-settings';
+  static const String settings = '/settings';
 
   // Route map
   static Map<String, WidgetBuilder> routes = {
@@ -35,5 +37,6 @@ class AppRoutes {
     uploadDocument: (context) => const UploadDocumentScreen(),
     documentViewer: (context) => const DocumentViewerScreen(),
     notificationSettings: (context) => const NotificationSettingsScreen(),
+    settings: (context) => const SettingsScreen(),
   };
 }

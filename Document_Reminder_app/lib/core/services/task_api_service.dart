@@ -1,120 +1,174 @@
+import '../config/api_config.dart';
+import '../models/task.dart';
 import 'api_client.dart';
 
 class TaskApiService {
   final ApiClient _apiClient = ApiClient();
 
   /// Get all tasks
-  Future<Map<String, dynamic>> getAllTasks() async {
+  Future<List<Task>> getAllTasks({String? status, String? categoryId}) async {
     try {
-      final response = await _apiClient.get('/task/get-all-tasks');
-      return {'success': true, 'data': response.data};
+      final response = await _apiClient.get(
+        ApiConfig.tasks,
+        queryParameters: {
+          if (status != null) 'status': status,
+          if (categoryId != null) 'categoryId': categoryId,
+        },
+      );
+      final List<dynamic> data = response.data['data'] as List<dynamic>;
+      return data.map((json) => Task.fromJson(json)).toList();
     } catch (e) {
-      return {'success': false, 'message': 'Failed to fetch tasks: $e'};
+      throw Exception('Failed to fetch tasks: $e');
     }
   }
 
   /// Get task by ID
-  Future<Map<String, dynamic>> getTaskById(String taskId) async {
+  Future<Task?> getTaskById(String taskId) async {
     try {
-      final response = await _apiClient.get('/task/get/$taskId');
-      return {'success': true, 'data': response.data};
+      final response = await _apiClient.get('${ApiConfig.tasks}/$taskId');
+      return Task.fromJson(response.data['data']);
     } catch (e) {
-      return {'success': false, 'message': 'Failed to fetch task: $e'};
+      // Return null or rethrow depending on needs. Rethrowing lets provider handle it.
+      throw Exception('Failed to fetch task: $e');
     }
   }
 
   /// Create a new task
-  Future<Map<String, dynamic>> createTask({
-    required String title,
-    required String description,
-    required String status,
-    String? dueDate,
-    bool isRecurring = false,
-    String? recurrenceType,
-    String? categoryId,
-  }) async {
+  Future<Task> createTask(Task task) async {
     try {
       final response = await _apiClient.post(
-        '/task/create',
-        data: {
-          'title': title,
-          'description': description,
-          'status': status,
-          'dueDate': dueDate,
-          'isRecurring': isRecurring,
-          'recurrenceType': recurrenceType,
-          'categoryId': categoryId,
-        },
+        ApiConfig.tasks,
+        data: task.toJson(),
       );
-      return {'success': true, 'data': response.data};
+      return Task.fromJson(response.data['data']);
     } catch (e) {
-      return {'success': false, 'message': 'Failed to create task: $e'};
+      throw Exception('Failed to create task: $e');
     }
   }
 
   /// Update a task
-  Future<Map<String, dynamic>> updateTask(
-    String taskId, {
-    required String title,
-    required String description,
-    required String status,
-    String? dueDate,
-    bool isRecurring = false,
-    String? recurrenceType,
-    String? categoryId,
-  }) async {
+  Future<Task> updateTask(String taskId, Task task) async {
     try {
       final response = await _apiClient.put(
-        '/task/update/$taskId',
-        data: {
-          'title': title,
-          'description': description,
-          'status': status,
-          'dueDate': dueDate,
-          'isRecurring': isRecurring,
-          'recurrenceType': recurrenceType,
-          'categoryId': categoryId,
-        },
+        '${ApiConfig.tasks}/$taskId',
+        data: task.toJson(),
       );
-      return {'success': true, 'data': response.data};
+      return Task.fromJson(response.data['data']);
     } catch (e) {
-      return {'success': false, 'message': 'Failed to update task: $e'};
+      throw Exception('Failed to update task: $e');
     }
   }
 
   /// Delete a task
-  Future<Map<String, dynamic>> deleteTask(String taskId) async {
+  Future<bool> deleteTask(String taskId) async {
     try {
-      final response = await _apiClient.delete('/task/delete/$taskId');
-      return {'success': true, 'data': response.data};
+      await _apiClient.delete('${ApiConfig.tasks}/$taskId');
+      return true;
     } catch (e) {
-      return {'success': false, 'message': 'Failed to delete task: $e'};
+      throw Exception('Failed to delete task: $e');
     }
   }
 
-  /// Get tasks by category
-  Future<Map<String, dynamic>> getTasksByCategory(String categoryId) async {
+  /// Mark task as complete
+  Future<Task> markTaskComplete(String taskId) async {
     try {
-      final response = await _apiClient.get('/task/by-category/$categoryId');
-      return {'success': true, 'data': response.data};
+      final response = await _apiClient.patch(
+        '${ApiConfig.tasks}/$taskId/complete',
+      );
+      return Task.fromJson(response.data['data']);
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to fetch tasks by category: $e',
-      };
+      throw Exception('Failed to mark task complete: $e');
+    }
+  }
+
+  /// Mark task as pending
+  Future<Task> markTaskPending(String taskId) async {
+    try {
+      final response = await _apiClient.patch(
+        '${ApiConfig.tasks}/$taskId/pending',
+      );
+      return Task.fromJson(response.data['data']);
+    } catch (e) {
+      throw Exception('Failed to mark task pending: $e');
+    }
+  }
+
+  /// Search tasks
+  Future<List<Task>> searchTasks(String query) async {
+    try {
+      final response = await _apiClient.get(
+        ApiConfig.taskSearch,
+        queryParameters: {'q': query},
+      );
+      final List<dynamic> data = response.data['data'] as List<dynamic>;
+      return data.map((json) => Task.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to search tasks: $e');
+    }
+  }
+
+  /// Filter tasks
+  Future<List<Task>> filterTasks({
+    String? status,
+    String? categoryId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      final Map<String, dynamic> queryParams = {};
+      if (status != null) queryParams['status'] = status;
+      if (categoryId != null) queryParams['categoryId'] = categoryId;
+      if (startDate != null) {
+        queryParams['startDate'] = startDate.toIso8601String().split('T')[0];
+      }
+      if (endDate != null) {
+        queryParams['endDate'] = endDate.toIso8601String().split('T')[0];
+      }
+
+      final response = await _apiClient.get(
+        ApiConfig.taskFilter,
+        queryParameters: queryParams,
+      );
+      final List<dynamic> data = response.data['data'] as List<dynamic>;
+      return data.map((json) => Task.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to filter tasks: $e');
+    }
+  }
+
+  /// Get overdue tasks
+  Future<List<Task>> getOverdueTasks() async {
+    try {
+      final response = await _apiClient.get(ApiConfig.taskOverdue);
+      final List<dynamic> data = response.data['data'] as List<dynamic>;
+      return data.map((json) => Task.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch overdue tasks: $e');
+    }
+  }
+
+  /// Get upcoming tasks
+  Future<List<Task>> getUpcomingTasks({int days = 7}) async {
+    try {
+      final response = await _apiClient.get(
+        ApiConfig.taskUpcoming,
+        queryParameters: {'days': days},
+      );
+      final List<dynamic> data = response.data['data'] as List<dynamic>;
+      return data.map((json) => Task.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch upcoming tasks: $e');
     }
   }
 
   /// Get recurring tasks
-  Future<Map<String, dynamic>> getRecurringTasks() async {
+  Future<List<Task>> getRecurringTasks() async {
     try {
-      final response = await _apiClient.get('/task/recurring');
-      return {'success': true, 'data': response.data};
+      final response = await _apiClient.get(ApiConfig.taskRecurring);
+      final List<dynamic> data = response.data['data'] as List<dynamic>;
+      return data.map((json) => Task.fromJson(json)).toList();
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to fetch recurring tasks: $e',
-      };
+      throw Exception('Failed to fetch recurring tasks: $e');
     }
   }
 }
