@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Modern Color Palette
@@ -12,9 +13,14 @@ class AppTheme {
   static const Color primaryDark = Color(0xFF818CF8); // Light Indigo
   static const Color secondaryDark = Color(0xFF34D399); // Light Emerald
   static const Color tertiaryDark = Color(0xFFFCD34D); // Light Amber
-  static const Color surfaceDark = Color(0xFF1F2937);
-  static const Color backgroundDark = Color(0xFF111827);
+  static const Color surfaceDark = Color(0xFF1F2937); // Dark Gray
+  static const Color backgroundDark = Color(
+    0xFF111827,
+  ); // Very Dark Gray (almost black)
   static const Color errorDark = Color(0xFFF87171);
+
+  // Custom Dark Mode Background (Softer than #111827)
+  static const Color scaffoldDark = Color(0xFF0F172A); // Slate 900
 
   // Light Theme
   static ThemeData get lightTheme {
@@ -41,12 +47,17 @@ class AppTheme {
         iconTheme: const IconThemeData(color: Color(0xFF1F2937)),
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF1F2937),
+        ),
       ),
 
       // Card Theme
       cardTheme: CardThemeData(
         elevation: 0,
-        shadowColor: Colors.black.withValues(alpha: 0.08),
+        shadowColor: Colors.black.withValues(alpha: 0.05), // Softer shadow
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: Colors.grey.shade200, width: 1),
@@ -58,46 +69,53 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.grey.shade100,
+        fillColor: Colors.grey.shade50,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 14,
+          vertical: 16,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16), // Softer corners
           borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: primaryLight, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: errorLight, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: errorLight, width: 2),
         ),
-        hintStyle: TextStyle(color: Colors.grey.shade500),
-        labelStyle: const TextStyle(color: primaryLight),
+        hintStyle: GoogleFonts.inter(color: Colors.grey.shade400),
+        labelStyle: GoogleFonts.inter(color: Colors.grey.shade600),
+        floatingLabelStyle: GoogleFonts.inter(
+          color: primaryLight,
+          fontWeight: FontWeight.w600,
+        ),
       ),
 
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           backgroundColor: primaryLight,
           foregroundColor: Colors.white,
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
 
@@ -106,8 +124,13 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: primaryLight,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
 
@@ -115,12 +138,15 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primaryLight,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           side: const BorderSide(color: primaryLight, width: 1.5),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
 
@@ -132,7 +158,14 @@ class AppTheme {
         unselectedItemColor: Colors.grey.shade400,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
-        landscapeLayout: BottomNavigationBarLandscapeLayout.spread,
+        selectedLabelStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+        unselectedLabelStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.w500,
+          fontSize: 12,
+        ),
       ),
 
       // Floating Action Button Theme
@@ -140,65 +173,65 @@ class AppTheme {
         elevation: 4,
         backgroundColor: primaryLight,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
 
-      // Text Theme
+      // Text Theme with Inter
       textTheme: TextTheme(
-        displayLarge: const TextStyle(
+        displayLarge: GoogleFonts.inter(
           fontSize: 32,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF1F2937),
+          color: const Color(0xFF1F2937),
         ),
-        displayMedium: const TextStyle(
+        displayMedium: GoogleFonts.inter(
           fontSize: 28,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF1F2937),
+          color: const Color(0xFF1F2937),
         ),
-        headlineLarge: const TextStyle(
+        headlineLarge: GoogleFonts.inter(
           fontSize: 24,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF1F2937),
+          color: const Color(0xFF1F2937),
         ),
-        headlineMedium: const TextStyle(
+        headlineMedium: GoogleFonts.inter(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF1F2937),
+          color: const Color(0xFF1F2937),
         ),
-        headlineSmall: const TextStyle(
+        headlineSmall: GoogleFonts.inter(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF1F2937),
+          color: const Color(0xFF1F2937),
         ),
-        titleLarge: const TextStyle(
+        titleLarge: GoogleFonts.inter(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF1F2937),
+          color: const Color(0xFF1F2937),
         ),
-        titleMedium: const TextStyle(
+        titleMedium: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w500,
-          color: Color(0xFF374151),
+          color: const Color(0xFF374151),
         ),
-        bodyLarge: const TextStyle(
+        bodyLarge: GoogleFonts.inter(
           fontSize: 16,
           fontWeight: FontWeight.w400,
-          color: Color(0xFF374151),
+          color: const Color(0xFF374151),
         ),
-        bodyMedium: const TextStyle(
+        bodyMedium: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: Color(0xFF6B7280),
+          color: const Color(0xFF6B7280),
         ),
-        bodySmall: const TextStyle(
+        bodySmall: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: FontWeight.w400,
-          color: Color(0xFF9CA3AF),
+          color: const Color(0xFF9CA3AF),
         ),
-        labelLarge: const TextStyle(
+        labelLarge: GoogleFonts.inter(
           fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF374151),
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF374151),
         ),
       ),
 
@@ -206,25 +239,9 @@ class AppTheme {
       dividerTheme: DividerThemeData(
         color: Colors.grey.shade200,
         thickness: 1,
-        space: 0,
+        space: 1,
       ),
 
-      // Chip Theme
-      chipTheme: ChipThemeData(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.grey.shade100,
-        selectedColor: primaryLight,
-        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-      ),
-
-      // Progress Indicator Theme
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: primaryLight,
-        linearTrackColor: Color(0xFFE5E7EB),
-      ),
-
-      // Scaffold Background Color
       scaffoldBackgroundColor: backgroundLight,
     );
   }
@@ -238,79 +255,96 @@ class AppTheme {
         primary: primaryDark,
         secondary: secondaryDark,
         tertiary: tertiaryDark,
-        surface: surfaceDark,
         error: errorDark,
         onPrimary: Colors.black,
         onSecondary: Colors.black,
         onSurface: const Color(0xFFF3F4F6),
+        surface: scaffoldDark, // App background
       ),
 
       // AppBar Theme
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: false,
-        backgroundColor: backgroundDark,
+        backgroundColor: scaffoldDark, // Match scaffold
         foregroundColor: const Color(0xFFF3F4F6),
         iconTheme: const IconThemeData(color: Color(0xFFF3F4F6)),
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFFF3F4F6),
+        ),
       ),
 
       // Card Theme
       cardTheme: CardThemeData(
         elevation: 0,
-        shadowColor: Colors.black.withValues(alpha: 0.3),
+        shadowColor: Colors.black.withValues(
+          alpha: 0.2,
+        ), // Subtle shadow in dark mode
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.grey.shade700, width: 1),
+          side: BorderSide(
+            color: Colors.grey.shade800,
+            width: 1,
+          ), // Softer border
         ),
-        color: surfaceDark,
+        color: surfaceDark, // Slightly lighter than background
         surfaceTintColor: Colors.transparent,
       ),
 
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF111827),
+        fillColor: const Color(0xFF1E293B), // Slate 800
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 14,
+          vertical: 16,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: Colors.grey.shade700, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: Colors.grey.shade700, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: primaryDark, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: errorDark, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: errorDark, width: 2),
         ),
-        hintStyle: TextStyle(color: Colors.grey.shade500),
-        labelStyle: const TextStyle(color: primaryDark),
+        hintStyle: GoogleFonts.inter(color: Colors.grey.shade600),
+        labelStyle: GoogleFonts.inter(color: Colors.grey.shade400),
+        floatingLabelStyle: GoogleFonts.inter(
+          color: primaryDark,
+          fontWeight: FontWeight.w600,
+        ),
       ),
 
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           backgroundColor: primaryDark,
-          foregroundColor: Colors.black,
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          foregroundColor: Colors.black, // Dark text on light button
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
 
@@ -319,8 +353,13 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: primaryDark,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
 
@@ -328,24 +367,34 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primaryDark,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           side: const BorderSide(color: primaryDark, width: 1.5),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
 
       // Bottom Navigation Bar Theme
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         elevation: 8,
-        backgroundColor: surfaceDark,
+        backgroundColor: surfaceDark, // Match card color
         selectedItemColor: primaryDark,
-        unselectedItemColor: Colors.grey.shade600,
+        unselectedItemColor: Colors.grey.shade500,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
-        landscapeLayout: BottomNavigationBarLandscapeLayout.spread,
+        selectedLabelStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+        unselectedLabelStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.w500,
+          fontSize: 12,
+        ),
       ),
 
       // Floating Action Button Theme
@@ -353,96 +402,76 @@ class AppTheme {
         elevation: 4,
         backgroundColor: primaryDark,
         foregroundColor: Colors.black,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
 
       // Text Theme
       textTheme: TextTheme(
-        displayLarge: const TextStyle(
+        displayLarge: GoogleFonts.inter(
           fontSize: 32,
           fontWeight: FontWeight.w700,
-          color: Color(0xFFF3F4F6),
+          color: const Color(0xFFF3F4F6),
         ),
-        displayMedium: const TextStyle(
+        displayMedium: GoogleFonts.inter(
           fontSize: 28,
           fontWeight: FontWeight.w700,
-          color: Color(0xFFF3F4F6),
+          color: const Color(0xFFF3F4F6),
         ),
-        headlineLarge: const TextStyle(
+        headlineLarge: GoogleFonts.inter(
           fontSize: 24,
           fontWeight: FontWeight.w700,
-          color: Color(0xFFF3F4F6),
+          color: const Color(0xFFF3F4F6),
         ),
-        headlineMedium: const TextStyle(
+        headlineMedium: GoogleFonts.inter(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: Color(0xFFF3F4F6),
+          color: const Color(0xFFF3F4F6),
         ),
-        headlineSmall: const TextStyle(
+        headlineSmall: GoogleFonts.inter(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: Color(0xFFF3F4F6),
+          color: const Color(0xFFF3F4F6),
         ),
-        titleLarge: const TextStyle(
+        titleLarge: GoogleFonts.inter(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: Color(0xFFF3F4F6),
+          color: const Color(0xFFF3F4F6),
         ),
-        titleMedium: const TextStyle(
+        titleMedium: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w500,
-          color: Color(0xFFD1D5DB),
+          color: const Color(0xFFD1D5DB),
         ),
-        bodyLarge: const TextStyle(
+        bodyLarge: GoogleFonts.inter(
           fontSize: 16,
           fontWeight: FontWeight.w400,
-          color: Color(0xFFD1D5DB),
+          color: const Color(0xFFD1D5DB),
         ),
-        bodyMedium: const TextStyle(
+        bodyMedium: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: Color(0xFF9CA3AF),
+          color: const Color(0xFF9CA3AF),
         ),
-        bodySmall: const TextStyle(
+        bodySmall: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: FontWeight.w400,
-          color: Color(0xFF6B7280),
+          color: const Color(0xFF6B7280),
         ),
-        labelLarge: const TextStyle(
+        labelLarge: GoogleFonts.inter(
           fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFFD1D5DB),
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFFD1D5DB),
         ),
       ),
 
       // Divider Theme
       dividerTheme: DividerThemeData(
-        color: Colors.grey.shade700,
+        color: Colors.grey.shade800,
         thickness: 1,
-        space: 0,
+        space: 1,
       ),
 
-      // Chip Theme
-      chipTheme: ChipThemeData(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.grey.shade800,
-        selectedColor: primaryDark,
-        labelStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: Colors.white,
-        ),
-      ),
-
-      // Progress Indicator Theme
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: primaryDark,
-        linearTrackColor: Color(0xFF374151),
-      ),
-
-      // Scaffold Background Color
-      scaffoldBackgroundColor: backgroundDark,
+      scaffoldBackgroundColor: scaffoldDark,
     );
   }
 }

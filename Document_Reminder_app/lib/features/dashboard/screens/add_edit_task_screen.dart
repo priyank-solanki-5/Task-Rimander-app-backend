@@ -75,52 +75,138 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final inputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(
+        color: theme.colorScheme.outline.withValues(alpha: 0.2),
+      ),
+    );
 
     return SafeArea(
       child: Scaffold(
-        appBar: AppBar(title: Text(isEditing ? 'Edit Task' : 'Add Task')),
+        appBar: AppBar(
+          title: Text(
+            isEditing ? 'Edit Task' : 'Add Task',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          centerTitle: true,
+        ),
         body: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             children: [
               // Title
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
+                style: theme.textTheme.titleMedium,
+                decoration: InputDecoration(
                   labelText: 'Task Title',
-                  hintText: 'Enter task title',
-                  prefixIcon: Icon(Icons.title),
+                  hintText: 'What needs to be done?',
+                  prefixIcon: const Icon(Icons.title_rounded),
+                  border: inputBorder,
+                  enabledBorder: inputBorder,
+                  focusedBorder: inputBorder.copyWith(
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerLowest,
+                  contentPadding: const EdgeInsets.all(16),
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a task title';
-                  }
-                  return null;
-                },
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? 'Please enter a title'
+                    : null,
                 textCapitalization: TextCapitalization.sentences,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+
+              // Description
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  hintText: 'Add details (optional)',
+                  prefixIcon: const Icon(Icons.description_outlined),
+                  border: inputBorder,
+                  enabledBorder: inputBorder,
+                  focusedBorder: inputBorder.copyWith(
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerLowest,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                maxLines: 4,
+                minLines: 2,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              const SizedBox(height: 20),
+
+              // Due Date
+              InkWell(
+                onTap: _selectDate,
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    color: theme.colorScheme.surfaceContainerLowest,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Due Date', style: theme.textTheme.labelMedium),
+                          const SizedBox(height: 4),
+                          Text(
+                            DateFormat(
+                              'EEEE, MMM d, yyyy',
+                            ).format(_selectedDate),
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 16,
+                        color: theme.hintColor,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
 
               // Member Selection
               Consumer<MemberProvider>(
                 builder: (context, memberProvider, child) {
-                  if (memberProvider.members.isEmpty) {
-                    return const Card(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Text(
-                          'No members available. Please add a member first.',
-                        ),
-                      ),
-                    );
-                  }
-
                   return DropdownButtonFormField<String>(
                     value: _selectedMemberId,
-                    decoration: const InputDecoration(
-                      labelText: 'Select Member',
-                      prefixIcon: Icon(Icons.person_outline),
+                    decoration: InputDecoration(
+                      labelText: 'Assign Member',
+                      prefixIcon: const Icon(Icons.person_outline_rounded),
+                      border: inputBorder,
+                      enabledBorder: inputBorder,
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerLowest,
                     ),
                     items: memberProvider.members.map((member) {
                       return DropdownMenuItem<String>(
@@ -128,153 +214,127 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                         child: Text(member.name),
                       );
                     }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedMemberId = value;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Please select a member';
-                      }
-                      return null;
-                    },
+                    onChanged: (value) =>
+                        setState(() => _selectedMemberId = value),
+                    validator: (value) =>
+                        value == null ? 'Please assign a member' : null,
                   );
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-              // Description
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description (Optional)',
-                  hintText: 'Enter task description',
-                  prefixIcon: Icon(Icons.description_outlined),
-                ),
-                maxLines: 3,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              const SizedBox(height: 16),
-
-              // Due Date
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.calendar_today_outlined),
-                title: const Text('Due Date'),
-                subtitle: Text(
-                  DateFormat('MMM dd, yyyy').format(_selectedDate),
-                ),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: _selectDate,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
+              // Reminder & Task Type Group
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
                   ),
+                  borderRadius: BorderRadius.circular(16),
+                  color: theme.colorScheme.surfaceContainerLowest,
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // Reminder Days
-              Row(
-                children: [
-                  const Icon(Icons.notifications_outlined),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Remind $_reminderDays days before',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        Slider(
-                          value: _reminderDays.toDouble(),
-                          min: 1,
-                          max: 30,
-                          divisions: 29,
-                          label: '$_reminderDays days',
-                          onChanged: (value) {
-                            setState(() {
-                              _reminderDays = value.toInt();
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Task Type
-              const Text(
-                'Task Type',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: RadioListTile<TaskType>(
-                      title: const Text('One-time'),
-                      value: TaskType.oneTime,
-                      groupValue: _taskType,
-                      onChanged: (value) {
-                        setState(() {
-                          _taskType = value!;
-                        });
-                      },
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: _taskType == TaskType.oneTime
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.outline.withValues(
-                                  alpha: 0.3,
-                                ),
-                        ),
+                child: Column(
+                  children: [
+                    // Start of Reminder Section
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.notifications_outlined),
+                          const SizedBox(width: 12),
+                          Text('Remind me', style: theme.textTheme.bodyLarge),
+                          const Spacer(),
+                          Text(
+                            '$_reminderDays days before',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: RadioListTile<TaskType>(
-                      title: const Text('Recurring'),
-                      value: TaskType.recurring,
-                      groupValue: _taskType,
-                      onChanged: (value) {
-                        setState(() {
-                          _taskType = value!;
-                        });
-                      },
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: _taskType == TaskType.recurring
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.outline.withValues(
-                                  alpha: 0.3,
-                                ),
-                        ),
+                    Slider(
+                      value: _reminderDays.toDouble(),
+                      min: 1,
+                      max: 30,
+                      divisions: 29,
+                      onChanged: (value) =>
+                          setState(() => _reminderDays = value.toInt()),
+                    ),
+                    const Divider(height: 1),
+
+                    // Task Type Section
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: RadioListTile<TaskType>(
+                              title: const Text('One-time'),
+                              value: TaskType.oneTime,
+                              groupValue: _taskType,
+                              onChanged: (val) =>
+                                  setState(() => _taskType = val!),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: RadioListTile<TaskType>(
+                              title: const Text('Recurring'),
+                              value: TaskType.recurring,
+                              groupValue: _taskType,
+                              onChanged: (val) =>
+                                  setState(() => _taskType = val!),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 32),
 
               // Save Button
-              ElevatedButton(
-                onPressed: _isLoading ? null : _saveTask,
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(isEditing ? 'Update Task' : 'Add Task'),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: FilledButton(
+                  onPressed: _isLoading ? null : _saveTask,
+                  style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          isEditing ? 'Save Changes' : 'Create Task',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ),
               ),
             ],
           ),

@@ -84,6 +84,7 @@ class _MembersScreenState extends State<MembersScreen> {
             }
 
             return GridView.builder(
+              physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(16),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,

@@ -263,7 +263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required ValueChanged<String?> onChanged,
   }) {
     return ListTile(
-      title: Text(title, style: TextStyle(fontWeight: FontWeight.w100)),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w400)),
       trailing: DropdownButton<String>(
         value: items.contains(value) ? value : items.first,
         underline: const SizedBox(),
