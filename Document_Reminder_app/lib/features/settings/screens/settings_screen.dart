@@ -115,10 +115,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Settings')),
-        body: _isLoading
+    return Scaffold(
+      appBar: AppBar(title: const Text('Settings')),
+      body: SafeArea(
+        child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : ListView(
                 padding: const EdgeInsets.all(16),
@@ -182,16 +182,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(),
                   // Removed Localization section as requested
                   /*
-                  _buildSectionHeader('Localization'),
-                  _buildDropdownTile(
-                    title: 'Language',
-                    value: _settings.language,
-                    items: const ['en', 'es', 'fr', 'de'],
-                    onChanged: (val) {
-                       ...
-                    },
-                  ),
-                  */
+                    _buildSectionHeader('Localization'),
+                    _buildDropdownTile(
+                      title: 'Language',
+                      value: _settings.language,
+                      items: const ['en', 'es', 'fr', 'de'],
+                      onChanged: (val) {
+                         ...
+                      },
+                    ),
+                    */
                   _buildDropdownTile(
                     title: 'Date Format',
                     value: _settings.dateFormat,

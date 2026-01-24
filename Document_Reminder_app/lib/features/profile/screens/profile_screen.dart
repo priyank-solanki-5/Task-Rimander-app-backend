@@ -68,56 +68,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Profile'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                Navigator.pushNamed(context, '/settings');
-              },
-              tooltip: 'Settings',
-            ),
-            IconButton(
-              icon: const Icon(Icons.logout, color: Colors.red),
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Logout'),
-                    content: const Text('Are you sure you want to logout?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.pushNamed(context, '/settings');
+            },
+            tooltip: 'Settings',
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.red),
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Logout'),
+                  content: const Text('Are you sure you want to logout?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text(
+                        'Logout',
+                        style: TextStyle(color: Colors.red),
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text(
-                          'Logout',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
+                    ),
+                  ],
+                ),
+              );
 
-                if (confirm == true) {
-                  await _authService.logout();
-                  if (context.mounted) {
-                    Navigator.of(
-                      context,
-                    ).pushNamedAndRemoveUntil('/login', (route) => false);
-                  }
+              if (confirm == true) {
+                await _authService.logout();
+                if (context.mounted) {
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (route) => false);
                 }
-              },
-              tooltip: 'Logout',
-            ),
-          ],
-        ),
-        body: _isLoading
+              }
+            },
+            tooltip: 'Logout',
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
                 onRefresh: _loadData,

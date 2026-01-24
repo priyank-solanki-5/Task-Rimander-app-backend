@@ -59,40 +59,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final theme = Theme.of(context);
     final today = DateTime.now();
 
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'My Tasks',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'My Tasks',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
-          centerTitle: false,
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          actions: [
-            Consumer<ThemeProvider>(
-              builder: (context, themeProvider, child) {
-                return IconButton(
-                  icon: Icon(
-                    themeProvider.isDarkMode
-                        ? Icons.light_mode_rounded
-                        : Icons.dark_mode_rounded,
-                  ),
-                  onPressed: () {
-                    themeProvider.toggleTheme();
-                  },
-                  tooltip: themeProvider.isDarkMode
-                      ? 'Switch to Light Mode'
-                      : 'Switch to Dark Mode',
-                );
-              },
-            ),
-            const SizedBox(width: 8),
-          ],
         ),
-        body: RefreshIndicator(
+        centerTitle: false,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        actions: [
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, child) {
+              return IconButton(
+                icon: Icon(
+                  themeProvider.isDarkMode
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded,
+                ),
+                onPressed: () {
+                  themeProvider.toggleTheme();
+                },
+                tooltip: themeProvider.isDarkMode
+                    ? 'Switch to Light Mode'
+                    : 'Switch to Dark Mode',
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SafeArea(
+        child: RefreshIndicator(
           onRefresh: () => context.read<TaskProvider>().refreshTasks(),
           child: Consumer<TaskProvider>(
             builder: (context, taskProvider, child) {
@@ -343,21 +343,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () async {
-            final taskProvider = context.read<TaskProvider>();
-            final result = await Navigator.push<bool>(
-              context,
-              MaterialPageRoute(builder: (_) => const AddEditTaskScreen()),
-            );
-            if (!mounted) return;
-            if (result == true) {
-              taskProvider.refreshTasks();
-            }
-          },
-          icon: const Icon(Icons.add),
-          label: const Text('Add Task'),
-        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final taskProvider = context.read<TaskProvider>();
+          final result = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(builder: (_) => const AddEditTaskScreen()),
+          );
+          if (!mounted) return;
+          if (result == true) {
+            taskProvider.refreshTasks();
+          }
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Add Task'),
       ),
     );
   }
