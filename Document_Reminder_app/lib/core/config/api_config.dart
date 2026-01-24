@@ -91,10 +91,30 @@ class ApiConfig {
   static const String taskUpcoming = '$tasks/upcoming';
   static const String taskRecurring = '$tasks/recurring';
 
+  /// Stop recurrence for a task: /api/tasks/:id/stop-recurrence
+  static String taskStopRecurrence(String taskId) =>
+      '$tasks/$taskId/stop-recurrence';
+
+  /// Process recurring tasks: /api/tasks/process-recurring
+  static const String taskProcessRecurring = '$tasks/process-recurring';
+
   // ===================================
   // 👥 MEMBER MANAGEMENT ENDPOINTS
   // ===================================
   static const String members = '$apiPrefix/members';
+
+  // ===================================
+  // 📄 DOCUMENT MANAGEMENT ENDPOINTS
+  // ===================================
+  static const String documents = '$apiPrefix/documents';
+  static const String documentsUpload = '$documents/upload';
+
+  /// Get documents for a task: /api/documents/task/:taskId
+  static String documentsForTask(String taskId) => '$documents/task/$taskId';
+
+  /// Download document: /api/documents/:id/download
+  static String documentDownload(String documentId) =>
+      '$documents/$documentId/download';
 
   /// Get member statistics: /api/members/stats/overview
   static const String memberStats = '$members/stats/overview';

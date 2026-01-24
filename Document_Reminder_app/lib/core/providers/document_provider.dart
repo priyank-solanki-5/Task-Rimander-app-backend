@@ -69,12 +69,29 @@ class DocumentProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('📂 Documents are managed through API services');
-      // Documents will be loaded through API calls in task screens
-      _documents = [];
+      _documents = await _documentService.getDocuments();
+      debugPrint('✅ Loaded ${_documents.length} documents');
     } catch (e) {
       _errorMessage = 'Failed to load documents: $e';
       debugPrint('❌ Error loading documents: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Load documents for a specific user (current logged-in user on dashboard)
+  Future<void> loadDocumentsForUser(String userId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _documents = await _documentService.getDocuments(userId: userId);
+      debugPrint('✅ Loaded ${_documents.length} documents for user $userId');
+    } catch (e) {
+      _errorMessage = 'Failed to load documents: $e';
+      debugPrint('❌ Error loading documents for user: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

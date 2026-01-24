@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/models/member.dart';
+import '../../../core/providers/member_provider.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_textfield.dart';
 
@@ -14,6 +17,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   String? _selectedRelation;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -23,11 +27,50 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
   void _handleSave() {
     if (_formKey.currentState!.validate()) {
-      // Mock save
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Member added successfully!')),
+      setState(() => _isLoading = true);
+      _performSave();
+    }
+  }
+
+  Future<void> _performSave() async {
+    try {
+      final memberProvider = context.read<MemberProvider>();
+
+      final newMember = Member(
+        name: _nameController.text.trim(),
+        // Note: relation field not in Member model, might need to add if backend supports it
       );
-      Navigator.pop(context);
+
+      final memberId = await memberProvider.addMember(newMember);
+
+      if (!mounted) return;
+
+      if (memberId != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Member added successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to add member. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -94,6 +137,7 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                   text: 'Save Member',
                   onPressed: _handleSave,
                   icon: Icons.check,
+                  isLoading: _isLoading,
                 ),
               ],
             ),

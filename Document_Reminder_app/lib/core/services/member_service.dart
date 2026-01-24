@@ -42,7 +42,7 @@ class MemberService {
     try {
       final response = await _apiClient.post(
         ApiConfig.members,
-        data: member.toJson(),
+        data: member.toCreateJson(),
       );
 
       if (response.data['success'] == true && response.data['data'] != null) {

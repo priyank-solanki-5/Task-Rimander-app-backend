@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
+import '../../../core/services/token_storage.dart';
+import '../../../core/services/document_service.dart';
+import '../../../core/providers/task_provider.dart';
+import '../../../core/providers/document_provider.dart';
 import '../../../widgets/custom_button.dart';
 
 class UploadDocumentScreen extends StatefulWidget {
@@ -9,31 +15,106 @@ class UploadDocumentScreen extends StatefulWidget {
 }
 
 class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
+  String? _selectedFilePath;
   String? _selectedFileName;
+  bool _isUploading = false;
+  double _uploadProgress = 0.0;
 
-  void _pickFile() {
-    // Mock file picker
-    setState(() {
-      _selectedFileName = 'sample_document.pdf';
-    });
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('File picker (mock)')));
+  Future<void> _pickFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'jpg', 'png', 'xlsx'],
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        setState(() {
+          _selectedFilePath = result.files.first.path;
+          _selectedFileName = result.files.first.name;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking file: $e')));
+      }
+    }
   }
 
-  void _handleUpload() {
-    if (_selectedFileName == null) {
+  Future<void> _handleUpload() async {
+    if (_selectedFilePath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a file first')),
       );
       return;
     }
 
-    // Mock upload
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Document uploaded successfully!')),
-    );
-    Navigator.pop(context);
+    // Get selected task
+    final taskProvider = context.read<TaskProvider>();
+    if (taskProvider.selectedTaskId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a task first')),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isUploading = true;
+      _uploadProgress = 0.0;
+    });
+
+    try {
+      final userId = await TokenStorage.getUserId();
+
+      if (userId == null) {
+        throw Exception('User ID not found');
+      }
+
+      final documentService = DocumentService();
+      final result = await documentService.uploadDocument(
+        filePath: _selectedFilePath!,
+        taskId: taskProvider.selectedTaskId!,
+        userId: userId,
+        onProgress: (sent, total) {
+          setState(() {
+            _uploadProgress = sent / total;
+          });
+        },
+      );
+
+      if (result['success'] && mounted) {
+        // Refresh documents list
+        context.read<DocumentProvider>().loadDocuments();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result['message'] ?? 'Document uploaded successfully',
+            ),
+          ),
+        );
+        Navigator.pop(context);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['message'] ?? 'Upload failed')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error uploading document: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -51,10 +132,35 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 24),
+              // Task selector
+              Consumer<TaskProvider>(
+                builder: (context, taskProvider, child) {
+                  return DropdownButtonFormField<String?>(
+                    value: taskProvider.selectedTaskId,
+                    decoration: InputDecoration(
+                      labelText: 'Select Task',
+                      prefixIcon: const Icon(Icons.assignment),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    items: taskProvider.tasks.map((task) {
+                      return DropdownMenuItem(
+                        value: task.id,
+                        child: Text(task.title),
+                      );
+                    }).toList(),
+                    onChanged: (taskId) {
+                      taskProvider.setSelectedTaskId(taskId);
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
 
               // File Picker Button
               OutlinedButton.icon(
-                onPressed: _pickFile,
+                onPressed: _isUploading ? null : _pickFile,
                 icon: const Icon(Icons.attach_file),
                 label: const Text('Choose File'),
                 style: OutlinedButton.styleFrom(
@@ -87,10 +193,22 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        'Preview placeholder',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
+                      if (_isUploading) ...[
+                        const SizedBox(height: 16),
+                        LinearProgressIndicator(
+                          value: _uploadProgress,
+                          minHeight: 8,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${(_uploadProgress * 100).toStringAsFixed(0)}% uploaded',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ] else
+                        Text(
+                          'Ready to upload',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
                     ],
                   ),
                 ),
@@ -101,8 +219,10 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
               // Upload Button
               CustomButton(
-                text: 'Upload Document',
-                onPressed: _handleUpload,
+                text: _isUploading
+                    ? 'Uploading... ${(_uploadProgress * 100).toStringAsFixed(0)}%'
+                    : 'Upload Document',
+                onPressed: _isUploading ? () {} : () => _handleUpload(),
                 icon: Icons.cloud_upload_outlined,
               ),
             ],

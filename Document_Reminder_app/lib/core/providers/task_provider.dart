@@ -9,11 +9,18 @@ class TaskProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _showAllUpcoming = false;
   String? _errorMessage;
+  String? _selectedTaskId;
 
   List<Task> get tasks => _tasks;
   bool get isLoading => _isLoading;
   bool get showAllUpcoming => _showAllUpcoming;
   String? get errorMessage => _errorMessage;
+  String? get selectedTaskId => _selectedTaskId;
+
+  void setSelectedTaskId(String? taskId) {
+    _selectedTaskId = taskId;
+    notifyListeners();
+  }
 
   // Filtered task lists
   List<Task> get dueTasks {
