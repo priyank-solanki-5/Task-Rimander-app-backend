@@ -6,6 +6,9 @@
   "type": "module",
   "scripts": {
     "init-db": "node scripts/initializeDatabase.js",
+    "add-dummy-data": "node scripts/initializeDatabase.js",
+    "clear-db": "node scripts/clearDatabase.js",
+    "reset-dummy-data": "node scripts/clearDatabase.js && node scripts/initializeDatabase.js",
     "start": "node server.js",
     "dev": "nodemon server.js",
     "dev-with-init": "npm run init-db && nodemon server.js",
@@ -22,6 +25,7 @@
   "author": "Priyank Solanki",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",

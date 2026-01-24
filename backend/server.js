@@ -2,6 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 import connectDB from "./config/mongodb.js";
 import userRoutes from "./routes/user.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
@@ -33,6 +34,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Serve uploaded files statically so admin can view/download
+// When running from backend/, the uploads folder is relative to this directory
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Routes
 app.use("/api/users", userRoutes);
@@ -93,6 +98,7 @@ connectDB()
       console.log(`   Reminders:    http://localhost:${PORT}/api/reminders`);
       console.log(`   Members:      http://localhost:${PORT}/api/members`);
       console.log(`   Dashboard:    http://localhost:${PORT}/api/dashboard`);
+      console.log(`   Uploads:      http://localhost:${PORT}/uploads`);
       console.log(`   Health Check: http://localhost:${PORT}/health\n`);
     });
   })

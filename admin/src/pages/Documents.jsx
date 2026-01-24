@@ -7,6 +7,8 @@ const Documents = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const apiBase = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
+
   useEffect(() => {
     fetchDocuments();
   }, []);
@@ -43,6 +45,23 @@ const Documents = () => {
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+  };
+
+  const formatDate = (dateString) => {
+    const d = dateString ? new Date(dateString) : null;
+    return d && !isNaN(d) ? d.toLocaleDateString() : "-";
+  };
+
+  const getDownloadUrl = (doc) => {
+    if (!doc) return "#";
+    // Prefer the static uploads path (no auth needed)
+    const raw = doc.filePath || "";
+    if (raw) {
+      const normalized = raw.startsWith("/") ? raw.slice(1) : raw;
+      return `${apiBase}/${normalized}`;
+    }
+    // Fallback to auth-protected download endpoint
+    return doc._id ? `${apiBase}/api/admin/documents/${doc._id}/download` : "#";
   };
 
   const getFileIcon = (mimeType) => {
@@ -154,12 +173,22 @@ const Documents = () => {
                           {getFileIcon(doc.mimeType)}
                         </div>
                         <div>
-                          <p className="font-medium text-white truncate max-w-xs">
-                            {doc.originalName}
-                          </p>
-                          <p className="text-xs text-slate-500 truncate max-w-xs">
+                          <a
+                            href={getDownloadUrl(doc)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-white hover:text-sky-300 truncate max-w-xs block"
+                          >
+                            {doc.originalName || doc.filename}
+                          </a>
+                          <a
+                            href={getDownloadUrl(doc)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-slate-500 hover:text-sky-300 truncate max-w-xs block"
+                          >
                             {doc.filename}
-                          </p>
+                          </a>
                         </div>
                       </div>
                     </td>
@@ -193,7 +222,7 @@ const Documents = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-300">
-                      {new Date(doc.createdAt).toLocaleDateString()}
+                      {formatDate(doc.createdAt)}
                     </td>
                     <td className="px-4 py-3">
                       <button

@@ -6,6 +6,8 @@ import Notification from "../models/Notification.js";
 import Category from "../models/Category.js";
 import Reminder from "../models/Reminder.js";
 import Document from "../models/Document.js";
+import fs from "fs";
+import path from "path";
 
 const router = express.Router();
 
@@ -230,17 +232,33 @@ router.get("/documents", async (req, res) => {
     const documents = await Document.find({})
       .populate("userId", "username email")
       .populate("taskId", "title")
-      .sort({ createdAt: -1 })
-      .lean();
+      .sort({ createdAt: -1 });
+
+    // Transform to safe format, handling null references
+    const safeDocuments = documents.map((doc) => ({
+      _id: doc._id,
+      filename: doc.filename,
+      originalName: doc.originalName,
+      mimeType: doc.mimeType,
+      fileSize: doc.fileSize,
+      filePath: doc.filePath,
+      userId: doc.userId || null,
+      taskId: doc.taskId || null,
+      memberId: doc.memberId || null,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+    }));
 
     res.status(200).json({
       success: true,
-      data: documents,
-      count: documents.length,
+      data: safeDocuments,
+      count: safeDocuments.length,
     });
   } catch (error) {
-    console.error("Admin get documents error:", error);
-    res.status(500).json({ error: "Failed to fetch documents" });
+    console.error("Admin get documents error:", error.message, error.stack);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch documents", details: error.message });
   }
 });
 
@@ -249,17 +267,67 @@ router.get("/documents/:id", async (req, res) => {
   try {
     const document = await Document.findById(req.params.id)
       .populate("userId", "username email")
-      .populate("taskId", "title")
-      .lean();
+      .populate("taskId", "title");
 
     if (!document) {
       return res.status(404).json({ error: "Document not found" });
     }
 
-    res.status(200).json({ success: true, data: document });
+    const safeDocument = {
+      _id: document._id,
+      filename: document.filename,
+      originalName: document.originalName,
+      mimeType: document.mimeType,
+      fileSize: document.fileSize,
+      filePath: document.filePath,
+      userId: document.userId || null,
+      taskId: document.taskId || null,
+      memberId: document.memberId || null,
+      createdAt: document.createdAt,
+      updatedAt: document.updatedAt,
+    };
+
+    res.status(200).json({ success: true, data: safeDocument });
   } catch (error) {
-    console.error("Admin get document error:", error);
-    res.status(500).json({ error: "Failed to fetch document" });
+    console.error("Admin get document error:", error.message, error.stack);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch document", details: error.message });
+  }
+});
+
+// Download/view a specific document (inline for preview)
+router.get("/documents/:id/download", async (req, res) => {
+  try {
+    const document = await Document.findById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    const rawPath = document.filePath || "";
+    const normalized = rawPath.startsWith("/") ? rawPath.slice(1) : rawPath;
+    const absolutePath = path.join(process.cwd(), normalized);
+
+    if (!fs.existsSync(absolutePath)) {
+      return res.status(404).json({ error: "File not found on server" });
+    }
+
+    res.setHeader(
+      "Content-Type",
+      document.mimeType || "application/octet-stream",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${document.originalName || document.filename}"`,
+    );
+
+    const stream = fs.createReadStream(absolutePath);
+    stream.on("error", () => res.status(500).end());
+    stream.pipe(res);
+  } catch (error) {
+    console.error("Admin download document error:", error);
+    res.status(500).json({ error: "Failed to download document" });
   }
 });
 

@@ -21,6 +21,19 @@ const Notifications = () => {
     fetchNotifications();
   }, []);
 
+  const formatDate = (value) => {
+    const d = value ? new Date(value) : null;
+    return d && !isNaN(d) ? d.toLocaleString() : "-";
+  };
+
+  const formatUser = (n) => {
+    if (n?.userId && typeof n.userId === "object") {
+      return n.userId.email || n.userId.username || "-";
+    }
+    if (typeof n?.userId === "string") return n.userId;
+    return "-";
+  };
+
   return (
     <Layout>
       <div className="flex items-center justify-between mb-4">
@@ -44,11 +57,9 @@ const Notifications = () => {
                   <td className="px-4 py-3 text-white">
                     {n.title || n.message || "Notification"}
                   </td>
-                  <td className="px-4 py-3 text-slate-200">
-                    {n.userId?.email || "-"}
-                  </td>
+                  <td className="px-4 py-3 text-slate-200">{formatUser(n)}</td>
                   <td className="px-4 py-3 text-slate-300">
-                    {new Date(n.createdAt).toLocaleString()}
+                    {formatDate(n.createdAt)}
                   </td>
                 </tr>
               ))}
