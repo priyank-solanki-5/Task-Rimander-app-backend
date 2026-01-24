@@ -171,4 +171,47 @@ class TaskApiService {
       throw Exception('Failed to fetch recurring tasks: $e');
     }
   }
+
+  /// Stop recurrence for a task
+  Future<Task> stopTaskRecurrence(String taskId) async {
+    try {
+      final response = await _apiClient.patch(
+        ApiConfig.taskStopRecurrence(taskId),
+      );
+      return Task.fromJson(response.data['data']);
+    } catch (e) {
+      throw Exception('Failed to stop task recurrence: $e');
+    }
+  }
+
+  /// Search and filter tasks (combined)
+  Future<List<Task>> searchAndFilterTasks({
+    String? query,
+    String? status,
+    String? categoryId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      final Map<String, dynamic> queryParams = {};
+      if (query != null) queryParams['q'] = query;
+      if (status != null) queryParams['status'] = status;
+      if (categoryId != null) queryParams['categoryId'] = categoryId;
+      if (startDate != null) {
+        queryParams['startDate'] = startDate.toIso8601String().split('T')[0];
+      }
+      if (endDate != null) {
+        queryParams['endDate'] = endDate.toIso8601String().split('T')[0];
+      }
+
+      final response = await _apiClient.get(
+        ApiConfig.taskSearchFilter,
+        queryParameters: queryParams,
+      );
+      final List<dynamic> data = response.data['data'] as List<dynamic>;
+      return data.map((json) => Task.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to search and filter tasks: $e');
+    }
+  }
 }

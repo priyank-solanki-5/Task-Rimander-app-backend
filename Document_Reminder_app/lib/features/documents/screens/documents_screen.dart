@@ -28,57 +28,57 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Documents'),
-          actions: [
-            // Sort menu
-            Consumer<DocumentProvider>(
-              builder: (context, provider, child) {
-                return PopupMenuButton<SortType>(
-                  icon: const Icon(Icons.sort),
-                  onSelected: (sortType) {
-                    provider.setSortType(sortType);
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: SortType.uploadDate,
-                      child: Row(
-                        children: [
-                          Icon(
-                            provider.sortType == SortType.uploadDate
-                                ? Icons.radio_button_checked
-                                : Icons.radio_button_unchecked,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text('Upload Date'),
-                        ],
-                      ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Documents'),
+        actions: [
+          // Sort menu
+          Consumer<DocumentProvider>(
+            builder: (context, provider, child) {
+              return PopupMenuButton<SortType>(
+                icon: const Icon(Icons.sort),
+                onSelected: (sortType) {
+                  provider.setSortType(sortType);
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: SortType.uploadDate,
+                    child: Row(
+                      children: [
+                        Icon(
+                          provider.sortType == SortType.uploadDate
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_unchecked,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('Upload Date'),
+                      ],
                     ),
-                    PopupMenuItem(
-                      value: SortType.alphabetical,
-                      child: Row(
-                        children: [
-                          Icon(
-                            provider.sortType == SortType.alphabetical
-                                ? Icons.radio_button_checked
-                                : Icons.radio_button_unchecked,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text('Alphabetical'),
-                        ],
-                      ),
+                  ),
+                  PopupMenuItem(
+                    value: SortType.alphabetical,
+                    child: Row(
+                      children: [
+                        Icon(
+                          provider.sortType == SortType.alphabetical
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_unchecked,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('Alphabetical'),
+                      ],
                     ),
-                  ],
-                );
-              },
-            ),
-          ],
-        ),
-        body: Column(
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Column(
           children: [
             // Member filter dropdown
             Consumer2<DocumentProvider, MemberProvider>(
@@ -215,22 +215,20 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () async {
-            final result = await Navigator.push<bool>(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AddDocumentScreen(),
-              ),
-            );
-            if (!context.mounted) return;
-            if (result == true) {
-              context.read<DocumentProvider>().refreshDocuments();
-            }
-          },
-          icon: const Icon(Icons.add),
-          label: const Text('Add Document'),
-        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final result = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(builder: (context) => const AddDocumentScreen()),
+          );
+          if (!context.mounted) return;
+          if (result == true) {
+            context.read<DocumentProvider>().refreshDocuments();
+          }
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Add Document'),
       ),
     );
   }

@@ -32,59 +32,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
 
-    // Load counts
     final docProvider = context.read<DocumentProvider>();
     final memberProvider = context.read<MemberProvider>();
 
-    final docCount = docProvider.getDocumentCount() as int? ?? 0;
-    final memCount = memberProvider.getMemberCount() as int? ?? 0;
+    try {
+      // Run API calls in parallel to reduce loading time
+      final results = await Future.wait([
+        _authService.getCurrentUser(),
+        memberProvider.getMemberCount(),
+      ]);
 
-    // Load user info from API only
-    final user = await _authService.getCurrentUser();
+      final user = results[0] as User?;
+      final memCount = results[1] as int;
+      final docCount = docProvider.getDocumentCount(); // Synchronous
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _documentCount = docCount;
-      _memberCount = memCount;
-      _currentUser = user;
-      _userName = user?.username ?? 'User';
-      _profilePhotoPath = null; // No local storage for profile photo
-      _isLoading = false;
-    });
+      setState(() {
+        _documentCount = docCount;
+        _memberCount = memCount;
+        _currentUser = user;
+        _userName = user?.username ?? 'User';
+        _profilePhotoPath = null;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading profile data: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Profile'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                Navigator.pushNamed(context, '/settings');
-              },
-              tooltip: 'Settings',
-            ),
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () async {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.pushNamed(context, '/settings');
+            },
+            tooltip: 'Settings',
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.red),
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Logout'),
+                  content: const Text('Are you sure you want to logout?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text(
+                        'Logout',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
                 await _authService.logout();
                 if (context.mounted) {
                   Navigator.of(
                     context,
                   ).pushNamedAndRemoveUntil('/login', (route) => false);
                 }
-              },
-              tooltip: 'Logout',
-            ),
-          ],
-        ),
-        body: _isLoading
+              }
+            },
+            tooltip: 'Logout',
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
                 onRefresh: _loadData,
@@ -156,6 +189,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                           ),
+                          if (_currentUser?.createdAt != null) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primaryContainer
+                                    .withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                'Member Since: ${_currentUser!.createdAt!.year}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onPrimaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

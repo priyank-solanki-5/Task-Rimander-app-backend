@@ -1,18 +1,21 @@
 import 'package:flutter/foundation.dart';
-import 'package:uuid/uuid.dart';
+import '../config/api_config.dart';
 import '../models/member.dart';
-import 'mongo_service.dart';
+import 'api_client.dart';
 
 class MemberService {
-  final MongoService _mongoService = MongoService();
-  final Uuid _uuid = const Uuid();
+  final ApiClient _apiClient = ApiClient();
 
   /// Get all members
   Future<List<Member>> getAllMembers() async {
     try {
-      final List<Map<String, dynamic>> maps = await _mongoService.findAll('members');
-      
-      return maps.map((map) => Member.fromJson(map)).toList();
+      final response = await _apiClient.get(ApiConfig.members);
+
+      if (response.data['success'] == true && response.data['data'] != null) {
+        final List<dynamic> data = response.data['data'];
+        return data.map((json) => Member.fromJson(json)).toList();
+      }
+      return [];
     } catch (e) {
       debugPrint('❌ Error getting all members: $e');
       return [];
@@ -22,9 +25,10 @@ class MemberService {
   /// Get member by ID
   Future<Member?> getMemberById(String id) async {
     try {
-      final map = await _mongoService.findById('members', id);
-      if (map != null) {
-        return Member.fromJson(map);
+      final response = await _apiClient.get(ApiConfig.memberById(id));
+
+      if (response.data['success'] == true && response.data['data'] != null) {
+        return Member.fromJson(response.data['data']);
       }
       return null;
     } catch (e) {
@@ -36,19 +40,15 @@ class MemberService {
   /// Create a new member
   Future<Member?> createMember(Member member) async {
     try {
-      final newMember = member.copyWith(
-        id: _uuid.v4(),
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+      final response = await _apiClient.post(
+        ApiConfig.members,
+        data: member.toCreateJson(),
       );
 
-      final map = newMember.toJson();
-      map.remove('_id'); // Remove _id as MongoDB will generate it
-      
-      final memberId = await _mongoService.insertOne('members', map);
-      
-      debugPrint('✅ Member created: $memberId');
-      return newMember.copyWith(id: memberId);
+      if (response.data['success'] == true && response.data['data'] != null) {
+        return Member.fromJson(response.data['data']);
+      }
+      return null;
     } catch (e) {
       debugPrint('❌ Error creating member: $e');
       return null;
@@ -58,17 +58,15 @@ class MemberService {
   /// Update an existing member
   Future<Member?> updateMember(String id, Member member) async {
     try {
-      final updatedMember = member.copyWith(
-        updatedAt: DateTime.now(),
+      final response = await _apiClient.put(
+        ApiConfig.memberById(id),
+        data: member.toJson(),
       );
 
-      final map = updatedMember.toJson();
-      map.remove('_id'); // Remove _id as it shouldn't be updated
-      
-      await _mongoService.updateOne('members', id, map);
-      
-      debugPrint('✅ Member updated: $id');
-      return updatedMember.copyWith(id: id);
+      if (response.data['success'] == true && response.data['data'] != null) {
+        return Member.fromJson(response.data['data']);
+      }
+      return null;
     } catch (e) {
       debugPrint('❌ Error updating member: $e');
       return null;
@@ -78,9 +76,8 @@ class MemberService {
   /// Delete a member
   Future<bool> deleteMember(String id) async {
     try {
-      await _mongoService.deleteOne('members', id);
-      debugPrint('✅ Member deleted: $id');
-      return true;
+      final response = await _apiClient.delete(ApiConfig.memberById(id));
+      return response.data['success'] == true;
     } catch (e) {
       debugPrint('❌ Error deleting member: $e');
       return false;
@@ -90,7 +87,24 @@ class MemberService {
   /// Get member count
   Future<int> getMemberCount() async {
     try {
-      return await _mongoService.count('members');
+      // Use the stats endpoint for efficiency
+      try {
+        final response = await _apiClient.get(ApiConfig.memberStats);
+        if (response.data['success'] == true && response.data['data'] != null) {
+          // If totalMembers is available in stats
+          if (response.data['data']['totalMembers'] != null) {
+            return response.data['data']['totalMembers'] as int;
+          }
+          // Some backends might return it differently, checking response structure would be ideal
+          // But for now fall back to list logic if key implies something else
+        }
+      } catch (e) {
+        debugPrint('⚠️ Stats endpoint failed, falling back to list count: $e');
+      }
+
+      // Fallback: Get all members and count
+      final members = await getAllMembers();
+      return members.length;
     } catch (e) {
       debugPrint('❌ Error getting member count: $e');
       return 0;
@@ -100,16 +114,16 @@ class MemberService {
   /// Search members
   Future<List<Member>> searchMembers(String query) async {
     try {
-      final searchQuery = {
-        'name': {'\$regex': query, '\$options': 'i'}
-      };
-      
-      final List<Map<String, dynamic>> maps = await _mongoService.findAll(
-        'members',
-        query: searchQuery,
+      final response = await _apiClient.get(
+        ApiConfig.searchMembers,
+        queryParameters: {'q': query},
       );
-      
-      return maps.map((map) => Member.fromJson(map)).toList();
+
+      if (response.data['success'] == true && response.data['data'] != null) {
+        final List<dynamic> data = response.data['data'];
+        return data.map((json) => Member.fromJson(json)).toList();
+      }
+      return [];
     } catch (e) {
       debugPrint('❌ Error searching members: $e');
       return [];

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../config/api_config.dart';
@@ -5,10 +6,10 @@ import '../utils/api_exception.dart';
 import 'token_storage.dart';
 
 /// API Client - Singleton HTTP Client for Backend Communication
-/// 
+///
 /// This class provides a centralized HTTP client using the Dio package.
 /// It implements the Singleton pattern to ensure only one instance exists throughout the app.
-/// 
+///
 /// Key Features:
 /// - Singleton pattern for consistent configuration
 /// - Automatic JWT token injection via interceptors
@@ -16,7 +17,7 @@ import 'token_storage.dart';
 /// - Automatic error handling and conversion to custom exceptions
 /// - Support for file uploads and downloads with progress tracking
 /// - Configurable timeouts and headers
-/// 
+///
 /// Usage:
 /// ```dart
 /// final apiClient = ApiClient();
@@ -25,7 +26,7 @@ import 'token_storage.dart';
 class ApiClient {
   /// Singleton instance
   static final ApiClient _instance = ApiClient._internal();
-  
+
   /// Factory constructor returns the singleton instance
   factory ApiClient() => _instance;
 
@@ -63,14 +64,14 @@ class ApiClient {
   // ========================================
   // 🌐 HTTP REQUEST METHODS
   // ========================================
-  
+
   /// Performs a GET request to fetch data from the server
-  /// 
+  ///
   /// Parameters:
   /// - [path]: The endpoint path (e.g., '/api/tasks')
   /// - [queryParameters]: Optional query parameters (e.g., {'status': 'pending'})
   /// - [options]: Optional Dio request options for customization
-  /// 
+  ///
   /// Returns: Dio Response object containing the server response
   /// Throws: ApiException or its subclasses on error
   Future<Response> get(
@@ -90,13 +91,13 @@ class ApiClient {
   }
 
   /// Performs a POST request to create new resources on the server
-  /// 
+  ///
   /// Parameters:
   /// - [path]: The endpoint path (e.g., '/api/tasks')
   /// - [data]: The request body data (will be JSON encoded)
   /// - [queryParameters]: Optional query parameters
   /// - [options]: Optional Dio request options
-  /// 
+  ///
   /// Returns: Dio Response object containing the server response
   /// Throws: ApiException or its subclasses on error
   Future<Response> post(
@@ -118,13 +119,13 @@ class ApiClient {
   }
 
   /// Performs a PUT request to update existing resources on the server
-  /// 
+  ///
   /// Parameters:
   /// - [path]: The endpoint path (e.g., '/api/tasks/123')
   /// - [data]: The request body data (will be JSON encoded)
   /// - [queryParameters]: Optional query parameters
   /// - [options]: Optional Dio request options
-  /// 
+  ///
   /// Returns: Dio Response object containing the server response
   /// Throws: ApiException or its subclasses on error
   Future<Response> put(
@@ -146,13 +147,13 @@ class ApiClient {
   }
 
   /// Performs a PATCH request to partially update resources on the server
-  /// 
+  ///
   /// Parameters:
   /// - [path]: The endpoint path (e.g., '/api/tasks/123/complete')
   /// - [data]: The request body data (will be JSON encoded)
   /// - [queryParameters]: Optional query parameters
   /// - [options]: Optional Dio request options
-  /// 
+  ///
   /// Returns: Dio Response object containing the server response
   /// Throws: ApiException or its subclasses on error
   Future<Response> patch(
@@ -174,13 +175,13 @@ class ApiClient {
   }
 
   /// Performs a DELETE request to remove resources from the server
-  /// 
+  ///
   /// Parameters:
   /// - [path]: The endpoint path (e.g., '/api/tasks/123')
   /// - [data]: Optional request body data
   /// - [queryParameters]: Optional query parameters
   /// - [options]: Optional Dio request options
-  /// 
+  ///
   /// Returns: Dio Response object containing the server response
   /// Throws: ApiException or its subclasses on error
   Future<Response> delete(
@@ -202,14 +203,14 @@ class ApiClient {
   }
 
   /// Uploads a file to the server using multipart/form-data
-  /// 
+  ///
   /// Parameters:
   /// - [path]: The endpoint path (e.g., '/api/documents/upload')
   /// - [filePath]: Local file path to upload
   /// - [fieldName]: Form field name for the file (e.g., 'document')
   /// - [data]: Optional additional form data
   /// - [onSendProgress]: Optional callback for upload progress tracking
-  /// 
+  ///
   /// Returns: Dio Response object containing the server response
   /// Throws: ApiException or its subclasses on error
   Future<Response> uploadFile(
@@ -220,17 +221,20 @@ class ApiClient {
     ProgressCallback? onSendProgress,
   }) async {
     try {
+      final file = File(filePath);
+
       final formData = FormData.fromMap({
-        fieldName: await MultipartFile.fromFile(filePath),
+        fieldName: await MultipartFile.fromFile(
+          file.path,
+          filename: file.path.split('/').last,
+        ),
         if (data != null) ...data,
       });
 
       return await _dio.post(
         path,
         data: formData,
-        options: Options(
-          headers: {'Content-Type': 'multipart/form-data'},
-        ),
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
         onSendProgress: onSendProgress,
       );
     } catch (e) {
@@ -239,12 +243,12 @@ class ApiClient {
   }
 
   /// Downloads a file from the server to local storage
-  /// 
+  ///
   /// Parameters:
   /// - [path]: The endpoint path (e.g., '/api/documents/123/download')
   /// - [savePath]: Local path where the file will be saved
   /// - [onReceiveProgress]: Optional callback for download progress tracking
-  /// 
+  ///
   /// Returns: Dio Response object
   /// Throws: ApiException or its subclasses on error
   Future<Response> downloadFile(
@@ -269,7 +273,7 @@ class ApiClient {
 // ========================================
 
 /// Interceptor that automatically adds JWT authentication token to requests
-/// 
+///
 /// This interceptor retrieves the stored JWT token from secure storage
 /// and adds it to the Authorization header of every outgoing request.
 /// If no token is found, the request proceeds without authentication.
@@ -297,12 +301,12 @@ class _AuthInterceptor extends Interceptor {
 // ========================================
 
 /// Interceptor for logging HTTP requests and responses in debug mode
-/// 
+///
 /// This interceptor logs:
 /// - Outgoing requests (method, URL, headers, body)
 /// - Incoming responses (status code, data)
 /// - Errors (status code, error message, response data)
-/// 
+///
 /// Logging only occurs in debug mode to avoid performance impact in production.
 class _LoggingInterceptor extends Interceptor {
   @override
@@ -323,7 +327,9 @@ class _LoggingInterceptor extends Interceptor {
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     if (kDebugMode) {
       debugPrint('┌─────────────────────────────────────────────────');
-      debugPrint('│ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}');
+      debugPrint(
+        '│ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}',
+      );
       debugPrint('│ Data: ${response.data}');
       debugPrint('└─────────────────────────────────────────────────');
     }
@@ -334,7 +340,9 @@ class _LoggingInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (kDebugMode) {
       debugPrint('┌─────────────────────────────────────────────────');
-      debugPrint('│ ERROR: ${err.requestOptions.method} ${err.requestOptions.uri}');
+      debugPrint(
+        '│ ERROR: ${err.requestOptions.method} ${err.requestOptions.uri}',
+      );
       debugPrint('│ Status: ${err.response?.statusCode}');
       debugPrint('│ Message: ${err.message}');
       debugPrint('│ Response: ${err.response?.data}');
@@ -349,12 +357,12 @@ class _LoggingInterceptor extends Interceptor {
 // ========================================
 
 /// Interceptor that converts Dio errors into custom ApiException types
-/// 
+///
 /// This interceptor intercepts all HTTP errors and converts them into
 /// appropriate custom exception types based on:
 /// - Error type (timeout, network, bad response, etc.)
 /// - HTTP status code (400, 401, 403, 404, 429, 500, etc.)
-/// 
+///
 /// Custom exceptions provide better error handling and user-friendly messages.
 class _ErrorInterceptor extends Interceptor {
   @override
@@ -442,11 +450,11 @@ class _ErrorInterceptor extends Interceptor {
   }
 
   /// Extracts error message from various response data formats
-  /// 
+  ///
   /// The backend may return errors in different formats:
   /// - JSON object with 'message', 'error', or 'msg' field
   /// - Plain string
-  /// 
+  ///
   /// Returns: Extracted error message or null
   String? _extractErrorMessage(dynamic data) {
     if (data == null) return null;

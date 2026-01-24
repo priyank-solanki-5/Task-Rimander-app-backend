@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/models/user.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/providers/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,23 +15,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _authService = AuthService();
   bool _isLoading = true;
   UserSettings _settings = UserSettings();
+  NotificationPreferences? _notificationPreferences;
 
   @override
   void initState() {
     super.initState();
-    _loadSettings();
+    _loadData();
   }
 
-  Future<void> _loadSettings() async {
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final settings = await _authService.getUserSettings();
-    if (mounted) {
-      setState(() {
-        if (settings != null) {
-          _settings = settings;
-        }
-        _isLoading = false;
-      });
+
+    try {
+      // Load both settings and notification preferences in parallel
+      final results = await Future.wait([
+        _authService.getUserSettings(),
+        _authService.getNotificationPreferences(),
+      ]);
+
+      final settings = results[0] as UserSettings?;
+      final prefs = results[1] as NotificationPreferences?;
+
+      if (mounted) {
+        setState(() {
+          if (settings != null) {
+            _settings = settings;
+          }
+          if (prefs != null) {
+            _notificationPreferences = prefs;
+          }
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading settings: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -56,21 +78,76 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         );
         // Revert on failure
-        _loadSettings();
+        _loadData();
+      }
+    }
+  }
+
+  Future<void> _updateNotificationPreferences(
+    NotificationPreferences newPrefs,
+  ) async {
+    // Optimistic update
+    setState(() => _notificationPreferences = newPrefs);
+
+    final success = await _authService.updateNotificationPreferences(newPrefs);
+
+    if (mounted) {
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Preferences updated'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update preferences'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        // Revert on failure
+        _loadData();
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Settings')),
-        body: _isLoading
+    return Scaffold(
+      appBar: AppBar(title: const Text('Settings')),
+      body: SafeArea(
+        child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  _buildSectionHeader('Notifications'),
+                  for (final pref in [
+                    (
+                      'Push Notifications',
+                      _notificationPreferences?.push ?? true,
+                      (val) => _updateNotificationPreferences(
+                        _notificationPreferences?.copyWith(push: val) ??
+                            NotificationPreferences(push: val),
+                      ),
+                    ),
+                    (
+                      'In-App Notifications',
+                      _notificationPreferences?.inApp ?? true,
+                      (val) => _updateNotificationPreferences(
+                        _notificationPreferences?.copyWith(inApp: val) ??
+                            NotificationPreferences(inApp: val),
+                      ),
+                    ),
+                  ])
+                    SwitchListTile(
+                      title: Text(pref.$1),
+                      value: pref.$2,
+                      onChanged: pref.$3,
+                    ),
+                  const Divider(),
                   _buildSectionHeader('Appearance'),
                   _buildDropdownTile(
                     title: 'Theme',
@@ -78,6 +155,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     items: const ['light', 'dark', 'system'],
                     onChanged: (val) {
                       if (val != null) {
+                        // Update local theme provider immediately
+                        final provider = context.read<ThemeProvider>();
+                        switch (val) {
+                          case 'light':
+                            provider.setThemeMode(ThemeMode.light);
+                            break;
+                          case 'dark':
+                            provider.setThemeMode(ThemeMode.dark);
+                            break;
+                          case 'system':
+                          default:
+                            provider.setThemeMode(ThemeMode.system);
+                            break;
+                        }
+
                         _updateSettings(
                           UserSettings.fromJson({
                             ..._settings.toJson(),
@@ -88,22 +180,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   const Divider(),
-                  _buildSectionHeader('Localization'),
-                  _buildDropdownTile(
-                    title: 'Language',
-                    value: _settings.language,
-                    items: const ['en', 'es', 'fr', 'de'],
-                    onChanged: (val) {
-                      if (val != null) {
-                        _updateSettings(
-                          UserSettings.fromJson({
-                            ..._settings.toJson(),
-                            'language': val,
-                          }),
-                        );
-                      }
-                    },
-                  ),
+                  // Removed Localization section as requested
+                  /*
+                    _buildSectionHeader('Localization'),
+                    _buildDropdownTile(
+                      title: 'Language',
+                      value: _settings.language,
+                      items: const ['en', 'es', 'fr', 'de'],
+                      onChanged: (val) {
+                         ...
+                      },
+                    ),
+                    */
                   _buildDropdownTile(
                     title: 'Date Format',
                     value: _settings.dateFormat,
@@ -161,7 +249,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Text(
         title,
         style: TextStyle(
-          color: Theme.of(context).primaryColor,
+          color: Theme.of(context).colorScheme.secondary,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -175,7 +263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required ValueChanged<String?> onChanged,
   }) {
     return ListTile(
-      title: Text(title),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w400)),
       trailing: DropdownButton<String>(
         value: items.contains(value) ? value : items.first,
         underline: const SizedBox(),

@@ -17,7 +17,7 @@ class Member {
   factory Member.fromJson(Map<String, dynamic> json) {
     return Member(
       id: json['_id'] as String?,
-      name: json['name'] as String,
+      name: json['memberName'] as String,
       photoPath: json['photoPath'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -32,11 +32,16 @@ class Member {
   Map<String, dynamic> toJson() {
     return {
       if (id != null) '_id': id,
-      'name': name,
+      'memberName': name,
       if (photoPath != null) 'photoPath': photoPath,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };
+  }
+
+  /// Convert Member to JSON for creation (excludes auto-generated fields)
+  Map<String, dynamic> toCreateJson() {
+    return {'memberName': name, if (photoPath != null) 'photoPath': photoPath};
   }
 
   /// Create a copy with modified fields

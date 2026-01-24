@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../core/models/task.dart';
 import '../screens/add_edit_task_screen.dart';
 import 'task_card.dart';
@@ -82,37 +83,35 @@ class TaskSection extends StatelessWidget {
           itemBuilder: (context, index) {
             final task = tasks[index];
 
-            return TweenAnimationBuilder<double>(
-              duration: Duration(milliseconds: 300 + (index * 50)),
-              tween: Tween(begin: 0.0, end: 1.0),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, child) {
-                return Transform.translate(
-                  offset: Offset(0, 20 * (1 - value)),
-                  child: Opacity(opacity: value, child: child),
-                );
-              },
-              child: TaskCard(
-                task: task,
-                memberName: memberNames?[task.userId],
-                onCheckboxChanged: (value) {
-                  if (value != null) {
-                    onTaskToggle(task.id!, value);
-                  }
-                },
-                onTap: () async {
-                  // Navigate to edit task screen
-                  final result = await Navigator.push<bool>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AddEditTaskScreen(task: task),
-                    ),
-                  );
-                  if (result == true && context.mounted) {
-                    // Refresh task list
-                    onTaskToggle(task.id!, task.isCompleted);
-                  }
-                },
+            return AnimationConfiguration.staggeredList(
+              position: index,
+              duration: const Duration(milliseconds: 375),
+              child: SlideAnimation(
+                verticalOffset: 50.0,
+                child: FadeInAnimation(
+                  child: TaskCard(
+                    task: task,
+                    memberName: memberNames?[task.userId],
+                    onCheckboxChanged: (value) {
+                      if (value != null) {
+                        onTaskToggle(task.id!, value);
+                      }
+                    },
+                    onTap: () async {
+                      // Navigate to edit task screen
+                      final result = await Navigator.push<bool>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddEditTaskScreen(task: task),
+                        ),
+                      );
+                      if (result == true && context.mounted) {
+                        // Refresh task list
+                        onTaskToggle(task.id!, task.isCompleted);
+                      }
+                    },
+                  ),
+                ),
               ),
             );
           },

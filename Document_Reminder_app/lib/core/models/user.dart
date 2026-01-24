@@ -155,6 +155,30 @@ class NotificationPreferences {
       'recurringNotifications': recurringNotifications,
     };
   }
+
+  NotificationPreferences copyWith({
+    bool? email,
+    bool? push,
+    bool? sms,
+    bool? inApp,
+    int? remindersBefore,
+    bool? overdueNotifications,
+    bool? completionNotifications,
+    bool? recurringNotifications,
+  }) {
+    return NotificationPreferences(
+      email: email ?? this.email,
+      push: push ?? this.push,
+      sms: sms ?? this.sms,
+      inApp: inApp ?? this.inApp,
+      remindersBefore: remindersBefore ?? this.remindersBefore,
+      overdueNotifications: overdueNotifications ?? this.overdueNotifications,
+      completionNotifications:
+          completionNotifications ?? this.completionNotifications,
+      recurringNotifications:
+          recurringNotifications ?? this.recurringNotifications,
+    );
+  }
 }
 
 class UserSettings {

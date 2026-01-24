@@ -16,23 +16,41 @@ class TaskCard extends StatelessWidget {
     this.memberName,
   });
 
+  int get _daysUntilDue {
+    if (task.dueDate == null) return 999;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final due = DateTime(
+      task.dueDate!.year,
+      task.dueDate!.month,
+      task.dueDate!.day,
+    );
+    return due.difference(today).inDays;
+  }
+
   Color _getTaskStatusColor(ThemeData theme) {
+    if (task.isCompleted) return theme.disabledColor;
+
     if (task.isOverdue) {
-      return theme.colorScheme.error; // Red for overdue
-    } else if ((task.dueDate?.difference(DateTime.now()).inDays ?? 999) <= 1) {
-      return Colors.orange; // Orange for due today/tomorrow
+      return theme.colorScheme.error;
+    } else if (_daysUntilDue <= 1) {
+      return Colors.orange;
     } else {
-      return theme.colorScheme.primary; // Blue for upcoming
+      return theme.colorScheme.primary;
     }
   }
 
   String _getTaskStatusLabel() {
+    if (task.isCompleted) return 'COMPLETED';
+
     if (task.isOverdue) {
       return 'OVERDUE';
-    } else if ((task.dueDate?.difference(DateTime.now()).inDays ?? 999) == 0) {
+    } else if (_daysUntilDue == 0) {
       return 'TODAY';
-    } else if ((task.dueDate?.difference(DateTime.now()).inDays ?? 999) == 1) {
+    } else if (_daysUntilDue == 1) {
       return 'TOMORROW';
+    } else if (_daysUntilDue < 7) {
+      return '$_daysUntilDue DAYS LEFT';
     } else {
       return 'UPCOMING';
     }
@@ -41,36 +59,47 @@ class TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isOverdue = task.isOverdue;
+    final isOverdue = task.isOverdue && !task.isCompleted;
     final statusColor = _getTaskStatusColor(theme);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      elevation: 3,
-      shadowColor: statusColor.withValues(alpha: 0.3),
+      elevation: 2,
+      shadowColor: theme.shadowColor.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         side: isOverdue
-            ? BorderSide(color: theme.colorScheme.error, width: 1.5)
+            ? BorderSide(
+                color: theme.colorScheme.error.withValues(alpha: 0.5),
+                width: 1,
+              )
             : BorderSide.none,
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Checkbox
-              Checkbox(
-                value: task.isCompleted,
-                onChanged: onCheckboxChanged,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
+              Transform.scale(
+                scale: 1.1,
+                child: Checkbox(
+                  value: task.isCompleted,
+                  onChanged: onCheckboxChanged,
+                  shape: const CircleBorder(),
+                  activeColor: theme.colorScheme.primary,
+                  side: BorderSide(
+                    color: isOverdue
+                        ? theme.colorScheme.error
+                        : theme.unselectedWidgetColor,
+                    width: 2,
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
 
               // Task details
               Expanded(
@@ -81,22 +110,36 @@ class TaskCard extends StatelessWidget {
                     Text(
                       task.title,
                       style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                         decoration: task.isCompleted
                             ? TextDecoration.lineThrough
                             : null,
                         color: task.isCompleted
                             ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
-                            : null,
+                            : theme.colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    if (task.description != null &&
+                        task.description!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        task.description!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
 
-                    // Due date
+                    // Footer Row (Date & Status)
                     Row(
                       children: [
+                        // Due Date
                         Icon(
-                          Icons.calendar_today_outlined,
-                          size: 16,
+                          Icons.calendar_today_rounded,
+                          size: 14,
                           color: isOverdue
                               ? theme.colorScheme.error
                               : theme.colorScheme.onSurface.withValues(
@@ -106,102 +149,67 @@ class TaskCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           task.dueDate != null
-                              ? DateFormat('MMM dd, yyyy').format(task.dueDate!)
-                              : 'No due date',
-                          style: theme.textTheme.bodySmall?.copyWith(
+                              ? DateFormat('MMM dd').format(task.dueDate!)
+                              : 'No date',
+                          style: theme.textTheme.labelMedium?.copyWith(
                             color: isOverdue
                                 ? theme.colorScheme.error
                                 : theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.6,
+                                    alpha: 0.7,
                                   ),
-                            fontWeight: isOverdue ? FontWeight.w600 : null,
+                            fontWeight: isOverdue
+                                ? FontWeight.bold
+                                : FontWeight.w500,
                           ),
                         ),
-                        if (isOverdue) ...[
+
+                        const Spacer(),
+
+                        // Status Badge
+                        if (!task.isCompleted)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: statusColor.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: Text(
+                              _getTaskStatusLabel(),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: statusColor,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+
+                        // Recurring Badge
+                        if (task.taskType == TaskType.recurring) ...[
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
+                              horizontal: 8,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.error.withValues(
+                              color: theme.colorScheme.secondary.withValues(
                                 alpha: 0.1,
                               ),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text(
-                              'OVERDUE',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.error,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            child: Icon(
+                              Icons.repeat_rounded,
+                              size: 14,
+                              color: theme.colorScheme.secondary,
                             ),
                           ),
                         ],
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Status and Task type badges
-                    Row(
-                      children: [
-                        // Status badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: statusColor.withValues(alpha: 0.3),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.circle, size: 8, color: statusColor),
-                              const SizedBox(width: 4),
-                              Text(
-                                _getTaskStatusLabel(),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: statusColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Task type badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: task.taskType == TaskType.recurring
-                                ? theme.colorScheme.secondary.withValues(
-                                    alpha: 0.1,
-                                  )
-                                : theme.colorScheme.primary.withValues(
-                                    alpha: 0.1,
-                                  ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            task.taskTypeDisplay,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: task.taskType == TaskType.recurring
-                                  ? theme.colorScheme.secondary
-                                  : theme.colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ],

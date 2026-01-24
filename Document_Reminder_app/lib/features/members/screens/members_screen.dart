@@ -27,10 +27,10 @@ class _MembersScreenState extends State<MembersScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Members')),
-        body: Consumer<MemberProvider>(
+    return Scaffold(
+      appBar: AppBar(title: const Text('Members')),
+      body: SafeArea(
+        child: Consumer<MemberProvider>(
           builder: (context, provider, child) {
             if (provider.isLoading) {
               return const Center(child: CircularProgressIndicator());
@@ -84,6 +84,7 @@ class _MembersScreenState extends State<MembersScreen> {
             }
 
             return GridView.builder(
+              physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(16),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
@@ -115,10 +116,10 @@ class _MembersScreenState extends State<MembersScreen> {
             );
           },
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _addMember,
-          child: const Icon(Icons.add),
-        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addMember,
+        child: const Icon(Icons.add),
       ),
     );
   }

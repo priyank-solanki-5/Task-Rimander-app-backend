@@ -1,12 +1,30 @@
 import 'package:flutter/foundation.dart';
+import '../config/api_config.dart';
+import '../models/document.dart';
+import 'api_client.dart';
 
-/// Document service for handling document operations via MongoDB API
+/// Document service wired to the backend API.
 class DocumentService {
-  /// This service is a placeholder for document management operations
-  /// All document operations should be performed through API services
-  /// once the backend API is properly configured
+  final ApiClient _apiClient = ApiClient();
 
-  /// Example method for uploading documents
+  /// Get documents for the current user. Backend derives user from token, but
+  /// a userId query parameter is supported for clarity when available.
+  Future<List<Document>> getDocuments({String? userId}) async {
+    try {
+      final response = await _apiClient.get(
+        ApiConfig.documents,
+        queryParameters: {if (userId != null) 'userId': userId},
+      );
+
+      final List<dynamic> data = response.data['data'] as List<dynamic>? ?? [];
+      return data.map((json) => Document.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('❌ Error fetching documents: $e');
+      rethrow;
+    }
+  }
+
+  /// Upload a document for a task with progress tracking.
   Future<Map<String, dynamic>> uploadDocument({
     required String filePath,
     required String taskId,
@@ -15,10 +33,20 @@ class DocumentService {
   }) async {
     try {
       debugPrint('📁 Document upload initiated for task: $taskId');
-      // Document upload will be handled by the API layer
+
+      final response = await _apiClient.uploadFile(
+        ApiConfig.documentsUpload,
+        filePath,
+        'document',
+        data: {'taskId': taskId},
+        onSendProgress: onProgress,
+      );
+
+      debugPrint('✅ Document uploaded successfully');
       return {
         'success': true,
-        'message': 'Document upload will be handled through the API',
+        'message': response.data['message'] ?? 'Document uploaded successfully',
+        'data': response.data['data'],
       };
     } catch (e) {
       debugPrint('❌ Error during document upload: $e');
@@ -26,23 +54,38 @@ class DocumentService {
     }
   }
 
-  /// Example method for retrieving documents
-  Future<List<Map<String, dynamic>>> getDocumentsForTask(String taskId) async {
+  /// Get documents for a specific task.
+  Future<List<Document>> getDocumentsForTask(String taskId) async {
     try {
-      debugPrint('📂 Retrieving documents for task: $taskId');
-      // Document retrieval will be handled by the API layer
-      return [];
+      final response = await _apiClient.get(ApiConfig.documentsForTask(taskId));
+
+      final List<dynamic> data = response.data['data'] as List<dynamic>? ?? [];
+      return data.map((json) => Document.fromJson(json)).toList();
     } catch (e) {
-      debugPrint('❌ Error retrieving documents: $e');
-      return [];
+      debugPrint('❌ Error fetching documents for task: $e');
+      rethrow;
     }
   }
 
-  /// Example method for deleting documents
+  /// Download a document by id to the specified save path.
+  Future<bool> downloadDocument(String documentId, String savePath) async {
+    try {
+      await _apiClient.downloadFile(
+        ApiConfig.documentDownload(documentId),
+        savePath,
+      );
+      debugPrint('✅ Document downloaded successfully');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Error downloading document: $e');
+      return false;
+    }
+  }
+
+  /// Delete a document by id.
   Future<bool> deleteDocument(String documentId) async {
     try {
-      debugPrint('🗑️ Deleting document: $documentId');
-      // Document deletion will be handled by the API layer
+      await _apiClient.delete('${ApiConfig.documents}/$documentId');
       return true;
     } catch (e) {
       debugPrint('❌ Error deleting document: $e');
