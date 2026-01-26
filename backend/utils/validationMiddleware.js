@@ -124,7 +124,15 @@ export const validateTaskCreation = [
  * Task Update Validation
  */
 export const validateTaskUpdate = [
-  param("id").isInt().withMessage("Task ID must be an integer"),
+  param("id")
+    .custom((value) => {
+      const isMongoId = /^[0-9a-fA-F]{24}$/.test(value);
+      const isInt = Number.isInteger(Number(value)) && Number(value) > 0;
+      if (!isMongoId && !isInt) {
+        throw new Error("ID must be a valid MongoDB ID or a positive integer");
+      }
+      return true;
+    }),
   body("title")
     .optional()
     .trim()
@@ -147,7 +155,16 @@ export const validateTaskUpdate = [
  * ID Parameter Validation
  */
 export const validateIdParam = [
-  param("id").isInt({ min: 1 }).withMessage("ID must be a positive integer"),
+  param("id")
+    .custom((value) => {
+      // Allow integer IDs (if any legacy) OR MongoDB ObjectIds (24 hex chars)
+      const isMongoId = /^[0-9a-fA-F]{24}$/.test(value);
+      const isInt = Number.isInteger(Number(value)) && Number(value) > 0;
+      if (!isMongoId && !isInt) {
+        throw new Error("ID must be a valid MongoDB ID or a positive integer");
+      }
+      return true;
+    }),
   validate,
 ];
 
