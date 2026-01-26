@@ -9,12 +9,14 @@ class DocumentProvider extends ChangeNotifier {
 
   List<Document> _documents = [];
   String? _selectedTaskId;
+  String? _selectedMemberId = 'myself'; // Default to "Myself"
   SortType _sortType = SortType.uploadDate;
   bool _isLoading = false;
   String? _errorMessage;
 
   List<Document> get documents => _documents;
   String? get selectedTaskId => _selectedTaskId;
+  String? get selectedMemberId => _selectedMemberId;
   SortType get sortType => _sortType;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -23,11 +25,23 @@ class DocumentProvider extends ChangeNotifier {
   List<Document> get filteredDocuments {
     List<Document> filtered = _documents;
 
-    // Filter by task if selected
+    // Filter by task if selected (overrides member filter usually, or works in tandem)
     if (_selectedTaskId != null) {
       filtered = filtered
           .where((doc) => doc.taskId == _selectedTaskId)
           .toList();
+    } else {
+      // Filter by Member (only if task not selected)
+      if (_selectedMemberId == 'myself') {
+        // Show docs where memberId is NULL (meaning it belongs to the user strictly, or unassigned)
+        filtered = filtered.where((doc) => doc.memberId == null).toList();
+      } else if (_selectedMemberId != null && _selectedMemberId != 'all') {
+        // Show docs for specific member
+        filtered = filtered
+            .where((doc) => doc.memberId == _selectedMemberId)
+            .toList();
+      }
+      // If 'all', do nothing (show all)
     }
 
     // Sort
@@ -56,6 +70,12 @@ class DocumentProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Set member filter
+  void setMemberFilter(String? memberId) {
+    _selectedMemberId = memberId;
+    notifyListeners();
+  }
+
   // Set sort type
   void setSortType(SortType type) {
     _sortType = type;
@@ -63,7 +83,9 @@ class DocumentProvider extends ChangeNotifier {
   }
 
   // Load all documents from API
-  Future<void> loadDocuments() async {
+  Future<void> loadDocuments({bool forceRefresh = false}) async {
+    if (_documents.isNotEmpty && !forceRefresh) return;
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -81,7 +103,12 @@ class DocumentProvider extends ChangeNotifier {
   }
 
   /// Load documents for a specific user (current logged-in user on dashboard)
-  Future<void> loadDocumentsForUser(String userId) async {
+  Future<void> loadDocumentsForUser(
+    String userId, {
+    bool forceRefresh = false,
+  }) async {
+    if (_documents.isNotEmpty && !forceRefresh) return;
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -123,7 +150,8 @@ class DocumentProvider extends ChangeNotifier {
     String? filePath,
     List<int>? fileBytes,
     String? fileName,
-    required String taskId,
+    String? taskId,
+    String? memberId,
     required String userId,
     void Function(int, int)? onProgress,
   }) async {
@@ -133,6 +161,7 @@ class DocumentProvider extends ChangeNotifier {
         fileBytes: fileBytes,
         fileName: fileName,
         taskId: taskId,
+        memberId: memberId,
         userId: userId,
         onProgress: onProgress,
       );
@@ -178,21 +207,6 @@ class DocumentProvider extends ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
-  }
-
-  // Member filter support (for backward compatibility)
-  String? _selectedMemberId;
-
-  String? get selectedMemberId => _selectedMemberId;
-
-  void setMemberFilter(String? memberId) {
-    _selectedMemberId = memberId;
-    notifyListeners();
-  }
-
-  // Get member name (placeholder - returns empty string)
-  String getMemberName(String? memberId) {
-    return '';
   }
 
   // Get document count

@@ -4,19 +4,8 @@ import fs from "fs/promises";
 class DocumentController {
   async uploadDocument(req, res) {
     try {
-      const { taskId } = req.body;
+      const { taskId, memberId } = req.body;
       const userId = req.user.id; // Get from authenticated token
-
-      // Validate required fields
-      if (!taskId) {
-        // Delete uploaded file if validation fails
-        if (req.file) {
-          await fs.unlink(req.file.path).catch(() => {});
-        }
-        return res.status(400).json({
-          error: "Task ID is required",
-        });
-      }
 
       // Validate file exists
       if (!req.file) {
@@ -28,7 +17,8 @@ class DocumentController {
       const document = await documentService.uploadDocument(
         userId,
         taskId,
-        req.file
+        req.file,
+        memberId
       );
 
       res.status(201).json({
@@ -40,12 +30,13 @@ class DocumentController {
           mimeType: document.mimeType,
           fileSize: document.fileSize,
           taskId: document.taskId,
+          memberId: document.memberId,
         },
       });
     } catch (error) {
       // Clean up uploaded file on error
       if (req.file) {
-        await fs.unlink(req.file.path).catch(() => {});
+        await fs.unlink(req.file.path).catch(() => { });
       }
       res.status(400).json({ error: error.message });
     }

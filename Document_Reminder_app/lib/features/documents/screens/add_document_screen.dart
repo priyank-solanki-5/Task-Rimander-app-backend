@@ -8,7 +8,9 @@ import '../../../core/providers/task_provider.dart';
 import '../../../core/services/token_storage.dart';
 
 class AddDocumentScreen extends StatefulWidget {
-  const AddDocumentScreen({super.key});
+  final String? initialMemberId;
+
+  const AddDocumentScreen({super.key, this.initialMemberId});
 
   @override
   State<AddDocumentScreen> createState() => _AddDocumentScreenState();
@@ -28,6 +30,7 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedMemberId = widget.initialMemberId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MemberProvider>().loadMembers();
       context.read<TaskProvider>().loadTasks();
@@ -70,14 +73,15 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Task Selection of Member Selection
+              // Task Selection (Optional)
               Consumer<TaskProvider>(
                 builder: (context, taskProvider, child) {
                   return DropdownButtonFormField<String>(
                     value: _selectedTaskId,
                     decoration: const InputDecoration(
-                      labelText: 'Select Task',
+                      labelText: 'Select Task (Optional)',
                       prefixIcon: Icon(Icons.assignment_outlined),
+                      helperText: 'Leave empty to assign directly to member',
                     ),
                     items: taskProvider.tasks.map((task) {
                       return DropdownMenuItem<String>(
@@ -94,28 +98,10 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
                         _selectedTaskId = value;
                       });
                     },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Please select a task';
-                      }
-                      return null;
-                    },
                   );
                 },
               ),
               const SizedBox(height: 16),
-
-              /*
-              // Member Selection (Optional or Alternative)
-              Consumer<MemberProvider>(
-                builder: (context, memberProvider, child) {
-                  // ... (Member selection code if needed) 
-                  // Keeping it commented out or removed if we strictly link documents to tasks
-                  return const SizedBox.shrink(); 
-                },
-              ),
-              */
-              const SizedBox(height: 24),
 
               // File Picker
               OutlinedButton.icon(
@@ -214,7 +200,8 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
         filePath: _selectedFilePath,
         fileBytes: _selectedFileBytes,
         fileName: _selectedFileName,
-        taskId: _selectedTaskId!,
+        taskId: _selectedTaskId, // Can be null
+        memberId: _selectedMemberId, // Passed from widget.initialMemberId
         userId: userId,
         onProgress: (count, total) {
           // Optional: Handle progress

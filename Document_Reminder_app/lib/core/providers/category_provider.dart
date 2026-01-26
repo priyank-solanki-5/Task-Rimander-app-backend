@@ -41,7 +41,9 @@ class CategoryProvider extends ChangeNotifier {
   }
 
   // Load all categories from API
-  Future<void> loadCategories() async {
+  Future<void> loadCategories({bool forceRefresh = false}) async {
+    if (_categories.isNotEmpty && !forceRefresh) return;
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -97,8 +99,10 @@ class CategoryProvider extends ChangeNotifier {
   // Update category
   Future<bool> updateCategory(Category category) async {
     try {
-      final updatedCategory =
-          await _categoryService.updateCategory(category.id!, category);
+      final updatedCategory = await _categoryService.updateCategory(
+        category.id!,
+        category,
+      );
       if (updatedCategory != null) {
         final index = _categories.indexWhere((c) => c.id == category.id);
         if (index != -1) {
@@ -136,7 +140,7 @@ class CategoryProvider extends ChangeNotifier {
 
   // Refresh categories
   Future<void> refreshCategories() async {
-    await loadCategories();
+    await loadCategories(forceRefresh: true);
   }
 
   // Clear error message

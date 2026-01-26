@@ -7,7 +7,7 @@ class Document {
   final String mimeType;
   final String userId;
   final String? memberId;
-  final String taskId;
+  final String? taskId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -20,7 +20,7 @@ class Document {
     required this.mimeType,
     required this.userId,
     this.memberId,
-    required this.taskId,
+    this.taskId,
     this.createdAt,
     this.updatedAt,
   });
@@ -41,8 +41,8 @@ class Document {
           ? (json['memberId']['_id'] as String?)
           : json['memberId'] as String?,
       taskId: json['taskId'] is Map
-          ? (json['taskId']['_id'] as String)
-          : json['taskId'] as String,
+          ? (json['taskId']['_id'] as String?)
+          : json['taskId'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : null,
@@ -63,7 +63,7 @@ class Document {
       'mimeType': mimeType,
       'userId': userId,
       if (memberId != null) 'memberId': memberId,
-      'taskId': taskId,
+      if (taskId != null) 'taskId': taskId,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };

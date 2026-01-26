@@ -4,25 +4,38 @@ import fs from "fs/promises";
 import path from "path";
 
 class DocumentService {
-  async uploadDocument(userId, taskId, file) {
-    // Validate task exists and belongs to user
-    const task = await taskDao.findTaskById(taskId, userId);
-    if (!task) {
-      // Delete uploaded file if task validation fails
-      await fs.unlink(file.path).catch(() => {});
-      throw new Error("Task not found or unauthorized");
+  async uploadDocument(userId, taskId, file, memberId = null) {
+    // Validate task exists and belongs to user ONLY if taskId is provided
+    if (taskId && taskId !== "null" && taskId !== "undefined") {
+      const task = await taskDao.findTaskById(taskId, userId);
+      if (!task) {
+        // Delete uploaded file if task validation fails
+        await fs.unlink(file.path).catch(() => { });
+        throw new Error("Task not found or unauthorized");
+      }
     }
 
-    // Create document record
-    const document = await documentDao.createDocument({
+    // Prepare document data
+    const docData = {
       filename: file.filename,
       originalName: file.originalname,
       mimeType: file.mimetype,
       fileSize: file.size,
       filePath: file.path,
-      taskId,
       userId,
-    });
+    };
+
+    // Add optional fields if they exist
+    if (taskId && taskId !== "null" && taskId !== "undefined") {
+      docData.taskId = taskId;
+    }
+
+    if (memberId && memberId !== "null" && memberId !== "undefined") {
+      docData.memberId = memberId;
+    }
+
+    // Create document record
+    const document = await documentDao.createDocument(docData);
 
     return document;
   }

@@ -663,9 +663,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             await Future.wait([
               taskProvider.refreshTasks(),
               if (userId != null)
-                documentProvider.loadDocumentsForUser(userId)
+                documentProvider.loadDocumentsForUser(
+                  userId,
+                  forceRefresh: true,
+                )
               else
-                documentProvider.loadDocuments(),
+                documentProvider.loadDocuments(forceRefresh: true),
             ]);
           },
           child: Consumer2<TaskProvider, DocumentProvider>(

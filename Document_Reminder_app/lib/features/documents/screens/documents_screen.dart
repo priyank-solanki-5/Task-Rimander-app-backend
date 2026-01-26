@@ -97,7 +97,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                     ),
                     items: [
                       const DropdownMenuItem<String?>(
-                        value: null,
+                        value: 'myself',
+                        child: Text('Myself'),
+                      ),
+                      const DropdownMenuItem<String?>(
+                        value: 'all',
                         child: Text('All Members'),
                       ),
                       ...memberProvider.members.map((member) {
@@ -117,8 +121,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
             // Document list
             Expanded(
-              child: Consumer<DocumentProvider>(
-                builder: (context, provider, child) {
+              child: Consumer2<DocumentProvider, MemberProvider>(
+                builder: (context, provider, memberProvider, child) {
                   if (provider.isLoading) {
                     return const Center(child: CircularProgressIndicator());
                   }
@@ -158,11 +162,20 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                           const SizedBox(height: 32),
                           ElevatedButton.icon(
                             onPressed: () async {
+                              final selectedMemberId =
+                                  provider.selectedMemberId;
+                              final initialMemberId =
+                                  (selectedMemberId == 'all' ||
+                                      selectedMemberId == 'myself')
+                                  ? null
+                                  : selectedMemberId;
+
                               final result = await Navigator.push<bool>(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      const AddDocumentScreen(),
+                                  builder: (context) => AddDocumentScreen(
+                                    initialMemberId: initialMemberId,
+                                  ),
                                 ),
                               );
                               if (!context.mounted) return;
@@ -203,7 +216,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         },
                         child: _DocumentCard(
                           document: document,
-                          memberName: provider.getMemberName(document.memberId),
+                          memberName: memberProvider.getMemberName(
+                            document.memberId,
+                          ),
                           onView: () => _viewDocument(document),
                           onDelete: () => _deleteDocument(document),
                         ),
@@ -218,9 +233,21 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          final docProvider = context.read<DocumentProvider>();
+          final selectedMemberId = docProvider.selectedMemberId;
+
+          // Only pass specific member IDs, not 'all' or 'myself'
+          final initialMemberId =
+              (selectedMemberId == 'all' || selectedMemberId == 'myself')
+              ? null
+              : selectedMemberId;
+
           final result = await Navigator.push<bool>(
             context,
-            MaterialPageRoute(builder: (context) => const AddDocumentScreen()),
+            MaterialPageRoute(
+              builder: (context) =>
+                  AddDocumentScreen(initialMemberId: initialMemberId),
+            ),
           );
           if (!context.mounted) return;
           if (result == true) {

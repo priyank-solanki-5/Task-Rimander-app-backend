@@ -29,28 +29,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadData();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool forceRefresh = false}) async {
     setState(() => _isLoading = true);
 
     final docProvider = context.read<DocumentProvider>();
     final memberProvider = context.read<MemberProvider>();
 
     try {
-      // Run API calls in parallel to reduce loading time
-      final results = await Future.wait([
-        _authService.getCurrentUser(),
-        memberProvider.getMemberCount(),
+      // Run API calls in parallel (using cache unless forced)
+      await Future.wait([
+        docProvider.loadDocuments(forceRefresh: forceRefresh),
+        memberProvider.loadMembers(forceRefresh: forceRefresh),
       ]);
 
-      final user = results[0] as User?;
-      final memCount = results[1] as int;
-      final docCount = docProvider.getDocumentCount(); // Synchronous
+      final user = await _authService.getCurrentUser(
+        forceRefresh: forceRefresh,
+      );
 
       if (!mounted) return;
 
       setState(() {
-        _documentCount = docCount;
-        _memberCount = memCount;
+        _documentCount = docProvider.getDocumentCount();
+        _memberCount = memberProvider.members.length;
         _currentUser = user;
         _userName = user?.username ?? 'User';
         _profilePhotoPath = null;
@@ -120,7 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
-                onRefresh: _loadData,
+                onRefresh: () => _loadData(forceRefresh: true),
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
