@@ -6,6 +6,7 @@ import '../../../core/providers/category_provider.dart';
 import '../../../core/models/task.dart';
 import '../../../core/services/token_storage.dart';
 import '../../../core/providers/member_provider.dart';
+import '../../../core/services/auth_service.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final Task? task;
@@ -52,16 +53,21 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       }
     }
 
-    // Load categories
+    // Load categories and members
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CategoryProvider>().loadCategories();
+      context.read<MemberProvider>().loadMembers();
     });
   }
 
+  String? _userName;
+
   Future<void> _loadUserId() async {
     final userId = await TokenStorage.getUserId();
+    final user = await AuthService().getCurrentUser();
     setState(() {
       _userId = userId;
+      _userName = user?.username;
     });
   }
 
@@ -198,7 +204,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               // Member Selection
               Consumer<MemberProvider>(
                 builder: (context, memberProvider, child) {
-                  return DropdownButtonFormField<String>(
+                  return DropdownButtonFormField<String?>(
                     value: _selectedMemberId,
                     decoration: InputDecoration(
                       labelText: 'Assign Member',
@@ -208,16 +214,23 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                       filled: true,
                       fillColor: theme.colorScheme.surfaceContainerLowest,
                     ),
-                    items: memberProvider.members.map((member) {
-                      return DropdownMenuItem<String>(
-                        value: member.id,
-                        child: Text(member.name),
-                      );
-                    }).toList(),
+                    items: [
+                      DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text(
+                          _userName != null ? 'Myself ($_userName)' : 'Myself',
+                        ),
+                      ),
+                      ...memberProvider.members.map((member) {
+                        return DropdownMenuItem<String?>(
+                          value: member.id,
+                          child: Text(member.name),
+                        );
+                      }),
+                    ],
                     onChanged: (value) =>
                         setState(() => _selectedMemberId = value),
-                    validator: (value) =>
-                        value == null ? 'Please assign a member' : null,
+                    validator: null, // Optional, defaults to self
                   );
                 },
               ),
@@ -378,6 +391,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         recurrenceType: _recurrenceType,
         status: isEditing ? widget.task!.status : TaskStatus.pending,
         categoryId: _selectedCategoryId,
+        memberId: _selectedMemberId, // Can be null (Myself)
       );
 
       final success = isEditing
@@ -394,13 +408,54 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
             ),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(provider.errorMessage ?? 'Failed to save task'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          // Check for specific "User not found" or 400 error in the provider's error message
+          final errorMessage = provider.errorMessage ?? 'Failed to save task';
+
+          if (errorMessage.contains('Status: 400') ||
+              errorMessage.contains('User not found')) {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Session Expired'),
+                content: const Text(
+                  'Your session has expired or is invalid. Please log out and log in again to continue.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Cancel'),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.pop(ctx); // Close dialog
+                      Navigator.pop(context); // Close task screen
+                      context.read<AuthService>().logout(); // Logic to logout
+                      // Navigation to login should be handled by the main app wrapper listening to auth state
+                      // Or we can force it here if needed, but usually AuthService handles clean up.
+                      Navigator.of(
+                        context,
+                      ).pushNamedAndRemoveUntil('/login', (route) => false);
+                    },
+                    child: const Text('Log Out'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errorMessage),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
       }
     } finally {
       if (mounted) {

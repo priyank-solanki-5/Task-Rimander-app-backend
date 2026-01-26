@@ -215,19 +215,35 @@ class ApiClient {
   /// Throws: ApiException or its subclasses on error
   Future<Response> uploadFile(
     String path,
-    String filePath,
+    String? filePath,
     String fieldName, {
+    List<int>? fileBytes,
+    String? fileName,
     Map<String, dynamic>? data,
     ProgressCallback? onSendProgress,
   }) async {
     try {
-      final file = File(filePath);
+      MultipartFile multipartFile;
 
-      final formData = FormData.fromMap({
-        fieldName: await MultipartFile.fromFile(
+      if (fileBytes != null) {
+        // Use bytes (Works on Web & Mobile/Desktop)
+        multipartFile = MultipartFile.fromBytes(
+          fileBytes,
+          filename: fileName ?? 'document',
+        );
+      } else if (filePath != null) {
+        // Fallback to file path (Mobile/Desktop only)
+        final file = File(filePath);
+        multipartFile = await MultipartFile.fromFile(
           file.path,
           filename: file.path.split('/').last,
-        ),
+        );
+      } else {
+        throw ApiException(message: 'No file data provided');
+      }
+
+      final formData = FormData.fromMap({
+        fieldName: multipartFile,
         if (data != null) ...data,
       });
 

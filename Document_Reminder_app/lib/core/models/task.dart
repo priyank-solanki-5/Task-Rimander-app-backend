@@ -1,4 +1,5 @@
 enum TaskStatus { pending, completed }
+
 enum TaskType { oneTime, recurring }
 
 class Task {
@@ -8,7 +9,8 @@ class Task {
   final TaskStatus status;
   final DateTime? dueDate;
   final bool isRecurring;
-  final String? recurrenceType; // "Monthly", "Every 3 months", "Every 6 months", "Yearly"
+  final String?
+  recurrenceType; // "Monthly", "Every 3 months", "Every 6 months", "Yearly"
   final DateTime? nextOccurrence;
   final String userId;
   final String? memberId;
@@ -78,7 +80,7 @@ class Task {
       if (recurrenceType != null) 'recurrenceType': recurrenceType,
       if (nextOccurrence != null)
         'nextOccurrence': nextOccurrence!.toIso8601String(),
-      'userId': userId,
+      // 'userId': userId, // Removed: Backend infers user from token
       if (memberId != null) 'memberId': memberId,
       if (categoryId != null) 'categoryId': categoryId,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),

@@ -26,7 +26,9 @@ class DocumentService {
 
   /// Upload a document for a task with progress tracking.
   Future<Map<String, dynamic>> uploadDocument({
-    required String filePath,
+    String? filePath,
+    List<int>? fileBytes,
+    String? fileName,
     required String taskId,
     required String userId,
     Function(int, int)? onProgress,
@@ -38,6 +40,8 @@ class DocumentService {
         ApiConfig.documentsUpload,
         filePath,
         'document',
+        fileBytes: fileBytes,
+        fileName: fileName,
         data: {'taskId': taskId},
         onSendProgress: onProgress,
       );
