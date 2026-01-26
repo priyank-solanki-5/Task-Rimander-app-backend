@@ -42,6 +42,11 @@ const taskSchema = new mongoose.Schema(
       ref: "Category",
       default: null,
     },
+    memberId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Member",
+      default: null,
+    },
   },
   {
     timestamps: true,

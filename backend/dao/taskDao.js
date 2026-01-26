@@ -23,14 +23,14 @@ class TaskDao {
 
     return await Task.find(query)
       .populate("categoryId", "id name isPredefined")
+      .populate("memberId", "id name")
       .sort({ dueDate: 1, createdAt: -1 });
   }
 
   async findTaskById(id, userId) {
-    return await Task.findOne({ _id: id, userId }).populate(
-      "categoryId",
-      "id name isPredefined"
-    );
+    return await Task.findOne({ _id: id, userId })
+      .populate("categoryId", "id name isPredefined")
+      .populate("memberId", "id name");
   }
 
   async updateTask(task, updateData) {
