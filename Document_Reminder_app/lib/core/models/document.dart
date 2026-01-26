@@ -34,9 +34,15 @@ class Document {
       filePath: json['filePath'] as String,
       fileSize: json['fileSize'] as int,
       mimeType: json['mimeType'] as String,
-      userId: json['userId'] as String,
-      memberId: json['memberId'] as String?,
-      taskId: json['taskId'] as String,
+      userId: json['userId'] is Map
+          ? (json['userId']['_id'] as String)
+          : json['userId'] as String,
+      memberId: json['memberId'] is Map
+          ? (json['memberId']['_id'] as String?)
+          : json['memberId'] as String?,
+      taskId: json['taskId'] is Map
+          ? (json['taskId']['_id'] as String)
+          : json['taskId'] as String,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : null,

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../core/providers/document_provider.dart';
 import '../../../core/providers/member_provider.dart';
+import '../../../core/providers/task_provider.dart';
+import '../../../core/services/token_storage.dart';
 
 class AddDocumentScreen extends StatefulWidget {
   const AddDocumentScreen({super.key});
@@ -17,7 +20,9 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
 
   String? _selectedMemberId;
   String? _selectedFilePath;
+  List<int>? _selectedFileBytes;
   String? _selectedFileName;
+  String? _selectedTaskId;
   bool _isLoading = false;
 
   @override
@@ -25,6 +30,7 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MemberProvider>().loadMembers();
+      context.read<TaskProvider>().loadTasks();
     });
   }
 
@@ -64,46 +70,51 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Member Selection
-              Consumer<MemberProvider>(
-                builder: (context, memberProvider, child) {
-                  if (memberProvider.members.isEmpty) {
-                    return const Card(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Text(
-                          'No members available. Please add a member first.',
-                        ),
-                      ),
-                    );
-                  }
-
+              // Task Selection of Member Selection
+              Consumer<TaskProvider>(
+                builder: (context, taskProvider, child) {
                   return DropdownButtonFormField<String>(
-                    value: _selectedMemberId,
+                    value: _selectedTaskId,
                     decoration: const InputDecoration(
-                      labelText: 'Select Member',
-                      prefixIcon: Icon(Icons.person_outline),
+                      labelText: 'Select Task',
+                      prefixIcon: Icon(Icons.assignment_outlined),
                     ),
-                    items: memberProvider.members.map((member) {
+                    items: taskProvider.tasks.map((task) {
                       return DropdownMenuItem<String>(
-                        value: member.id,
-                        child: Text(member.name),
+                        value: task.id,
+                        child: Text(
+                          task.title.length > 30
+                              ? '${task.title.substring(0, 30)}...'
+                              : task.title,
+                        ),
                       );
                     }).toList(),
                     onChanged: (value) {
                       setState(() {
-                        _selectedMemberId = value;
+                        _selectedTaskId = value;
                       });
                     },
                     validator: (value) {
                       if (value == null) {
-                        return 'Please select a member';
+                        return 'Please select a task';
                       }
                       return null;
                     },
                   );
                 },
               ),
+              const SizedBox(height: 16),
+
+              /*
+              // Member Selection (Optional or Alternative)
+              Consumer<MemberProvider>(
+                builder: (context, memberProvider, child) {
+                  // ... (Member selection code if needed) 
+                  // Keeping it commented out or removed if we strictly link documents to tasks
+                  return const SizedBox.shrink(); 
+                },
+              ),
+              */
               const SizedBox(height: 24),
 
               // File Picker
@@ -154,18 +165,21 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
   Future<void> _pickFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
+        withData: kIsWeb, // Important for Web
         type: FileType.custom,
         allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
       );
 
       if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
         setState(() {
-          _selectedFilePath = result.files.first.path;
-          _selectedFileName = result.files.first.name;
+          _selectedFilePath = file.path;
+          _selectedFileBytes = file.bytes;
+          _selectedFileName = file.name;
 
           // Auto-fill document name if empty
           if (_nameController.text.isEmpty) {
-            _nameController.text = result.files.first.name;
+            _nameController.text = file.name;
           }
         });
       }
@@ -181,7 +195,7 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
   Future<void> _saveDocument() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_selectedFilePath == null) {
+    if (_selectedFilePath == null && _selectedFileBytes == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Please select a file')));
@@ -191,13 +205,17 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final userId = await TokenStorage.getUserId();
+      if (userId == null) throw Exception('User not logged in');
+
       final provider = context.read<DocumentProvider>();
 
       await provider.uploadDocument(
-        filePath: _selectedFilePath!,
-        taskId:
-            'default-task-id', // TODO: Allow user to select task or handle general documents
-        userId: '', // Will be populated by the service/API layer
+        filePath: _selectedFilePath,
+        fileBytes: _selectedFileBytes,
+        fileName: _selectedFileName,
+        taskId: _selectedTaskId!,
+        userId: userId,
         onProgress: (count, total) {
           // Optional: Handle progress
         },
@@ -211,6 +229,12 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
             backgroundColor: Colors.green,
           ),
         );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error adding document: $e')));
       }
     } finally {
       if (mounted) {

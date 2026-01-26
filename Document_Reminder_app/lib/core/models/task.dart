@@ -54,8 +54,12 @@ class Task {
           ? DateTime.parse(json['nextOccurrence'] as String)
           : null,
       userId: json['userId'] as String,
-      memberId: json['memberId'] as String?,
-      categoryId: json['categoryId'] as String?,
+      memberId: json['memberId'] is Map
+          ? (json['memberId']['_id'] as String?)
+          : json['memberId'] as String?,
+      categoryId: json['categoryId'] is Map
+          ? (json['categoryId']['_id'] as String?)
+          : json['categoryId'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : null,

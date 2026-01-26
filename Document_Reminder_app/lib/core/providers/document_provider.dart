@@ -120,7 +120,9 @@ class DocumentProvider extends ChangeNotifier {
 
   // Upload document
   Future<bool> uploadDocument({
-    required String filePath,
+    String? filePath,
+    List<int>? fileBytes,
+    String? fileName,
     required String taskId,
     required String userId,
     void Function(int, int)? onProgress,
@@ -128,6 +130,8 @@ class DocumentProvider extends ChangeNotifier {
     try {
       final result = await _documentService.uploadDocument(
         filePath: filePath,
+        fileBytes: fileBytes,
+        fileName: fileName,
         taskId: taskId,
         userId: userId,
         onProgress: onProgress,
