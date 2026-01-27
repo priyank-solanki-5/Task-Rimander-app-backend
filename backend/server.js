@@ -3,7 +3,11 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
+import { fileURLToPath } from "url";
 import connectDB from "./config/mongodb.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import userRoutes from "./routes/user.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import taskRoutes from "./routes/task.routes.js";
@@ -37,7 +41,23 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Serve uploaded files statically so admin can view/download
 // When running from backend/, the uploads folder is relative to this directory
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+// Serve uploaded files statically so admin can view/download
+// When running from backend/, the uploads folder is relative to this directory
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"), {
+    maxAge: "1d",
+    etag: false,
+    setHeaders: (res, path) => {
+      // Set appropriate MIME types
+      if (path.endsWith(".pdf")) {
+        res.setHeader("Content-Type", "application/pdf");
+      } else if (path.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+        res.setHeader("Content-Type", "image/*");
+      }
+    },
+  }),
+);
 
 // Routes
 app.use("/api/users", userRoutes);

@@ -3,7 +3,13 @@ import path from "path";
 import fs from "fs";
 
 // Create uploads directory if it doesn't exist
-const uploadDir = "./uploads";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Create uploads directory if it doesn't exist
+const uploadDir = path.join(__dirname, "../uploads/documents");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -37,9 +43,9 @@ const fileFilter = (req, file, cb) => {
   } else {
     cb(
       new Error(
-        "Invalid file type. Only PDF and image files (JPEG, PNG, GIF, WEBP) are allowed."
+        "Invalid file type. Only PDF and image files (JPEG, PNG, GIF, WEBP) are allowed.",
       ),
-      false
+      false,
     );
   }
 };

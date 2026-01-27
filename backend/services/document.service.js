@@ -10,7 +10,7 @@ class DocumentService {
       const task = await taskDao.findTaskById(taskId, userId);
       if (!task) {
         // Delete uploaded file if task validation fails
-        await fs.unlink(file.path).catch(() => { });
+        await fs.unlink(file.path).catch(() => {});
         throw new Error("Task not found or unauthorized");
       }
     }
@@ -21,7 +21,7 @@ class DocumentService {
       originalName: file.originalname,
       mimeType: file.mimetype,
       fileSize: file.size,
-      filePath: file.path,
+      filePath: `uploads/documents/${file.filename}`,
       userId,
     };
 

@@ -305,9 +305,21 @@ router.get("/documents/:id/download", async (req, res) => {
       return res.status(404).json({ error: "Document not found" });
     }
 
-    const rawPath = document.filePath || "";
-    const normalized = rawPath.startsWith("/") ? rawPath.slice(1) : rawPath;
-    const absolutePath = path.join(process.cwd(), normalized);
+    // Construct the absolute path correctly
+    let filePath = document.filePath;
+
+    // If the path is already absolute, use it; otherwise resolve it relative to cwd
+    if (!path.isAbsolute(filePath)) {
+      filePath = path.join(process.cwd(), filePath);
+    }
+
+    // Security: ensure file is within uploads directory
+    const uploadsDir = path.join(process.cwd(), "uploads");
+    const absolutePath = path.resolve(filePath);
+
+    if (!absolutePath.startsWith(uploadsDir)) {
+      return res.status(403).json({ error: "Access denied" });
+    }
 
     if (!fs.existsSync(absolutePath)) {
       return res.status(404).json({ error: "File not found on server" });
@@ -334,15 +346,33 @@ router.get("/documents/:id/download", async (req, res) => {
 // Delete document
 router.delete("/documents/:id", async (req, res) => {
   try {
-    const document = await Document.findByIdAndDelete(req.params.id);
+    const document = await Document.findById(req.params.id);
 
     if (!document) {
       return res.status(404).json({ error: "Document not found" });
     }
 
+    // Delete physical file first
+    if (document.filePath) {
+      let filePath = document.filePath;
+      if (!path.isAbsolute(filePath)) {
+        filePath = path.join(process.cwd(), filePath);
+      }
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (error) {
+        console.error("Error deleting physical file:", error);
+      }
+    }
+
+    // Delete database record
+    await Document.findByIdAndDelete(req.params.id);
+
     res.status(200).json({
       success: true,
-      message: "Document deleted",
+      message: "Document deleted successfully",
     });
   } catch (error) {
     console.error("Admin delete document error:", error);
