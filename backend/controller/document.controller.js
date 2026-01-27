@@ -36,7 +36,9 @@ class DocumentController {
     } catch (error) {
       // Clean up uploaded file on error
       if (req.file) {
-        await fs.unlink(req.file.path).catch(() => { });
+        await fs.unlink(req.file.path).catch((err) => {
+          console.error("Failed to delete temp file:", err);
+        });
       }
       res.status(400).json({ error: error.message });
     }

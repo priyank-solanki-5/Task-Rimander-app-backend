@@ -87,10 +87,10 @@ class _MembersScreenState extends State<MembersScreen> {
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(16),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.85,
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.1,
               ),
               itemCount: members.length,
               itemBuilder: (context, index) {

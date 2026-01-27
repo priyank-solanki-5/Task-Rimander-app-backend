@@ -50,7 +50,7 @@ class ApiConfig {
   // Note: Render free tier may have cold starts, so longer timeouts are needed
 
   /// Maximum time to wait for establishing connection to the server
-  static const Duration connectTimeout = Duration(seconds: 0);
+  static const Duration connectTimeout = Duration(seconds: 30);
 
   /// Maximum time to wait for receiving data from the server
   static const Duration receiveTimeout = Duration(seconds: 60);
