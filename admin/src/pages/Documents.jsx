@@ -55,10 +55,17 @@ const Documents = () => {
   };
 
   const getDownloadUrl = (doc) => {
-    if (!doc || !doc._id) return "#";
-    // Use the auth-protected download endpoint for admin
-    // This ensures proper authentication and file path resolution
-    return `${apiBase}/api/admin/documents/${doc._id}/download`;
+    if (!doc) return "#";
+
+    // Prefer static uploads path (does not rely on auth headers in a new tab/iframe)
+    const raw = doc.filePath || "";
+    if (raw) {
+      const normalized = raw.startsWith("/") ? raw.slice(1) : raw;
+      return `${apiBase}/${normalized}`;
+    }
+
+    // Fallback to auth-protected download endpoint if no stored path
+    return doc._id ? `${apiBase}/api/admin/documents/${doc._id}/download` : "#";
   };
 
   const getFileIcon = (mimeType) => {
