@@ -3,7 +3,11 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
+import { fileURLToPath } from "url";
 import connectDB from "./config/mongodb.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import userRoutes from "./routes/user.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import taskRoutes from "./routes/task.routes.js";
@@ -41,7 +45,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // When running from backend/, the uploads folder is relative to this directory
 app.use(
   "/uploads",
-  express.static(path.join(process.cwd(), "uploads"), {
+  express.static(path.join(__dirname, "uploads"), {
     maxAge: "1d",
     etag: false,
     setHeaders: (res, path) => {
