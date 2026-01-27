@@ -37,7 +37,23 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Serve uploaded files statically so admin can view/download
 // When running from backend/, the uploads folder is relative to this directory
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+// Serve uploaded files statically so admin can view/download
+// When running from backend/, the uploads folder is relative to this directory
+app.use(
+  "/uploads",
+  express.static(path.join(process.cwd(), "uploads"), {
+    maxAge: "1d",
+    etag: false,
+    setHeaders: (res, path) => {
+      // Set appropriate MIME types
+      if (path.endsWith(".pdf")) {
+        res.setHeader("Content-Type", "application/pdf");
+      } else if (path.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+        res.setHeader("Content-Type", "image/*");
+      }
+    },
+  }),
+);
 
 // Routes
 app.use("/api/users", userRoutes);

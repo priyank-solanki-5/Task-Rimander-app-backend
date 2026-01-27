@@ -6,6 +6,8 @@ const Documents = () => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const apiBase = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
 
@@ -53,15 +55,10 @@ const Documents = () => {
   };
 
   const getDownloadUrl = (doc) => {
-    if (!doc) return "#";
-    // Prefer the static uploads path (no auth needed)
-    const raw = doc.filePath || "";
-    if (raw) {
-      const normalized = raw.startsWith("/") ? raw.slice(1) : raw;
-      return `${apiBase}/${normalized}`;
-    }
-    // Fallback to auth-protected download endpoint
-    return doc._id ? `${apiBase}/api/admin/documents/${doc._id}/download` : "#";
+    if (!doc || !doc._id) return "#";
+    // Use the auth-protected download endpoint for admin
+    // This ensures proper authentication and file path resolution
+    return `${apiBase}/api/admin/documents/${doc._id}/download`;
   };
 
   const getFileIcon = (mimeType) => {
@@ -100,6 +97,99 @@ const Documents = () => {
           clipRule="evenodd"
         />
       </svg>
+    );
+  };
+
+  const handlePreview = (doc) => {
+    setPreviewDoc(doc);
+    setShowPreview(true);
+  };
+
+  const closePreview = () => {
+    setShowPreview(false);
+    setPreviewDoc(null);
+  };
+
+  const renderPreviewContent = () => {
+    if (!previewDoc) return null;
+
+    const url = getDownloadUrl(previewDoc);
+    const mimeType = previewDoc.mimeType || "";
+
+    // Image preview
+    if (mimeType.startsWith("image/")) {
+      return (
+        <img
+          src={url}
+          alt={previewDoc.originalName}
+          className="max-w-full max-h-[80vh] mx-auto rounded-lg"
+        />
+      );
+    }
+
+    // PDF preview
+    if (mimeType.includes("pdf")) {
+      return (
+        <iframe
+          src={url}
+          className="w-full h-[80vh] rounded-lg border-0"
+          title={previewDoc.originalName}
+        />
+      );
+    }
+
+    // Text files
+    if (mimeType.startsWith("text/")) {
+      return (
+        <iframe
+          src={url}
+          className="w-full h-[80vh] rounded-lg border border-slate-700 bg-white"
+          title={previewDoc.originalName}
+        />
+      );
+    }
+
+    // For other file types, show download option
+    return (
+      <div className="text-center py-12">
+        <svg
+          className="w-20 h-20 mx-auto text-slate-500 mb-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+          />
+        </svg>
+        <p className="text-slate-300 mb-4">
+          Preview not available for this file type
+        </p>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg transition"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+          Download File
+        </a>
+      </div>
     );
   };
 
@@ -225,30 +315,135 @@ const Documents = () => {
                       {formatDate(doc.createdAt)}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleDelete(doc._id)}
-                        className="text-red-400 hover:text-red-300 transition"
-                        title="Delete document"
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handlePreview(doc)}
+                          className="text-sky-400 hover:text-sky-300 transition"
+                          title="Preview document"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(doc._id)}
+                          className="text-red-400 hover:text-red-300 transition"
+                          title="Delete document"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {showPreview && previewDoc && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={closePreview}
+        >
+          <div
+            className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="text-sky-400">
+                  {getFileIcon(previewDoc.mimeType)}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    {previewDoc.originalName || previewDoc.filename}
+                  </h3>
+                  <p className="text-sm text-slate-400">
+                    {formatFileSize(previewDoc.fileSize)} •{" "}
+                    {previewDoc.mimeType.split("/")[1]?.toUpperCase()}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={getDownloadUrl(previewDoc)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 text-slate-400 hover:text-sky-400 hover:bg-slate-800 rounded-lg transition"
+                  title="Download"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                    />
+                  </svg>
+                </a>
+                <button
+                  onClick={closePreview}
+                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
+                  title="Close"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 overflow-auto bg-slate-800/50">
+              {renderPreviewContent()}
+            </div>
           </div>
         </div>
       )}
