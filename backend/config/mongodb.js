@@ -14,10 +14,7 @@ const connectDB = async () => {
 
     console.log("📊 Connecting to MongoDB...");
 
-    await mongoose.connect(mongodbUrl, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(mongodbUrl);
 
     console.log("✅ MongoDB connection established successfully");
     return mongoose.connection;
