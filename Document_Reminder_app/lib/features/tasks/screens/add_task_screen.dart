@@ -43,18 +43,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   void _handleSave() {
     if (_formKey.currentState!.validate()) {
-      if (_selectedMember == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Please select a member')));
-        return;
-      }
-      if (_selectedDocumentType == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select document type')),
-        );
-        return;
-      }
+      // Member and Document Type are now OPTIONAL
+
       if (_selectedDate == null) {
         ScaffoldMessenger.of(
           context,
@@ -93,7 +83,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Select Member',
+                      'Select Member (Optional)',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
@@ -155,7 +145,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Document Type',
+                      'Document Type (Optional)',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),

@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../../../core/providers/document_provider.dart';
 import '../../../core/providers/member_provider.dart';
 import '../../../core/models/document.dart';
-import 'package:open_file/open_file.dart';
 import 'add_document_screen.dart';
 
 class DocumentsScreen extends StatefulWidget {
@@ -261,15 +260,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   Future<void> _viewDocument(Document document) async {
-    try {
-      await OpenFile.open(document.filePath);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Could not open document: $e')));
-      }
-    }
+    await context.read<DocumentProvider>().viewDocument(document);
   }
 
   Future<void> _deleteDocument(Document document) async {
