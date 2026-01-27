@@ -12,7 +12,9 @@ class MemberProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   // Load all members
-  Future<void> loadMembers() async {
+  Future<void> loadMembers({bool forceRefresh = false}) async {
+    if (_members.isNotEmpty && !forceRefresh) return;
+
     _isLoading = true;
     notifyListeners();
 
@@ -42,7 +44,7 @@ class MemberProvider extends ChangeNotifier {
       final createdMember = await _memberService.createMember(member);
       if (createdMember != null) {
         // Reload all members to get fresh data
-        await loadMembers();
+        await loadMembers(forceRefresh: true);
         debugPrint('Member added successfully with ID: ${createdMember.id}');
         return createdMember.id;
       }
@@ -57,10 +59,13 @@ class MemberProvider extends ChangeNotifier {
   Future<bool> updateMember(Member member) async {
     try {
       if (member.id == null) return false;
-      final updatedMember = await _memberService.updateMember(member.id!, member);
+      final updatedMember = await _memberService.updateMember(
+        member.id!,
+        member,
+      );
       if (updatedMember != null) {
         // Reload all members
-        await loadMembers();
+        await loadMembers(forceRefresh: true);
         debugPrint('Member updated successfully');
         return true;
       }
@@ -77,7 +82,7 @@ class MemberProvider extends ChangeNotifier {
       final success = await _memberService.deleteMember(id);
       if (success) {
         // Reload all members
-        await loadMembers();
+        await loadMembers(forceRefresh: true);
         debugPrint('Member deleted successfully');
       }
       return success;

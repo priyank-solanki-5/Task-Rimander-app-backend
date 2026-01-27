@@ -4,7 +4,7 @@ import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/documents/screens/document_viewer_screen.dart';
-import '../features/documents/screens/upload_document_screen.dart';
+import '../features/documents/screens/add_document_screen.dart';
 import '../features/members/screens/add_member_screen.dart';
 import '../features/settings/screens/notification_settings_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
@@ -34,7 +34,7 @@ class AppRoutes {
     main: (context) => const MainScreen(),
     addMember: (context) => const AddMemberScreen(),
     taskDetail: (context) => const TaskDetailScreen(),
-    uploadDocument: (context) => const UploadDocumentScreen(),
+    uploadDocument: (context) => const AddDocumentScreen(),
     documentViewer: (context) => const DocumentViewerScreen(),
     notificationSettings: (context) => const NotificationSettingsScreen(),
     settings: (context) => const SettingsScreen(),

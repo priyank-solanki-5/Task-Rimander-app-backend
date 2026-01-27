@@ -54,7 +54,9 @@ class TaskProvider extends ChangeNotifier {
   }
 
   // Load all tasks from API
-  Future<void> loadTasks() async {
+  Future<void> loadTasks({bool forceRefresh = false}) async {
+    if (_tasks.isNotEmpty && !forceRefresh) return;
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();

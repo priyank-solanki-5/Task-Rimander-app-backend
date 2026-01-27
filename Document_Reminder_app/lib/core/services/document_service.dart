@@ -25,20 +25,30 @@ class DocumentService {
   }
 
   /// Upload a document for a task with progress tracking.
+  /// Upload a document for a task or member with progress tracking.
   Future<Map<String, dynamic>> uploadDocument({
-    required String filePath,
-    required String taskId,
+    String? filePath,
+    List<int>? fileBytes,
+    String? fileName,
+    String? taskId,
+    String? memberId,
     required String userId,
     Function(int, int)? onProgress,
   }) async {
     try {
-      debugPrint('📁 Document upload initiated for task: $taskId');
+      debugPrint('📁 Document upload initiated');
+
+      final Map<String, dynamic> bodyData = {};
+      if (taskId != null) bodyData['taskId'] = taskId;
+      if (memberId != null) bodyData['memberId'] = memberId;
 
       final response = await _apiClient.uploadFile(
         ApiConfig.documentsUpload,
         filePath,
         'document',
-        data: {'taskId': taskId},
+        fileBytes: fileBytes,
+        fileName: fileName,
+        data: bodyData,
         onSendProgress: onProgress,
       );
 

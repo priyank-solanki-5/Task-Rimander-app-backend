@@ -11,6 +11,7 @@ class TaskController {
         categoryId,
         isRecurring,
         recurrenceType,
+        memberId,
       } = req.body;
 
       const userId = req.user.id; // Get from authenticated token
@@ -44,7 +45,8 @@ class TaskController {
         dueDate,
         categoryId,
         isRecurring,
-        recurrenceType
+        recurrenceType,
+        memberId
       );
 
       res.status(201).json({
@@ -103,6 +105,7 @@ class TaskController {
         categoryId,
         isRecurring,
         recurrenceType,
+        memberId,
       } = req.body;
 
       const userId = req.user.id; // Get from authenticated token
@@ -122,6 +125,7 @@ class TaskController {
         categoryId,
         isRecurring,
         recurrenceType,
+        memberId,
       });
 
       res.status(200).json({

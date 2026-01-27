@@ -6,7 +6,12 @@ import 'token_storage.dart';
 /// Authentication service that wraps the API service
 /// Provides a simplified interface for authentication operations
 class AuthService {
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
+  AuthService._internal();
+
   final AuthApiService _authApiService = AuthApiService();
+  User? _cachedUser;
 
   /// Register a new user
   Future<Map<String, dynamic>> registerUser({
@@ -32,21 +37,36 @@ class AuthService {
   }) async {
     debugPrint('Attempting login for: $email');
 
-    return await _authApiService.login(
+    final result = await _authApiService.login(
       email: email,
       password: password,
     );
+
+    if (result['success'] == true && result.containsKey('user')) {
+      _cachedUser = result['user'] as User;
+    }
+
+    return result;
   }
 
   /// Get current logged-in user
-  Future<User?> getCurrentUser() async {
+  Future<User?> getCurrentUser({bool forceRefresh = false}) async {
+    if (_cachedUser != null && !forceRefresh) {
+      return _cachedUser;
+    }
+
     final isAuth = await TokenStorage.isAuthenticated();
     if (!isAuth) {
       debugPrint('User not authenticated');
+      _cachedUser = null;
       return null;
     }
 
-    return await _authApiService.getProfile();
+    final user = await _authApiService.getProfile();
+    if (user != null) {
+      _cachedUser = user;
+    }
+    return user;
   }
 
   /// Update user password (for forgot password)
@@ -66,6 +86,7 @@ class AuthService {
 
   /// Logout user
   Future<void> logout() async {
+    _cachedUser = null;
     await _authApiService.logout();
     debugPrint('User logged out');
   }
