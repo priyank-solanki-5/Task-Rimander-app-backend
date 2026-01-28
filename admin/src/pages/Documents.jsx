@@ -61,7 +61,12 @@ const Documents = () => {
     const raw = doc.filePath || "";
     if (raw) {
       const normalized = raw.startsWith("/") ? raw.slice(1) : raw;
-      return `${apiBase}/${normalized}`;
+      // URL encode the path components to handle spaces and special characters
+      const pathParts = normalized.split("/");
+      const encodedPath = pathParts
+        .map((part) => encodeURIComponent(part))
+        .join("/");
+      return `${apiBase}/${encodedPath}`;
     }
 
     // Fallback to auth-protected download endpoint if no stored path

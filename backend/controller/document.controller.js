@@ -1,5 +1,6 @@
 import documentService from "../services/document.service.js";
 import fs from "fs/promises";
+import fsSyncModule from "fs";
 
 class DocumentController {
   async uploadDocument(req, res) {
@@ -18,7 +19,7 @@ class DocumentController {
         userId,
         taskId,
         req.file,
-        memberId
+        memberId,
       );
 
       res.status(201).json({
@@ -67,7 +68,7 @@ class DocumentController {
 
       const documents = await documentService.getDocumentsByTask(
         taskId,
-        userId
+        userId,
       );
 
       res.status(200).json({
@@ -106,12 +107,18 @@ class DocumentController {
       res.setHeader("Content-Type", mimeType);
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="${originalName}"`
+        `attachment; filename="${originalName}"`,
       );
 
-      // Stream file to response
-      const fileStream = await fs.readFile(path);
-      res.send(fileStream);
+      // Stream file to response (better for large files)
+      const fileStream = fsSyncModule.createReadStream(path);
+      fileStream.on("error", (error) => {
+        console.error("Error streaming file:", error);
+        if (!res.headersSent) {
+          res.status(500).json({ error: "Error reading file" });
+        }
+      });
+      fileStream.pipe(res);
     } catch (error) {
       res.status(404).json({ error: error.message });
     }

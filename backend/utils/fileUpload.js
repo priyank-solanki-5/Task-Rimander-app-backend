@@ -12,18 +12,25 @@ const __dirname = path.dirname(__filename);
 const uploadDir = path.join(__dirname, "../uploads/documents");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+  console.log(`✅ Created uploads directory: ${uploadDir}`);
+} else {
+  console.log(`✅ Uploads directory exists: ${uploadDir}`);
 }
 
 // Configure storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
+    // Ensure directory exists before saving
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    // Generate unique filename
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + "-" + uniqueSuffix + ext);
+    // Use original filename as-is
+    const filename = file.originalname;
+    console.log(`📁 Saving file: ${filename} to ${uploadDir}`);
+    cb(null, filename);
   },
 });
 
@@ -59,4 +66,18 @@ const upload = multer({
   fileFilter: fileFilter,
 });
 
-export default upload;
+// Middleware to handle multer errors
+const uploadErrorHandler = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === "FILE_TOO_LARGE") {
+      return res.status(400).json({ error: "File size exceeds 10MB limit" });
+    }
+    return res.status(400).json({ error: err.message });
+  }
+  if (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  next();
+};
+
+export { upload as default, uploadErrorHandler };
