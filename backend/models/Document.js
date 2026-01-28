@@ -8,7 +8,7 @@ const documentSchema = new mongoose.Schema(
     },
     originalName: {
       type: String,
-      required: true,
+      required: false,
     },
     mimeType: {
       type: String,
@@ -16,7 +16,7 @@ const documentSchema = new mongoose.Schema(
     },
     fileSize: {
       type: Number,
-      required: true,
+      required: false,
     },
     filePath: {
       type: String,
