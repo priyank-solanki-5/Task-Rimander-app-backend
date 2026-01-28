@@ -275,11 +275,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         surfaceTintColor: Colors.transparent,
         actions: [
           Consumer<ThemeProvider>(
-<<<<<<< HEAD
-            builder: (_, themeProvider, child) {
-=======
             builder: (_, themeProvider, _) {
->>>>>>> 7f15f44bef460acf876863746418a456a705a594
               return IconButton(
                 icon: Icon(
                   themeProvider.isDarkMode
