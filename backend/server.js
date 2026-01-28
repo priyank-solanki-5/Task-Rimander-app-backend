@@ -25,6 +25,7 @@ import "./models/Category.js";
 import "./models/Document.js";
 import "./models/Notification.js";
 import "./models/NotificationRule.js";
+import "./models/NotificationPreferences.js";
 import "./models/Reminder.js";
 import "./models/Member.js";
 

@@ -158,7 +158,7 @@ class NotificationController {
 
       const notifications = await notificationService.getUserNotifications(
         userId,
-        filter
+        filter,
       );
 
       return res.status(200).json({
@@ -262,7 +262,7 @@ class NotificationController {
 
       const tasks = await notificationService.getUpcomingTasks(
         userId,
-        days ? parseInt(days) : 7
+        days ? parseInt(days) : 7,
       );
 
       return res.status(200).json({
@@ -291,6 +291,107 @@ class NotificationController {
       });
     } catch (error) {
       console.error("Error triggering notification check:", error.message);
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Get user notification preferences
+   * GET /api/notifications/preferences
+   */
+  async getPreferences(req, res) {
+    try {
+      const userId = req.user.id;
+      const preferences = await notificationService.getUserPreferences(userId);
+
+      return res.status(200).json({
+        success: true,
+        preferences,
+      });
+    } catch (error) {
+      console.error("Error fetching preferences:", error.message);
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Update user notification preferences
+   * PUT /api/notifications/preferences
+   */
+  async updatePreferences(req, res) {
+    try {
+      const userId = req.user.id;
+      const updates = req.body;
+
+      const preferences = await notificationService.updateUserPreferences(
+        userId,
+        updates,
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Preferences updated successfully",
+        preferences,
+      });
+    } catch (error) {
+      console.error("Error updating preferences:", error.message);
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Update push notification token
+   * POST /api/notifications/push-token
+   */
+  async updatePushToken(req, res) {
+    try {
+      const userId = req.user.id;
+      const { pushToken } = req.body;
+
+      if (!pushToken) {
+        return res.status(400).json({ error: "pushToken is required" });
+      }
+
+      const preferences = await notificationService.updatePushToken(
+        userId,
+        pushToken,
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Push token updated successfully",
+        preferences,
+      });
+    } catch (error) {
+      console.error("Error updating push token:", error.message);
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Test push notification
+   * POST /api/notifications/test-push
+   */
+  async testPushNotification(req, res) {
+    try {
+      const userId = req.user.id;
+      const { title, message } = req.body;
+
+      const result = await notificationService.sendNotification(userId, {
+        title: title || "Test Notification",
+        message:
+          message || "This is a test notification from Task Reminder app",
+        taskId: null,
+        metadata: { test: true },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Test notification sent",
+        result,
+      });
+    } catch (error) {
+      console.error("Error sending test notification:", error.message);
       return res.status(400).json({ error: error.message });
     }
   }
