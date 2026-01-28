@@ -2,6 +2,13 @@ import documentDao from "../dao/documentDao.js";
 import taskDao from "../dao/taskDao.js";
 import fs from "fs/promises";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Get absolute path to uploads directory
+const UPLOADS_DIR = path.join(__dirname, "../uploads/documents");
 
 class DocumentService {
   async uploadDocument(userId, taskId, file, memberId = null) {
@@ -68,9 +75,10 @@ class DocumentService {
       throw new Error("Document not found or unauthorized");
     }
 
-    // Delete physical file
+    // Delete physical file using absolute path
     try {
-      await fs.unlink(document.filePath);
+      const absolutePath = path.join(UPLOADS_DIR, document.filename);
+      await fs.unlink(absolutePath);
     } catch (error) {
       console.error("Error deleting physical file:", error);
     }
@@ -86,15 +94,18 @@ class DocumentService {
       throw new Error("Document not found or unauthorized");
     }
 
+    // Get absolute path for file access
+    const absolutePath = path.join(UPLOADS_DIR, document.filename);
+
     // Check if file exists
     try {
-      await fs.access(document.filePath);
+      await fs.access(absolutePath);
     } catch (error) {
       throw new Error("File not found on server");
     }
 
     return {
-      path: document.filePath,
+      path: absolutePath,
       originalName: document.originalName,
       mimeType: document.mimeType,
     };

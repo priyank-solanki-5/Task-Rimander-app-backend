@@ -50,9 +50,15 @@ app.use(
       // Set appropriate MIME types
       if (filePath.endsWith(".pdf")) {
         res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", "inline");
       } else if (filePath.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
         res.setHeader("Content-Type", "image/*");
+        res.setHeader("Content-Disposition", "inline");
+      } else {
+        res.setHeader("Content-Disposition", "attachment");
       }
+      // Enable caching for static files
+      res.setHeader("Cache-Control", "public, max-age=86400");
     },
   }),
 );
