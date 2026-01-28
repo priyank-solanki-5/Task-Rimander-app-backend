@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../config/api_config.dart';
 import '../models/document.dart';
@@ -97,6 +98,14 @@ class DocumentService {
     try {
       await _apiClient.delete('${ApiConfig.documents}/$documentId');
       return true;
+    } on DioException catch (e) {
+      // If document is not found (404), it's already deleted. Treat as success.
+      if (e.response?.statusCode == 404) {
+        debugPrint('⚠️ Document not found (404), considering deleted.');
+        return true;
+      }
+      debugPrint('❌ Error deleting document: $e');
+      return false;
     } catch (e) {
       debugPrint('❌ Error deleting document: $e');
       return false;

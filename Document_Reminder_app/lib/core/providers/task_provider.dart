@@ -24,15 +24,26 @@ class TaskProvider extends ChangeNotifier {
 
   // Filtered task lists
   List<Task> get dueTasks {
-    return _tasks.where((task) => task.isOverdue).toList();
+    final due = _tasks.where((task) => task.isOverdue).toList();
+    due.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+    return due;
   }
 
   List<Task> get currentTasks {
-    return _tasks.where((task) => task.isDueToday).toList();
+    final current = _tasks.where((task) => task.isDueToday).toList();
+    current.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+    return current;
   }
 
   List<Task> get upcomingTasks {
     final upcoming = _tasks.where((task) => task.isUpcoming).toList();
+    upcoming.sort((a, b) {
+      if (a.dueDate == null && b.dueDate == null) return 0;
+      if (a.dueDate == null) return 1;
+      if (b.dueDate == null) return -1;
+      return a.dueDate!.compareTo(b.dueDate!);
+    });
+
     if (_showAllUpcoming) {
       return upcoming;
     }

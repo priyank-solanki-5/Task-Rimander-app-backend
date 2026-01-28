@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
 import '../models/document.dart';
 import '../services/document_service.dart';
 
@@ -73,6 +76,7 @@ class DocumentProvider extends ChangeNotifier {
   // Set member filter
   void setMemberFilter(String? memberId) {
     _selectedMemberId = memberId;
+    _selectedTaskId = null; // Clear task filter when filtering by member
     notifyListeners();
   }
 
@@ -84,10 +88,16 @@ class DocumentProvider extends ChangeNotifier {
 
   // Load all documents from API
   Future<void> loadDocuments({bool forceRefresh = false}) async {
-    if (_documents.isNotEmpty && !forceRefresh) return;
+    if (_documents.isNotEmpty && !forceRefresh) {
+      // Ensure we reset filters if we are just reloading/entering the screen
+      _selectedTaskId = null;
+      notifyListeners();
+      return;
+    }
 
     _isLoading = true;
     _errorMessage = null;
+    _selectedTaskId = null; // Reset task filter when loading all docs
     notifyListeners();
 
     try {
@@ -142,6 +152,56 @@ class DocumentProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  // View Document (Download to Temp & Open)
+  Future<void> viewDocument(Document document) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // 1. Get Temp Directory
+      final tempDir = await getTemporaryDirectory();
+
+      // 2. Construct path (Overwrite strategy: Always use same filename base)
+      // We keep the extension so the OS knows what app to open.
+      final extension = document.fileExtension.toLowerCase();
+      final filePath = '${tempDir.path}/temp_view_file.$extension';
+      final file = File(filePath);
+
+      // 3. Delete old file if exists (to be sure of overwrite)
+      if (await file.exists()) {
+        await file.delete();
+      }
+
+      // 4. Download content
+      debugPrint('📥 Downloading document to temp: $filePath');
+      final success = await _documentService.downloadDocument(
+        document.id!,
+        filePath,
+      );
+
+      _isLoading = false;
+      notifyListeners();
+
+      if (success) {
+        // 5. Open with external app
+        debugPrint('👀 Opening document...');
+        final result = await OpenFile.open(filePath);
+        if (result.type != ResultType.done) {
+          _errorMessage = 'Could not open file: ${result.message}';
+          notifyListeners();
+        }
+      } else {
+        _errorMessage = 'Failed to download document for viewing';
+        notifyListeners();
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Error opening document: $e';
+      notifyListeners();
+      debugPrint('❌ Error viewing document: $e');
     }
   }
 

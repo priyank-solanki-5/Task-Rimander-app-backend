@@ -66,7 +66,7 @@ export const verifyCategoryOwnership = async (req, res, next) => {
     }
 
     // Check if category is predefined (can't be modified) or belongs to user
-    if (!category.isPredefined && category.userId !== userId) {
+    if (!category.isPredefined && category.userId.toString() !== userId) {
       return res.status(403).json({
         success: false,
         error: "You don't have permission to access this category",
@@ -109,7 +109,7 @@ export const verifyDocumentOwnership = async (req, res, next) => {
       });
     }
 
-    const document = await documentDao.findDocumentById(documentId);
+    const document = await documentDao.findDocumentById(documentId, userId);
 
     if (!document) {
       return res.status(404).json({
@@ -118,7 +118,7 @@ export const verifyDocumentOwnership = async (req, res, next) => {
       });
     }
 
-    if (document.userId !== userId) {
+    if (document.userId.toString() !== userId) {
       return res.status(403).json({
         success: false,
         error: "You don't have permission to access this document",
@@ -160,7 +160,9 @@ export const verifyReminderOwnership = async (req, res, next) => {
       });
     }
 
-    if (reminder.userId !== userId) {
+    // Check ownership (handle both populated and unpopulated userId)
+    const reminderUserId = reminder.userId._id || reminder.userId;
+    if (reminderUserId.toString() !== userId) {
       return res.status(403).json({
         success: false,
         error: "You don't have permission to access this reminder",
@@ -204,7 +206,9 @@ export const verifyNotificationOwnership = async (req, res, next) => {
       });
     }
 
-    if (notification.userId !== userId) {
+    // Check ownership (handle both populated and unpopulated userId)
+    const notificationUserId = notification.userId._id || notification.userId;
+    if (notificationUserId.toString() !== userId) {
       return res.status(403).json({
         success: false,
         error: "You don't have permission to access this notification",

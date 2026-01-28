@@ -65,157 +65,188 @@ class TaskCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       elevation: 2,
-      shadowColor: theme.shadowColor.withValues(alpha: 0.1),
+      shadowColor: statusColor.withValues(alpha: 0.15), // Tinted shadow
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: isOverdue
-            ? BorderSide(
-                color: theme.colorScheme.error.withValues(alpha: 0.5),
-                width: 1,
-              )
-            : BorderSide.none,
+        // subtle border for dark mode visibility
+        side: BorderSide(
+          color: theme.brightness == Brightness.dark
+              ? theme.colorScheme.outline.withValues(alpha: 0.1)
+              : Colors.transparent,
+        ),
       ),
+      clipBehavior: Clip.antiAlias, // Needed for the gradient decoration
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Checkbox
-              Transform.scale(
-                scale: 1.1,
-                child: Checkbox(
-                  value: task.isCompleted,
-                  onChanged: onCheckboxChanged,
-                  shape: const CircleBorder(),
-                  activeColor: theme.colorScheme.primary,
-                  side: BorderSide(
-                    color: isOverdue
-                        ? theme.colorScheme.error
-                        : theme.unselectedWidgetColor,
-                    width: 2,
+        child: Container(
+          decoration: BoxDecoration(
+            // "Color Grading" - Solid dark background (No fade)
+            color: statusColor.withValues(alpha: 0.35),
+
+            // Strong visual indicator on the left
+            border: Border(
+              left: BorderSide(
+                color: statusColor,
+                width: 6, // Prominent strip
+              ),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Checkbox
+                Transform.scale(
+                  scale: 1.1,
+                  child: Checkbox(
+                    value: task.isCompleted,
+                    onChanged: onCheckboxChanged,
+                    shape: const CircleBorder(),
+                    activeColor: statusColor,
+                    side: BorderSide(
+                      color: isOverdue
+                          ? theme.colorScheme.error
+                          : theme.unselectedWidgetColor,
+                      width: 2,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
 
-              // Task details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    Text(
-                      task.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        decoration: task.isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
-                        color: task.isCompleted
-                            ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
-                            : theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    if (task.description != null &&
-                        task.description!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                // Task details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
                       Text(
-                        task.description!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        task.title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          decoration: task.isCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
+                          color: task.isCompleted
+                              ? theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.5,
+                                )
+                              : theme.colorScheme.onSurface,
                         ),
+                      ),
+                      if (task.description != null &&
+                          task.description!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          task.description!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+
+                      // Footer Row (Date & Status)
+                      Row(
+                        children: [
+                          // Due Date Chip (Enhanced)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface.withValues(
+                                alpha: 0.6,
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 14,
+                                  color: isOverdue
+                                      ? theme.colorScheme.error
+                                      : theme.colorScheme.onSurface.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  task.dueDate != null
+                                      ? DateFormat(
+                                          'MMM dd',
+                                        ).format(task.dueDate!)
+                                      : 'No date',
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: isOverdue
+                                        ? theme.colorScheme.error
+                                        : theme.colorScheme.onSurface
+                                              .withValues(alpha: 0.8),
+                                    fontWeight: isOverdue
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const Spacer(),
+
+                          // Status Badge
+                          if (!task.isCompleted)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusColor, // Solid color for contrast
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                _getTaskStatusLabel(),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: Colors.white, // White text
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+
+                          // Recurring Badge
+                          if (task.taskType == TaskType.recurring) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.secondary.withValues(
+                                  alpha: 0.1,
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.repeat_rounded,
+                                size: 14,
+                                color: theme.colorScheme.secondary,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
-                    const SizedBox(height: 12),
-
-                    // Footer Row (Date & Status)
-                    Row(
-                      children: [
-                        // Due Date
-                        Icon(
-                          Icons.calendar_today_rounded,
-                          size: 14,
-                          color: isOverdue
-                              ? theme.colorScheme.error
-                              : theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.6,
-                                ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          task.dueDate != null
-                              ? DateFormat('MMM dd').format(task.dueDate!)
-                              : 'No date',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: isOverdue
-                                ? theme.colorScheme.error
-                                : theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.7,
-                                  ),
-                            fontWeight: isOverdue
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                          ),
-                        ),
-
-                        const Spacer(),
-
-                        // Status Badge
-                        if (!task.isCompleted)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: statusColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: statusColor.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Text(
-                              _getTaskStatusLabel(),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: statusColor,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-
-                        // Recurring Badge
-                        if (task.taskType == TaskType.recurring) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.secondary.withValues(
-                                alpha: 0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.repeat_rounded,
-                              size: 14,
-                              color: theme.colorScheme.secondary,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

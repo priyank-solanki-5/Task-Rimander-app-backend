@@ -14,29 +14,24 @@ class AppConstants {
   ];
 
   static const List<String> documentTypes = [
-    'Passport',
     'Driving License',
+    'Passport',
     'Aadhaar Card',
     'PAN Card',
     'Voter ID',
-    'Insurance Policy',
+    '10th Marksheet',
+    '12th Marksheet',
+    'Degree Certificate',
+    'Life Insurance',
+    'Health Insurance',
     'Vehicle Registration',
     'Property Documents',
     'Bank Documents',
     'Medical Records',
-    'Educational Certificates',
     'Other',
   ];
 
-  static const List<int> reminderDays = [
-    1,
-    3,
-    7,
-    15,
-    30,
-    60,
-    90,
-  ];
+  static const List<int> reminderDays = [1, 3, 7, 15, 30, 60, 90];
 
   // App strings
   static const String appName = 'Document Reminder';

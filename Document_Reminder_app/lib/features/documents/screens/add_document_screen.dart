@@ -73,6 +73,44 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
               ),
               const SizedBox(height: 16),
 
+              // Member Selection (Mandatory)
+              Consumer<MemberProvider>(
+                builder: (context, memberProvider, child) {
+                  return DropdownButtonFormField<String?>(
+                    value: _selectedMemberId,
+                    decoration: const InputDecoration(
+                      labelText: 'Select Member *', // Marked as mandatory
+                      prefixIcon: Icon(Icons.person_outline),
+                    ),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('Myself'),
+                      ),
+                      ...memberProvider.members.map((member) {
+                        return DropdownMenuItem<String?>(
+                          value: member.id,
+                          child: Text(member.name),
+                        );
+                      }),
+                    ],
+                    // Although 'Myself' (null) is valid, this validator ensures clarity
+                    validator: (value) {
+                      // Note: value can be null (for Myself), so we just return null to say "it's valid"
+                      // If we wanted to FORCE a non-myself member, we'd check value == null.
+                      // But the user said "Member could be the user itself", so null is fine.
+                      return null;
+                    },
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedMemberId = value;
+                      });
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+
               // Task Selection (Optional)
               Consumer<TaskProvider>(
                 builder: (context, taskProvider, child) {
