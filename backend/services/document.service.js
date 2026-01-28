@@ -17,11 +17,11 @@ class DocumentService {
 
     // Prepare document data
     const docData = {
-      filename: file.filename,
+      filename: file.originalname,
       originalName: file.originalname,
       mimeType: file.mimetype,
       fileSize: file.size,
-      filePath: `uploads/documents/${file.filename}`,
+      filePath: `uploads/documents/${file.originalname}`,
       userId,
     };
 
