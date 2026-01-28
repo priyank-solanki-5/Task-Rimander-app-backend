@@ -371,7 +371,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
           children: [
             /// Task selector
             Consumer<TaskProvider>(
-              builder: (_, taskProvider, __) {
+              builder: (_, taskProvider, _) {
                 return DropdownButtonFormField<String?>(
                   value: taskProvider.selectedTaskId,
                   decoration: InputDecoration(
