@@ -35,10 +35,11 @@ class AuthService {
     }
   }
 
-  /// Login user
+  /// Login user with 30-day persistence
   Future<Map<String, dynamic>> loginUser({
     required String email,
     required String password,
+    bool rememberMe = true,
   }) async {
     debugPrint('Attempting login for: $email');
 
@@ -50,11 +51,57 @@ class AuthService {
 
       if (result['success'] == true && result.containsKey('user')) {
         _cachedUser = result['user'] as User;
+
+        // Save login session with 30-day expiry if remember me is enabled
+        if (rememberMe && result.containsKey('token')) {
+          await _saveLoginSession(result['token']);
+        }
       }
       return result;
     } catch (e) {
       debugPrint('Login error: $e');
       return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Save login session for 30 days
+  Future<void> _saveLoginSession(String token) async {
+    try {
+      await TokenStorage.saveToken(token);
+      // Set expiry to 30 days from now
+      final expiryTime = DateTime.now().add(const Duration(days: 30));
+      await TokenStorage.saveTokenExpiry(expiryTime);
+      await TokenStorage.saveLastLogin(DateTime.now());
+      debugPrint('Login session saved for 30 days');
+    } catch (e) {
+      debugPrint('Error saving login session: $e');
+    }
+  }
+
+  /// Auto-login if session is still valid
+  Future<bool> autoLogin() async {
+    try {
+      debugPrint('Checking for existing session...');
+
+      final isAuth = await TokenStorage.isAuthenticated();
+      if (!isAuth) {
+        debugPrint('No valid session found');
+        return false;
+      }
+
+      // Try to refresh token to ensure it's fresh
+      final refreshResult = await _authApiService.refreshToken();
+      if (refreshResult['success'] == false) {
+        // If refresh fails, try to get profile anyway
+        final user = await getCurrentUser(forceRefresh: true);
+        return user != null;
+      }
+
+      debugPrint('Auto-login successful');
+      return true;
+    } catch (e) {
+      debugPrint('Auto-login error: $e');
+      return false;
     }
   }
 
@@ -103,12 +150,13 @@ class AuthService {
     }
   }
 
-  /// Logout user
+  /// Logout user and clear session
   Future<void> logout() async {
     try {
       _cachedUser = null;
+      await TokenStorage.clearAll();
       await _authApiService.logout();
-      debugPrint('User logged out');
+      debugPrint('User logged out and session cleared');
     } catch (e) {
       debugPrint('Logout error: $e');
     }

@@ -74,6 +74,22 @@ class UserService {
   }
 
   /**
+   * Refresh user token for persistent login
+   * Generates a new token with fresh 30-day expiry
+   */
+  async refreshUserToken(userId) {
+    const user = await userDao.findUserById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Generate new token with fresh 30-day expiry
+    const newToken = authService.refreshToken(user);
+
+    return newToken;
+  }
+
+  /**
    * Get user profile
    */
   async getUserProfile(userId) {

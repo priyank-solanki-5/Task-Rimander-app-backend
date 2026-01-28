@@ -18,6 +18,7 @@ import 'token_storage.dart';
 /// - Password change functionality
 /// - Notification preferences management
 /// - User settings management
+/// - Token refresh for persistent login
 /// - Automatic error handling with user-friendly messages
 class AuthApiService {
   /// API client instance for making HTTP requests
@@ -26,6 +27,35 @@ class AuthApiService {
   // ========================================
   // 🔐 AUTHENTICATION METHODS
   // ========================================
+
+  /// Refresh JWT token before expiry
+  Future<Map<String, dynamic>> refreshToken() async {
+    try {
+      final response = await _apiClient.post(
+        '/api/users/refresh-token',
+        data: {},
+      );
+
+      debugPrint('Refresh token response: ${response.data}');
+
+      if (response.data['token'] != null) {
+        await TokenStorage.saveToken(response.data['token']);
+        // Token is valid for 30 days
+        await TokenStorage.saveTokenExpiry(
+          DateTime.now().add(const Duration(days: 30)),
+        );
+        return {'success': true, 'message': 'Token refreshed'};
+      }
+
+      return {'success': false, 'message': 'Failed to refresh token'};
+    } on ApiException catch (e) {
+      debugPrint('Refresh token error: ${e.message}');
+      return {'success': false, 'message': e.message};
+    } catch (e) {
+      debugPrint('Refresh token unexpected error: $e');
+      return {'success': false, 'message': 'Failed to refresh token'};
+    }
+  }
 
   /// Registers a new user account
   ///
