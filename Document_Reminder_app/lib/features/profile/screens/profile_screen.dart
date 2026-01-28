@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+
 import '../../../core/models/user.dart';
 import '../../../core/providers/document_provider.dart';
 import '../../../core/providers/member_provider.dart';
@@ -20,7 +19,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   String _userName = 'User';
   User? _currentUser;
-  String? _profilePhotoPath;
+
   final _authService = AuthService();
 
   @override
@@ -53,7 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _memberCount = memberProvider.members.length;
         _currentUser = user;
         _userName = user?.username ?? 'User';
-        _profilePhotoPath = null;
+
         _isLoading = false;
       });
     } catch (e) {
@@ -128,41 +127,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Center(
                       child: Column(
                         children: [
-                          // Profile Photo
-                          Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 60,
-                                backgroundColor: theme.colorScheme.primary,
-                                backgroundImage: _profilePhotoPath != null
-                                    ? FileImage(File(_profilePhotoPath!))
-                                    : null,
-                                child: _profilePhotoPath == null
-                                    ? Icon(
-                                        Icons.person,
-                                        size: 60,
-                                        color: theme.colorScheme.onPrimary,
-                                      )
-                                    : null,
+                          // Profile Avatar
+                          CircleAvatar(
+                            radius: 60,
+                            backgroundColor: theme.colorScheme.primaryContainer,
+                            child: Text(
+                              _currentUser?.initials ??
+                                  _userName.substring(0, 1).toUpperCase(),
+                              style: theme.textTheme.displayMedium?.copyWith(
+                                color: theme.colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.bold,
                               ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: CircleAvatar(
-                                  radius: 18,
-                                  backgroundColor: theme.colorScheme.primary,
-                                  child: IconButton(
-                                    icon: Icon(
-                                      Icons.camera_alt,
-                                      size: 18,
-                                      color: theme.colorScheme.onPrimary,
-                                    ),
-                                    onPressed: _changeProfilePhoto,
-                                    padding: EdgeInsets.zero,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -244,42 +220,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
       ),
     );
-  }
-
-  Future<void> _changeProfilePhoto() async {
-    final picker = ImagePicker();
-
-    try {
-      final pickedFile = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 85,
-      );
-
-      if (pickedFile != null) {
-        // Note: Profile photo is no longer persisted locally
-        // This would need to be uploaded to the API server
-        setState(() {
-          _profilePhotoPath = pickedFile.path;
-        });
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile photo selected (not persisted)'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
-      }
-    }
   }
 }
 

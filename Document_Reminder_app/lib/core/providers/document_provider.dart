@@ -3,12 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import '../models/document.dart';
-import '../services/document_service.dart';
+import '../services/document_api_service.dart';
 
 enum SortType { alphabetical, uploadDate }
 
 class DocumentProvider extends ChangeNotifier {
-  final DocumentService _documentService = DocumentService();
+  final DocumentApiService _documentService = DocumentApiService();
 
   List<Document> _documents = [];
   String? _selectedTaskId;
@@ -227,7 +227,21 @@ class DocumentProvider extends ChangeNotifier {
       );
 
       if (result['success']) {
-        notifyListeners();
+        try {
+          // Parse the new document from the response and add it to the list
+          final newDocData = result['data']['data'];
+          if (newDocData != null) {
+            final newDoc = Document.fromJson(newDocData);
+            _documents.insert(0, newDoc); // Add to top of list
+            notifyListeners();
+          }
+        } catch (e) {
+          debugPrint('⚠️ Error parsing new document response: $e');
+          // Still return true as upload was successful, just UI update failed
+          // Optionally trigger a full reload here as fallback
+          loadDocuments(forceRefresh: true);
+        }
+
         debugPrint('✅ Document uploaded successfully');
         return true;
       }

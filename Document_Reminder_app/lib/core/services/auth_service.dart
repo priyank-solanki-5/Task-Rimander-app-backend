@@ -22,12 +22,17 @@ class AuthService {
   }) async {
     debugPrint('Attempting to register user: $email');
 
-    return await _authApiService.register(
-      username: name,
-      email: email,
-      mobilenumber: mobile,
-      password: password,
-    );
+    try {
+      return await _authApiService.register(
+        username: name,
+        email: email,
+        mobilenumber: mobile,
+        password: password,
+      );
+    } catch (e) {
+      debugPrint('Registration error: $e');
+      return {'success': false, 'message': e.toString()};
+    }
   }
 
   /// Login user
@@ -37,16 +42,20 @@ class AuthService {
   }) async {
     debugPrint('Attempting login for: $email');
 
-    final result = await _authApiService.login(
-      email: email,
-      password: password,
-    );
+    try {
+      final result = await _authApiService.login(
+        email: email,
+        password: password,
+      );
 
-    if (result['success'] == true && result.containsKey('user')) {
-      _cachedUser = result['user'] as User;
+      if (result['success'] == true && result.containsKey('user')) {
+        _cachedUser = result['user'] as User;
+      }
+      return result;
+    } catch (e) {
+      debugPrint('Login error: $e');
+      return {'success': false, 'message': e.toString()};
     }
-
-    return result;
   }
 
   /// Get current logged-in user
@@ -55,18 +64,23 @@ class AuthService {
       return _cachedUser;
     }
 
-    final isAuth = await TokenStorage.isAuthenticated();
-    if (!isAuth) {
-      debugPrint('User not authenticated');
-      _cachedUser = null;
+    try {
+      final isAuth = await TokenStorage.isAuthenticated();
+      if (!isAuth) {
+        debugPrint('User not authenticated');
+        _cachedUser = null;
+        return null;
+      }
+
+      final user = await _authApiService.getProfile();
+      if (user != null) {
+        _cachedUser = user;
+      }
+      return user;
+    } catch (e) {
+      debugPrint('Get current user error: $e');
       return null;
     }
-
-    final user = await _authApiService.getProfile();
-    if (user != null) {
-      _cachedUser = user;
-    }
-    return user;
   }
 
   /// Update user password (for forgot password)
@@ -77,49 +91,82 @@ class AuthService {
   }) async {
     debugPrint('Attempting password reset for: $email');
 
-    return await _authApiService.changePassword(
-      email: email,
-      mobilenumber: mobile,
-      newPassword: newPassword,
-    );
+    try {
+      return await _authApiService.changePassword(
+        email: email,
+        mobilenumber: mobile,
+        newPassword: newPassword,
+      );
+    } catch (e) {
+      debugPrint('Update password error: $e');
+      return {'success': false, 'message': e.toString()};
+    }
   }
 
   /// Logout user
   Future<void> logout() async {
-    _cachedUser = null;
-    await _authApiService.logout();
-    debugPrint('User logged out');
+    try {
+      _cachedUser = null;
+      await _authApiService.logout();
+      debugPrint('User logged out');
+    } catch (e) {
+      debugPrint('Logout error: $e');
+    }
   }
 
   /// Check if user is authenticated
   Future<bool> isAuthenticated() async {
-    return await _authApiService.isAuthenticated();
+    try {
+      return await _authApiService.isAuthenticated();
+    } catch (e) {
+      return false;
+    }
   }
 
   /// Get notification preferences
   Future<NotificationPreferences?> getNotificationPreferences() async {
-    return await _authApiService.getNotificationPreferences();
+    try {
+      return await _authApiService.getNotificationPreferences();
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Update notification preferences
   Future<bool> updateNotificationPreferences(
     NotificationPreferences preferences,
   ) async {
-    return await _authApiService.updateNotificationPreferences(preferences);
+    try {
+      return await _authApiService.updateNotificationPreferences(preferences);
+    } catch (e) {
+      return false;
+    }
   }
 
   /// Get user settings
   Future<UserSettings?> getUserSettings() async {
-    return await _authApiService.getUserSettings();
+    try {
+      return await _authApiService.getUserSettings();
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Update user settings
   Future<bool> updateUserSettings(UserSettings settings) async {
-    return await _authApiService.updateUserSettings(settings);
+    try {
+      return await _authApiService.updateUserSettings(settings);
+    } catch (e) {
+      return false;
+    }
   }
 
   /// Update user metadata
   Future<bool> updateMetadata(Map<String, dynamic> metadata) async {
-    return await _authApiService.updateMetadata(metadata);
+    try {
+      return await _authApiService.updateMetadata(metadata);
+    } catch (e) {
+      return false;
+    }
   }
 }

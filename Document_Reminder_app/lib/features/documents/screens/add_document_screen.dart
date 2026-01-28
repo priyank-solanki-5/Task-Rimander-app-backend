@@ -77,7 +77,6 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
               Consumer<MemberProvider>(
                 builder: (context, memberProvider, child) {
                   return DropdownButtonFormField<String?>(
-                    value: _selectedMemberId,
                     decoration: const InputDecoration(
                       labelText: 'Select Member *', // Marked as mandatory
                       prefixIcon: Icon(Icons.person_outline),
@@ -94,6 +93,14 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
                         );
                       }),
                     ],
+                    // Ensure the selected value actually exists in the items list
+                    // If member was deleted or list refreshed, reset to null (Myself) if needed
+                    value:
+                        memberProvider.members.any(
+                          (m) => m.id == _selectedMemberId,
+                        )
+                        ? _selectedMemberId
+                        : null,
                     // Although 'Myself' (null) is valid, this validator ensures clarity
                     validator: (value) {
                       // Note: value can be null (for Myself), so we just return null to say "it's valid"
@@ -229,10 +236,13 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
     setState(() => _isLoading = true);
 
     try {
+      if (!mounted) return;
+      final provider = context.read<DocumentProvider>();
       final userId = await TokenStorage.getUserId();
+
       if (userId == null) throw Exception('User not logged in');
 
-      final provider = context.read<DocumentProvider>();
+      if (!mounted) return;
 
       await provider.uploadDocument(
         filePath: _selectedFilePath,

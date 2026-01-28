@@ -1,4 +1,4 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/foundation.dart';
 
 class TokenStorage {
@@ -7,11 +7,13 @@ class TokenStorage {
   static const String _userIdKey = 'user_id';
   static const String _userEmailKey = 'user_email';
 
+  // Secure storage instance
+  static const _storage = FlutterSecureStorage();
+
   /// Save authentication token
   static Future<void> saveToken(String token) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_tokenKey, token);
+      await _storage.write(key: _tokenKey, value: token);
     } catch (e) {
       debugPrint('Error saving token: $e');
     }
@@ -20,8 +22,7 @@ class TokenStorage {
   /// Get authentication token
   static Future<String?> getToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_tokenKey);
+      return await _storage.read(key: _tokenKey);
     } catch (e) {
       debugPrint('Error getting token: $e');
       return null;
@@ -30,8 +31,7 @@ class TokenStorage {
 
   static Future<void> deleteToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_tokenKey);
+      await _storage.delete(key: _tokenKey);
     } catch (e) {
       debugPrint('Error deleting token: $e');
     }
@@ -40,8 +40,7 @@ class TokenStorage {
   /// Save user ID
   static Future<void> saveUserId(String userId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_userIdKey, userId);
+      await _storage.write(key: _userIdKey, value: userId);
     } catch (e) {
       debugPrint('Error saving user ID: $e');
     }
@@ -50,8 +49,7 @@ class TokenStorage {
   /// Get user ID
   static Future<String?> getUserId() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_userIdKey);
+      return await _storage.read(key: _userIdKey);
     } catch (e) {
       debugPrint('Error getting user ID: $e');
       return null;
@@ -61,8 +59,7 @@ class TokenStorage {
   /// Save user email
   static Future<void> saveUserEmail(String email) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_userEmailKey, email);
+      await _storage.write(key: _userEmailKey, value: email);
     } catch (e) {
       debugPrint('Error saving user email: $e');
     }
@@ -71,8 +68,7 @@ class TokenStorage {
   /// Get user email
   static Future<String?> getUserEmail() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_userEmailKey);
+      return await _storage.read(key: _userEmailKey);
     } catch (e) {
       debugPrint('Error getting user email: $e');
       return null;
@@ -88,10 +84,7 @@ class TokenStorage {
   /// Clear all stored authentication data
   static Future<void> clearAll() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_tokenKey);
-      await prefs.remove(_userIdKey);
-      await prefs.remove(_userEmailKey);
+      await _storage.deleteAll();
     } catch (e) {
       debugPrint('Error clearing storage: $e');
     }

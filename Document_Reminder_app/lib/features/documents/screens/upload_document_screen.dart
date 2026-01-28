@@ -241,7 +241,7 @@ import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 
 import '../../../core/services/token_storage.dart';
-import '../../../core/services/document_service.dart';
+// import '../../../core/services/document_service.dart'; // Removed
 import '../../../core/providers/task_provider.dart';
 import '../../../core/providers/document_provider.dart';
 import '../../../widgets/custom_button.dart';
@@ -320,12 +320,19 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         throw Exception('User not logged in');
       }
 
-      final result = await DocumentService().uploadDocument(
+      if (!mounted) return;
+
+      final documentProvider = context.read<DocumentProvider>();
+      final success = await documentProvider.uploadDocument(
         filePath: _selectedFilePath,
         fileBytes: _selectedFileBytes,
         fileName: _selectedFileName,
         taskId: taskProvider.selectedTaskId!,
         userId: userId,
+        // DocumentProvider's uploadDocument doesn't currently expose onProgress in its signature
+        // in the implementation I saw earlier, but if it did, we'd pass it.
+        // Checking DocumentProvider signature from earlier view:
+        // Future<bool> uploadDocument({..., void Function(int, int)? onProgress})
         onProgress: (sent, total) {
           if (total > 0) {
             setState(() {
@@ -337,15 +344,16 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
       if (!mounted) return;
 
-      if (result['success'] == true) {
-        context.read<DocumentProvider>().loadDocuments();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? 'Upload successful')),
-        );
+      if (success) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Upload successful')));
         Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? 'Upload failed')),
+          SnackBar(
+            content: Text(documentProvider.errorMessage ?? 'Upload failed'),
+          ),
         );
       }
     } catch (e) {
@@ -371,7 +379,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
           children: [
             /// Task selector
             Consumer<TaskProvider>(
-              builder: (_, taskProvider, __) {
+              builder: (_, taskProvider, child) {
                 return DropdownButtonFormField<String?>(
                   value: taskProvider.selectedTaskId,
                   decoration: InputDecoration(

@@ -107,6 +107,14 @@ class User {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  /// Get initials for avatar
+  String get initials {
+    final parts = username.trim().split(' ');
+    if (parts.isEmpty) return '';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
+  }
 }
 
 class NotificationPreferences {

@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import '../models/member.dart';
-import '../services/member_service.dart';
+import '../services/member_api_service.dart';
 
 class MemberProvider extends ChangeNotifier {
-  final MemberService _memberService = MemberService();
+  final MemberApiService _memberService = MemberApiService();
 
   List<Member> _members = [];
   bool _isLoading = false;
