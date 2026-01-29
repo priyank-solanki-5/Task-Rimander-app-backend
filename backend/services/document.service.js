@@ -24,11 +24,11 @@ class DocumentService {
 
     // Prepare document data
     const docData = {
-      filename: file.originalname,
+      filename: file.filename,
       originalName: file.originalname,
       mimeType: file.mimetype,
       fileSize: file.size,
-      filePath: `uploads/documents/${file.originalname}`,
+      filePath: `uploads/documents/${file.filename}`,
       userId,
     };
 
@@ -77,7 +77,7 @@ class DocumentService {
 
     // Delete physical file using absolute path
     try {
-      const absolutePath = path.join(UPLOADS_DIR, document.filename);
+      const absolutePath = path.join(__dirname, "../", document.filePath);
       await fs.unlink(absolutePath);
     } catch (error) {
       console.error("Error deleting physical file:", error);
@@ -95,7 +95,7 @@ class DocumentService {
     }
 
     // Get absolute path for file access
-    const absolutePath = path.join(UPLOADS_DIR, document.filename);
+    const absolutePath = path.join(__dirname, "../", document.filePath);
 
     // Check if file exists
     try {
