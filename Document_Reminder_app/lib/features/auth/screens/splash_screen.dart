@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../app/routes.dart';
+import '../../../core/services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -9,16 +10,31 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final _authService = AuthService();
+
   @override
   void initState() {
     super.initState();
-    _navigateToLogin();
+    _checkAuthenticationAndNavigate();
   }
 
-  Future<void> _navigateToLogin() async {
-    await Future.delayed(const Duration(seconds: 3));
+  Future<void> _checkAuthenticationAndNavigate() async {
+    // Show splash for at least 2 seconds
+    await Future.delayed(const Duration(seconds: 2));
+
     if (mounted) {
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      // Check if user has a valid persistent login session
+      final isAutoLoginSuccessful = await _authService.autoLogin();
+
+      if (isAutoLoginSuccessful) {
+        // User has valid session, navigate to main screen
+        debugPrint('Auto-login successful, navigating to main screen');
+        Navigator.pushReplacementNamed(context, AppRoutes.main);
+      } else {
+        // No valid session, navigate to login screen
+        debugPrint('No valid session, navigating to login screen');
+        Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
     }
   }
 

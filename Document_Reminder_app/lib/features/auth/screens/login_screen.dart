@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authService = AuthService();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _rememberMe = true; // Keep me logged in for 30 days
 
   @override
   void dispose() {
@@ -34,10 +35,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
       debugPrint('Login form validated, attempting authentication...');
 
-      // Attempt login
+      // Attempt login with remember me option
       final result = await _authService.loginUser(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        rememberMe: _rememberMe,
       );
 
       if (mounted) {
@@ -135,6 +137,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 12),
+
+                // Remember Me Checkbox
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _rememberMe,
+                      onChanged: (value) {
+                        setState(() {
+                          _rememberMe = value ?? true;
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Keep me logged in for 30 days'),
+                  ],
                 ),
                 const SizedBox(height: 12),
 

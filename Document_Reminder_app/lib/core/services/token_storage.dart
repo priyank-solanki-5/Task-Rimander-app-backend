@@ -6,6 +6,8 @@ class TokenStorage {
   static const String _tokenKey = 'auth_token';
   static const String _userIdKey = 'user_id';
   static const String _userEmailKey = 'user_email';
+  static const String _tokenExpiryKey = 'token_expiry';
+  static const String _lastLoginKey = 'last_login';
 
   // Secure storage instance
   static const _storage = FlutterSecureStorage();
@@ -75,10 +77,66 @@ class TokenStorage {
     }
   }
 
-  /// Check if user is authenticated (has token)
+  /// Save token expiry timestamp
+  static Future<void> saveTokenExpiry(DateTime expiryTime) async {
+    try {
+      await _storage.write(
+        key: _tokenExpiryKey,
+        value: expiryTime.toIso8601String(),
+      );
+    } catch (e) {
+      debugPrint('Error saving token expiry: $e');
+    }
+  }
+
+  /// Get token expiry timestamp
+  static Future<DateTime?> getTokenExpiry() async {
+    try {
+      final expiryStr = await _storage.read(key: _tokenExpiryKey);
+      if (expiryStr == null) return null;
+      return DateTime.parse(expiryStr);
+    } catch (e) {
+      debugPrint('Error getting token expiry: $e');
+      return null;
+    }
+  }
+
+  /// Check if token is expired
+  static Future<bool> isTokenExpired() async {
+    final expiry = await getTokenExpiry();
+    if (expiry == null) return true;
+    return DateTime.now().isAfter(expiry);
+  }
+
+  /// Save last login timestamp
+  static Future<void> saveLastLogin(DateTime loginTime) async {
+    try {
+      await _storage.write(
+        key: _lastLoginKey,
+        value: loginTime.toIso8601String(),
+      );
+    } catch (e) {
+      debugPrint('Error saving last login: $e');
+    }
+  }
+
+  /// Get last login timestamp
+  static Future<DateTime?> getLastLogin() async {
+    try {
+      final loginStr = await _storage.read(key: _lastLoginKey);
+      if (loginStr == null) return null;
+      return DateTime.parse(loginStr);
+    } catch (e) {
+      debugPrint('Error getting last login: $e');
+      return null;
+    }
+  }
+
+  /// Check if user is authenticated (has valid token)
   static Future<bool> isAuthenticated() async {
     final token = await getToken();
-    return token != null && token.isNotEmpty;
+    final isExpired = await isTokenExpired();
+    return token != null && token.isNotEmpty && !isExpired;
   }
 
   /// Clear all stored authentication data

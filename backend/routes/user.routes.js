@@ -28,6 +28,14 @@ router.put(
   (req, res) => userController.changePassword(req, res),
 );
 
+// Refresh token for persistent login
+router.post(
+  "/refresh-token",
+  authMiddleware,
+  apiLimiter,
+  (req, res) => userController.refreshToken(req, res),
+);
+
 // ===== PROTECTED ROUTES (Require Authentication) =====
 
 // Get user profile

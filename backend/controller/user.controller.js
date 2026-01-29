@@ -90,6 +90,26 @@ class UserController {
   }
 
   /**
+   * Refresh JWT token for persistent login
+   * POST /api/users/refresh-token
+   * Requires: valid JWT token in Authorization header
+   */
+  async refreshToken(req, res) {
+    try {
+      const userId = req.user.id;
+
+      const result = await userService.refreshUserToken(userId);
+
+      res.status(200).json({
+        message: "Token refreshed successfully",
+        token: result,
+      });
+    } catch (error) {
+      res.status(401).json({ error: error.message });
+    }
+  }
+
+  /**
    * Get user profile
    * GET /api/users/profile
    */
