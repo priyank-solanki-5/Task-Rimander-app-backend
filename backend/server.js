@@ -64,6 +64,17 @@ app.use(
   }),
 );
 
+// Fallback handler for document files with encoded names (e.g., spaces)
+app.get("/uploads/documents/:filename", (req, res, next) => {
+  const decoded = decodeURIComponent(req.params.filename);
+  const filePath = path.join(__dirname, "uploads", "documents", decoded);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      return next(); // Let static handler or 404 manage missing files
+    }
+  });
+});
+
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);

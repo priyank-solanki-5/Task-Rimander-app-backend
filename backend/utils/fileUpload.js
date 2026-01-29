@@ -27,8 +27,10 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    // Use original filename as-is
-    const filename = file.originalname;
+    // Generate collision-safe filename: timestamp-random-originalname
+    const safeOriginal = file.originalname.replace(/\s+/g, "_");
+    const uniquePrefix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const filename = `${uniquePrefix}-${safeOriginal}`;
     console.log(`📁 Saving file: ${filename} to ${uploadDir}`);
     cb(null, filename);
   },

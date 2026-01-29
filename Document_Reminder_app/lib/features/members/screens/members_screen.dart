@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/member_provider.dart';
+import '../../../widgets/double_back_to_exit_wrapper.dart';
 import '../../../core/models/member.dart';
 import '../widgets/member_card.dart';
 import 'add_edit_member_screen.dart';
@@ -133,7 +134,10 @@ class _MembersScreenState extends State<MembersScreen> {
   Future<void> _addMember() async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (context) => const AddEditMemberScreen()),
+      MaterialPageRoute(
+        builder: (context) =>
+            const DoubleBackToExitWrapper(child: AddEditMemberScreen()),
+      ),
     );
 
     if (result == true && mounted) {
@@ -145,7 +149,8 @@ class _MembersScreenState extends State<MembersScreen> {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (context) => AddEditMemberScreen(member: member),
+        builder: (context) =>
+            DoubleBackToExitWrapper(child: AddEditMemberScreen(member: member)),
       ),
     );
 
