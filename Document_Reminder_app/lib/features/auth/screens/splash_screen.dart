@@ -25,6 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (mounted) {
       // Check if user has a valid persistent login session
       final isAutoLoginSuccessful = await _authService.autoLogin();
+      if (!mounted) return;
 
       if (isAutoLoginSuccessful) {
         // User has valid session, navigate to main screen
