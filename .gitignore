@@ -1,4 +1,5 @@
-.md
-# -/Document_Reminder_app
-# -.yaml
-# -.bat
+*.md
+*.yaml
+*.bat
+
+Document_Reminder_app/
