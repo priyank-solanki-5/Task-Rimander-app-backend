@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/providers/document_provider.dart';
+import '../../../widgets/double_back_to_exit_wrapper.dart';
 import '../../../core/providers/member_provider.dart';
 import '../../../core/models/document.dart';
 import 'add_document_screen.dart';
@@ -244,8 +245,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           final result = await Navigator.push<bool>(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  AddDocumentScreen(initialMemberId: initialMemberId),
+              builder: (context) => DoubleBackToExitWrapper(
+                child: AddDocumentScreen(initialMemberId: initialMemberId),
+              ),
             ),
           );
           if (!context.mounted) return;

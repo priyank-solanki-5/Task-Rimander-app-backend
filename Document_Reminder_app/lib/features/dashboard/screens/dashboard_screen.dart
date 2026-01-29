@@ -11,6 +11,7 @@
 // import 'add_edit_task_screen.dart';
 // import '../../documents/screens/documents_screen.dart';
 // import '../../tasks/screens/all_tasks_screen.dart';
+// import '../../../widgets/double_back_to_exit_wrapper.dart';
 
 // class DashboardScreen extends StatefulWidget {
 //   const DashboardScreen({super.key});
@@ -204,6 +205,7 @@ import '../widgets/task_section.dart';
 import 'add_edit_task_screen.dart';
 import '../../tasks/screens/all_tasks_screen.dart';
 import '../../../widgets/main_screen.dart';
+import '../../../widgets/double_back_to_exit_wrapper.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -379,7 +381,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           // Navigate to Documents tab via bottom nav
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
-                              builder: (_) => const MainScreen(initialIndex: 1),
+                              builder: (_) => const DoubleBackToExitWrapper(
+                                child: MainScreen(initialIndex: 1),
+                              ),
                             ),
                           );
                         },
@@ -400,7 +404,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           final result = await Navigator.push<bool>(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const AddEditTaskScreen(),
+                              builder: (_) => const DoubleBackToExitWrapper(
+                                child: AddEditTaskScreen(),
+                              ),
                             ),
                           );
                           if (result == true && context.mounted) {
@@ -411,7 +417,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const AllTasksScreen(),
+                              builder: (_) => const DoubleBackToExitWrapper(
+                                child: AllTasksScreen(),
+                              ),
                             ),
                           );
                         },

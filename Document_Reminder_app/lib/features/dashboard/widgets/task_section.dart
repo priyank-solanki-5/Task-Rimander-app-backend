@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import '../../../../widgets/double_back_to_exit_wrapper.dart';
 import '../../../core/models/task.dart';
 import '../screens/add_edit_task_screen.dart';
 import 'task_card.dart';
@@ -102,7 +103,9 @@ class TaskSection extends StatelessWidget {
                       final result = await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AddEditTaskScreen(task: task),
+                          builder: (context) => DoubleBackToExitWrapper(
+                            child: AddEditTaskScreen(task: task),
+                          ),
                         ),
                       );
                       if (result == true && context.mounted) {
