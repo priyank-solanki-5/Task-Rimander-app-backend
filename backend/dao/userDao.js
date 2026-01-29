@@ -1,7 +1,13 @@
 import User from "../models/User.js";
+import bcrypt from "bcryptjs";
 
 class UserDao {
   async createUser(userData) {
+    // Hash password before saving
+    if (userData.password) {
+      const salt = await bcrypt.genSalt(10);
+      userData.password = await bcrypt.hash(userData.password, salt);
+    }
     const user = new User(userData);
     return await user.save();
   }
@@ -11,7 +17,34 @@ class UserDao {
   }
 
   async findUserByEmailAndPassword(email, password) {
-    return await User.findOne({ email, password });
+    // Find user by email first
+    const user = await User.findOne({ email });
+    if (!user) {
+      return null;
+    }
+
+    // If password is already hashed, compare using bcrypt
+    const isHashed =
+      typeof user.password === "string" &&
+      (user.password.startsWith("$2a$") || user.password.startsWith("$2b$"));
+
+    if (isHashed) {
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return null;
+      }
+    } else {
+      // Legacy/plaintext password path: compare directly, then upgrade to bcrypt hash
+      if (user.password !== password) {
+        return null;
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+      await user.save();
+    }
+
+    return user;
   }
 
   async findUserByEmailAndMobile(email, mobilenumber) {
@@ -19,6 +52,11 @@ class UserDao {
   }
 
   async updateUser(user) {
+    // Hash password if it's being updated
+    if (user.isModified("password")) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(user.password, salt);
+    }
     return await user.save();
   }
 
