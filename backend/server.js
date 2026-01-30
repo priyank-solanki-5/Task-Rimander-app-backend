@@ -29,53 +29,69 @@ import "./models/NotificationPreferences.js";
 import "./models/Reminder.js";
 import "./models/Member.js";
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
-// Middleware
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (
+      !origin ||
+      allowedOrigins.length === 0 ||
+      allowedOrigins.includes(origin)
+    ) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve uploaded files statically so admin can view/download
-// When running from backend/, the uploads folder is relative to this directory
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"), {
     maxAge: "1d",
     etag: false,
     setHeaders: (res, filePath) => {
-      // Set appropriate MIME types
       if (filePath.endsWith(".pdf")) {
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", "inline");
       } else if (filePath.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-        res.setHeader("Content-Type", "image/*");
+        // Avoid /* in string to keep some editors from mis-highlighting the line
+        res.setHeader("Content-Type", "image/" + "*");
         res.setHeader("Content-Disposition", "inline");
       } else {
         res.setHeader("Content-Disposition", "attachment");
       }
-      // Enable caching for static files
+
       res.setHeader("Cache-Control", "public, max-age=86400");
     },
   }),
 );
 
-// Fallback handler for document files with encoded names (e.g., spaces)
 app.get("/uploads/documents/:filename", (req, res, next) => {
   const decoded = decodeURIComponent(req.params.filename);
   const filePath = path.join(__dirname, "uploads", "documents", decoded);
   res.sendFile(filePath, (err) => {
     if (err) {
-      return next(); // Let static handler or 404 manage missing files
+      return next();
     }
   });
 });
 
-// Routes
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/tasks", taskRoutes);
@@ -86,7 +102,6 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/members", memberRoutes);
 app.use("/api/admin", adminRoutes);
 
-// Health check route
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
@@ -96,7 +111,6 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Keep-alive endpoint for preventing Render sleep
 app.get("/keep-alive", (req, res) => {
   res.status(200).json({
     status: "alive",
@@ -105,20 +119,16 @@ app.get("/keep-alive", (req, res) => {
   });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Something went wrong!" });
 });
 
-// Connect to MongoDB and start server
 connectDB()
   .then(async () => {
-    // Seed predefined categories
     await categoryService.seedPredefinedCategories();
     console.log("✅ Predefined categories seeded successfully");
 
-    // Initialize notification scheduler
     schedulerService.initializeScheduler();
 
     app.listen(PORT, () => {
