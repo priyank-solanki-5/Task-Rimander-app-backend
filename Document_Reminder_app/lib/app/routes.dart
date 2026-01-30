@@ -10,6 +10,7 @@ import '../features/settings/screens/notification_settings_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
 import '../features/tasks/screens/task_detail_screen.dart';
 import '../widgets/main_screen.dart';
+import '../widgets/double_back_to_exit_wrapper.dart';
 
 class AppRoutes {
   // Route names
@@ -27,16 +28,24 @@ class AppRoutes {
 
   // Route map
   static Map<String, WidgetBuilder> routes = {
-    splash: (context) => const SplashScreen(),
-    login: (context) => const LoginScreen(),
-    register: (context) => const RegisterScreen(),
-    forgotPassword: (context) => const ForgotPasswordScreen(),
-    main: (context) => const MainScreen(),
-    addMember: (context) => const AddMemberScreen(),
-    taskDetail: (context) => const TaskDetailScreen(),
-    uploadDocument: (context) => const AddDocumentScreen(),
-    documentViewer: (context) => const DocumentViewerScreen(),
-    notificationSettings: (context) => const NotificationSettingsScreen(),
-    settings: (context) => const SettingsScreen(),
+    splash: (context) => const DoubleBackToExitWrapper(child: SplashScreen()),
+    login: (context) => const DoubleBackToExitWrapper(child: LoginScreen()),
+    register: (context) =>
+        const DoubleBackToExitWrapper(child: RegisterScreen()),
+    forgotPassword: (context) =>
+        const DoubleBackToExitWrapper(child: ForgotPasswordScreen()),
+    main: (context) => const DoubleBackToExitWrapper(child: MainScreen()),
+    addMember: (context) =>
+        const DoubleBackToExitWrapper(child: AddMemberScreen()),
+    taskDetail: (context) =>
+        const DoubleBackToExitWrapper(child: TaskDetailScreen()),
+    uploadDocument: (context) =>
+        const DoubleBackToExitWrapper(child: AddDocumentScreen()),
+    documentViewer: (context) =>
+        const DoubleBackToExitWrapper(child: DocumentViewerScreen()),
+    notificationSettings: (context) =>
+        const DoubleBackToExitWrapper(child: NotificationSettingsScreen()),
+    settings: (context) =>
+        const DoubleBackToExitWrapper(child: SettingsScreen()),
   };
 }
