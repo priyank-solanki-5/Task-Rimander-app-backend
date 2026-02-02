@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import '../core/providers/document_provider.dart';
 import '../core/providers/task_provider.dart';
 import '../core/responsive/breakpoints.dart';
+import '../core/services/token_storage.dart';
+import 'package:flutter/foundation.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
@@ -181,6 +183,27 @@ class _MainScreenState extends State<MainScreen> {
             );
           },
         ),
+        // Debug: show current stored userId/token when in debug mode
+        floatingActionButton: kDebugMode
+            ? FloatingActionButton.small(
+                onPressed: () async {
+                  final userId = await TokenStorage.getUserId();
+                  final token = await TokenStorage.getToken();
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'userId: ${userId ?? 'null'}\n' +
+                            'token: ${token != null ? token.substring(0, 20) + "..." : 'null'}',
+                      ),
+                      duration: const Duration(seconds: 6),
+                    ),
+                  );
+                },
+                tooltip: 'Show auth debug info',
+                child: const Icon(Icons.bug_report_outlined),
+              )
+            : null,
       ),
     );
   }
