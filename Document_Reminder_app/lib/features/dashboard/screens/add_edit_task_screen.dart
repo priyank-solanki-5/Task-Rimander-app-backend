@@ -154,6 +154,47 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               ),
               const SizedBox(height: 20),
 
+              // Category Selection
+              Consumer<CategoryProvider>(
+                builder: (context, categoryProvider, _) {
+                  final categories = categoryProvider.categories;
+
+                  return DropdownButtonFormField<String?>(
+                    value: _selectedCategoryId,
+                    decoration: InputDecoration(
+                      labelText: 'Category',
+                      hintText: 'Select a category (optional)',
+                      prefixIcon: const Icon(Icons.category_rounded),
+                      border: inputBorder,
+                      enabledBorder: inputBorder,
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerLowest,
+                    ),
+                    items: [
+                      DropdownMenuItem<String?>(
+                        value: null,
+                        child: const Text('No Category'),
+                      ),
+                      ...categories.map((category) {
+                        return DropdownMenuItem<String?>(
+                          value: category.id,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.label, size: 20),
+                              const SizedBox(width: 12),
+                              Text(category.name),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _selectedCategoryId = value),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+
               // Due Date
               InkWell(
                 onTap: _selectDate,

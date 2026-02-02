@@ -33,11 +33,10 @@ class ApiConfig {
   // ========================================
 
   // 👇 PRODUCTION RENDER BACKEND URL
-  static const String baseUrl =
-      'https://task-rimander-app-backend-1.onrender.com';
+  static const String baseUrl = 'https://reminderbackend.aurickrystal.com/';
 
   // Example configurations (uncomment the one you need):
-  // static const String baseUrl = 'https://task-rimander-app-backend-1.onrender.com';  // Production
+  // static const String baseUrl = 'https://reminderbackend.aurickrystal.com/';  // Production
   // static const String baseUrl = 'http://192.168.1.100:3000';  // Local development
   // static const String baseUrl = 'http://10.0.2.2:3000';       // Android emulator
   // static const String baseUrl = 'http://localhost:3000';      // iOS simulator
