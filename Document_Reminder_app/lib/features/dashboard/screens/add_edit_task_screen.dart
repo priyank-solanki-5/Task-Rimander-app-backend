@@ -7,6 +7,7 @@ import '../../../core/models/task.dart';
 import '../../../core/services/token_storage.dart';
 import '../../../core/providers/member_provider.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/constants/task_categories.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final Task? task;
@@ -151,6 +152,48 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 maxLines: 4,
                 minLines: 2,
                 textCapitalization: TextCapitalization.sentences,
+              ),
+              const SizedBox(height: 20),
+
+              // Category Selection
+              DropdownButtonFormField<String?>(
+                value: _selectedCategoryId,
+                decoration: InputDecoration(
+                  labelText: 'Category',
+                  hintText: 'Select a category (optional)',
+                  prefixIcon: _selectedCategoryId != null
+                      ? Icon(
+                          TaskCategories.getIconById(_selectedCategoryId),
+                          color: TaskCategories.getColorById(
+                            _selectedCategoryId,
+                          ),
+                        )
+                      : const Icon(Icons.category_rounded),
+                  border: inputBorder,
+                  enabledBorder: inputBorder,
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerLowest,
+                ),
+                items: [
+                  DropdownMenuItem<String?>(
+                    value: null,
+                    child: const Text('No Category'),
+                  ),
+                  ...TaskCategories.all.map((category) {
+                    return DropdownMenuItem<String?>(
+                      value: category.id,
+                      child: Row(
+                        children: [
+                          Icon(category.icon, size: 20, color: category.color),
+                          const SizedBox(width: 12),
+                          Text(category.name),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+                onChanged: (value) =>
+                    setState(() => _selectedCategoryId = value),
               ),
               const SizedBox(height: 20),
 

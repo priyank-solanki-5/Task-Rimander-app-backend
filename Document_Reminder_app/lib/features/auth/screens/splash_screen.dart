@@ -56,10 +56,11 @@ class _SplashScreenState extends State<SplashScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: const Icon(
-                  Icons.description_outlined,
-                  size: 64,
-                  color: Color(0xFF6366F1),
+                child: Image.asset(
+                  'assets/logo/Subtract.png',
+                  width: 64,
+                  height: 64,
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(height: 24),
