@@ -3,7 +3,7 @@
 A complete reference for all routes exposed by the Task Rimander backend. This README documents the live base URL and the routes as implemented in source.
 
 ## Base URL
-- Production: https://task-rimander-app-backend-1.onrender.com
+- Production: https://reminderbackend.aurickrystal.com/
 
 Unless specified, all API routes are prefixed with `/api`. A health probe is available at `/health`.
 
