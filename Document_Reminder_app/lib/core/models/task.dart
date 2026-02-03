@@ -18,6 +18,7 @@ class Task {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final TaskType taskType;
+  final int? remindMeBeforeDays; // Added field
 
   Task({
     this.id,
@@ -34,6 +35,7 @@ class Task {
     this.createdAt,
     this.updatedAt,
     this.taskType = TaskType.oneTime,
+    this.remindMeBeforeDays,
   });
 
   /// Create Task from JSON (API response)
@@ -69,6 +71,7 @@ class Task {
       taskType: json['taskType'] == 'recurring'
           ? TaskType.recurring
           : TaskType.oneTime,
+      remindMeBeforeDays: json['remindMeBeforeDays'] as int?,
     );
   }
 
@@ -90,6 +93,7 @@ class Task {
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
       'taskType': taskType == TaskType.recurring ? 'recurring' : 'oneTime',
+      if (remindMeBeforeDays != null) 'remindMeBeforeDays': remindMeBeforeDays,
     };
   }
 
@@ -109,6 +113,7 @@ class Task {
     DateTime? createdAt,
     DateTime? updatedAt,
     TaskType? taskType,
+    int? remindMeBeforeDays,
   }) {
     return Task(
       id: id ?? this.id,
@@ -125,6 +130,7 @@ class Task {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       taskType: taskType ?? this.taskType,
+      remindMeBeforeDays: remindMeBeforeDays ?? this.remindMeBeforeDays,
     );
   }
 

@@ -43,8 +43,8 @@ dependencies:
   provider: ^6.1.1
   
   # Firebase Push Notifications
-  firebase_core: ^3.0.0
-  firebase_messaging: ^15.0.0
+  firebase_core: ^4.4.0
+  firebase_messaging: ^16.1.1
   
   # MongoDB
   
@@ -58,7 +58,7 @@ dependencies:
   flutter_secure_storage: ^10.0.0
 
 dev_dependencies:
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
   flutter_test:
     sdk: flutter
 

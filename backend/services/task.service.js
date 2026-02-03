@@ -2,6 +2,7 @@ import taskDao from "../dao/taskDao.js";
 import categoryDao from "../dao/categoryDao.js";
 import userDao from "../dao/userDao.js";
 import RecurrenceHelper from "../utils/recurrenceHelper.js";
+import notificationDao from "../dao/notificationDao.js";
 
 class TaskService {
   async createTask(
@@ -13,7 +14,9 @@ class TaskService {
     categoryId,
     isRecurring,
     recurrenceType,
-    memberId // Added memberId
+    recurrenceType,
+    memberId, // Added memberId
+    remindMeBeforeDays // Added remindMeBeforeDays
   ) {
     // Validate user exists
     // FIX: Changed findUserByEmail to findUserById
@@ -76,7 +79,61 @@ class TaskService {
       recurrenceType: recurrenceType || null,
       nextOccurrence,
       memberId: memberId || null, // Persist memberId
+      remindMeBeforeDays: remindMeBeforeDays || null,
     });
+
+    // AUTO-CREATE NOTIFICATION RULES (Fix for missing notifications)
+    if (task) {
+      // Rule 1: Push Notification on Due Date
+      await notificationDao.createNotificationRule({
+        taskId: task._id || task.id,
+        userId,
+        type: "push",
+        triggerType: "on_due_date",
+        isActive: true,
+      });
+
+      // Rule 2: In-App Notification on Due Date
+      await notificationDao.createNotificationRule({
+        taskId: task._id || task.id,
+        userId,
+        type: "in-app",
+        triggerType: "on_due_date",
+        isActive: true,
+      });
+
+      // Rule 3: Before Due Date (if requested)
+      if (remindMeBeforeDays && remindMeBeforeDays > 0) {
+        await notificationDao.createNotificationRule({
+          taskId: task._id || task.id,
+          userId,
+          type: "push", // Assuming push for reminders
+          triggerType: "before_due_date",
+          hoursBeforeDue: remindMeBeforeDays * 24,
+          isActive: true,
+        });
+      }
+
+      // Rule 4: Mandatory 1 Hour Before (Requested by User)
+      await notificationDao.createNotificationRule({
+        taskId: task._id || task.id,
+        userId,
+        type: "push",
+        triggerType: "before_due_date",
+        hoursBeforeDue: 1, // 1 hour before
+        isActive: true,
+      });
+
+      // Rule 5: Mandatory Overdue Notification 1 Day Later (Requested by User)
+      await notificationDao.createNotificationRule({
+        taskId: task._id || task.id,
+        userId,
+        type: "push",
+        triggerType: "after_due_date",
+        hoursBeforeDue: 24, // Interpreted as 24 hours *after* due date by updated logic
+        isActive: true,
+      });
+    }
 
     return task;
   }
@@ -124,6 +181,8 @@ class TaskService {
       dataToUpdate.categoryId = updateData.categoryId || null;
     if (updateData.memberId !== undefined)
       dataToUpdate.memberId = updateData.memberId || null; // Handle memberId update
+    if (updateData.remindMeBeforeDays !== undefined)
+      dataToUpdate.remindMeBeforeDays = updateData.remindMeBeforeDays;
     if (updateData.isRecurring !== undefined)
       dataToUpdate.isRecurring = updateData.isRecurring;
     if (updateData.recurrenceType !== undefined) {

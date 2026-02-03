@@ -174,12 +174,9 @@ class NotificationService {
   async checkAndCreateNotifications() {
     try {
       const now = new Date();
-      const upcomingTasks = await Task.findAll({
-        where: {
-          status: "Pending",
-        },
-        include: [{ model: User }],
-      });
+      const upcomingTasks = await Task.find({
+        status: "Pending",
+      }).populate({ path: "userId" });
 
       let notificationsCreated = 0;
 
@@ -254,8 +251,11 @@ class NotificationService {
         );
 
       case "after_due_date":
-        // Check if task is overdue
-        return now > due && !rule.lastNotifiedDate;
+        // Check if task is overdue by X hours (default 24 if not specified, or 0 if immediate needed)
+        // We reuse hoursBeforeDue to mean "hours after due" for this type
+        const hoursAfter = rule.hoursBeforeDue || 0;
+        const overdueTime = new Date(due.getTime() + hoursAfter * 60 * 60 * 1000);
+        return now >= overdueTime && !rule.lastNotifiedDate;
 
       case "on_completion":
         // This is handled separately when task is marked complete
@@ -297,7 +297,7 @@ class NotificationService {
   async onTaskCompleted(taskId, userId) {
     try {
       // Get task details
-      const task = await Task.findByPk(taskId);
+      const task = await Task.findById(taskId);
 
       if (!task) {
         throw new Error("Task not found");
@@ -337,16 +337,14 @@ class NotificationService {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + days);
 
-      const tasks = await Task.findAll({
-        where: {
-          userId,
-          status: "Pending",
-          dueDate: {
-            [require("sequelize").Op.between]: [now, futureDate],
-          },
+      const tasks = await Task.find({
+        userId,
+        status: "Pending",
+        dueDate: {
+          $gte: now,
+          $lte: futureDate,
         },
-        order: [["dueDate", "ASC"]],
-      });
+      }).sort({ dueDate: 1 });
 
       return tasks;
     } catch (error) {

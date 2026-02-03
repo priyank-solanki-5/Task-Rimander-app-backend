@@ -7,7 +7,6 @@ import '../../../core/models/task.dart';
 import '../../../core/services/token_storage.dart';
 import '../../../core/providers/member_provider.dart';
 import '../../../core/services/auth_service.dart';
-import '../../../core/constants/task_categories.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final Task? task;
@@ -51,6 +50,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       _taskType = widget.task!.taskType;
       if (widget.task!.memberId != null) {
         _selectedMemberId = widget.task!.memberId;
+      }
+      if (widget.task!.remindMeBeforeDays != null) {
+        _reminderDays = widget.task!.remindMeBeforeDays!;
       }
     }
 
@@ -156,44 +158,43 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               const SizedBox(height: 20),
 
               // Category Selection
-              DropdownButtonFormField<String?>(
-                value: _selectedCategoryId,
-                decoration: InputDecoration(
-                  labelText: 'Category',
-                  hintText: 'Select a category (optional)',
-                  prefixIcon: _selectedCategoryId != null
-                      ? Icon(
-                          TaskCategories.getIconById(_selectedCategoryId),
-                          color: TaskCategories.getColorById(
-                            _selectedCategoryId,
-                          ),
-                        )
-                      : const Icon(Icons.category_rounded),
-                  border: inputBorder,
-                  enabledBorder: inputBorder,
-                  filled: true,
-                  fillColor: theme.colorScheme.surfaceContainerLowest,
-                ),
-                items: [
-                  DropdownMenuItem<String?>(
-                    value: null,
-                    child: const Text('No Category'),
-                  ),
-                  ...TaskCategories.all.map((category) {
-                    return DropdownMenuItem<String?>(
-                      value: category.id,
-                      child: Row(
-                        children: [
-                          Icon(category.icon, size: 20, color: category.color),
-                          const SizedBox(width: 12),
-                          Text(category.name),
-                        ],
+              Consumer<CategoryProvider>(
+                builder: (context, categoryProvider, _) {
+                  final categories = categoryProvider.categories;
+
+                  return DropdownButtonFormField<String?>(
+                    value: _selectedCategoryId,
+                    decoration: InputDecoration(
+                      labelText: 'Category',
+                      hintText: 'Select a category (optional)',
+                      prefixIcon: const Icon(Icons.category_rounded),
+                      border: inputBorder,
+                      enabledBorder: inputBorder,
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerLowest,
+                    ),
+                    items: [
+                      DropdownMenuItem<String?>(
+                        value: null,
+                        child: const Text('No Category'),
                       ),
-                    );
-                  }),
-                ],
-                onChanged: (value) =>
-                    setState(() => _selectedCategoryId = value),
+                      ...categories.map((category) {
+                        return DropdownMenuItem<String?>(
+                          value: category.id,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.label, size: 20),
+                              const SizedBox(width: 12),
+                              Text(category.name),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _selectedCategoryId = value),
+                  );
+                },
               ),
               const SizedBox(height: 20),
 
@@ -224,7 +225,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                           const SizedBox(height: 4),
                           Text(
                             DateFormat(
-                              'EEEE, MMM d, yyyy',
+                              'EEEE, MMM d, yyyy • h:mm a',
                             ).format(_selectedDate),
                             style: theme.textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.w600,
@@ -300,7 +301,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                           Text('Remind me', style: theme.textTheme.bodyLarge),
                           const Spacer(),
                           Text(
-                            '$_reminderDays days before',
+                            '$_reminderDays days before (${DateFormat('MMM d').format(_selectedDate.subtract(Duration(days: _reminderDays)))})',
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,
@@ -407,10 +408,23 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
 
-    if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-      });
+    if (picked != null && mounted) {
+      final timePicked = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(_selectedDate),
+      );
+
+      if (timePicked != null) {
+        setState(() {
+          _selectedDate = DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            timePicked.hour,
+            timePicked.minute,
+          );
+        });
+      }
     }
   }
 
@@ -435,6 +449,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         status: isEditing ? widget.task!.status : TaskStatus.pending,
         categoryId: _selectedCategoryId,
         memberId: _selectedMemberId, // Can be null (Myself)
+        remindMeBeforeDays: _reminderDays,
       );
 
       final success = isEditing

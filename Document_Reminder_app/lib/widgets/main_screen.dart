@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../features/dashboard/screens/dashboard_screen.dart';
 import '../features/documents/screens/documents_screen.dart';
 import '../features/members/screens/members_screen.dart';
+
 import '../features/profile/screens/profile_screen.dart';
 import 'package:provider/provider.dart';
 import '../core/providers/document_provider.dart';
@@ -106,6 +107,11 @@ class _MainScreenState extends State<MainScreen> {
                     label: Text('Members'),
                   ),
                   NavigationRailDestination(
+                    icon: Icon(Icons.notifications_active_outlined),
+                    selectedIcon: Icon(Icons.notifications_active),
+                    label: Text('Test Notif'),
+                  ),
+                  NavigationRailDestination(
                     icon: Icon(Icons.person_outline),
                     selectedIcon: Icon(Icons.person),
                     label: Text('Profile'),
@@ -175,6 +181,11 @@ class _MainScreenState extends State<MainScreen> {
                   label: 'Members',
                 ),
                 const BottomNavigationBarItem(
+                  icon: Icon(Icons.notifications_active_outlined),
+                  activeIcon: Icon(Icons.notifications_active),
+                  label: 'Test Notif',
+                ),
+                const BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline),
                   activeIcon: Icon(Icons.person),
                   label: 'Profile',
@@ -193,8 +204,8 @@ class _MainScreenState extends State<MainScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        'userId: ${userId ?? 'null'}\n' +
-                            'token: ${token != null ? token.substring(0, 20) + "..." : 'null'}',
+                        'userId: ${userId ?? 'null'}\n'
+                        'token: ${token != null ? '${token.substring(0, 20)}...' : 'null'}',
                       ),
                       duration: const Duration(seconds: 6),
                     ),
