@@ -107,10 +107,6 @@ class TaskController {
         categoryId,
         isRecurring,
         recurrenceType,
-<<<<<<< HEAD
-=======
-
->>>>>>> a6d6125a85741bd9ff1a633af40c1edbe2bdef05
         memberId,
         remindMeBeforeDays,
       } = req.body;

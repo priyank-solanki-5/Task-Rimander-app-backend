@@ -177,11 +177,7 @@ class NotificationService {
       const now = new Date();
       const upcomingTasks = await Task.find({
         status: "Pending",
-<<<<<<< HEAD
       }).populate("userId");
-=======
-      }).populate({ path: "userId" });
->>>>>>> a6d6125a85741bd9ff1a633af40c1edbe2bdef05
 
       let notificationsCreated = 0;
 
@@ -259,7 +255,9 @@ class NotificationService {
         // Check if task is overdue by X hours (default 24 if not specified, or 0 if immediate needed)
         // We reuse hoursBeforeDue to mean "hours after due" for this type
         const hoursAfter = rule.hoursBeforeDue || 0;
-        const overdueTime = new Date(due.getTime() + hoursAfter * 60 * 60 * 1000);
+        const overdueTime = new Date(
+          due.getTime() + hoursAfter * 60 * 60 * 1000,
+        );
         return now >= overdueTime && !rule.lastNotifiedDate;
 
       case "on_completion":
