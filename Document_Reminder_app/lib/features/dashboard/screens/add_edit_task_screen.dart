@@ -51,6 +51,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       if (widget.task!.memberId != null) {
         _selectedMemberId = widget.task!.memberId;
       }
+      if (widget.task!.remindMeBeforeDays != null) {
+        _reminderDays = widget.task!.remindMeBeforeDays!;
+      }
     }
 
     // Load categories and members
@@ -298,7 +301,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                           Text('Remind me', style: theme.textTheme.bodyLarge),
                           const Spacer(),
                           Text(
-                            '$_reminderDays days before',
+                            '$_reminderDays days before (${DateFormat('MMM d').format(_selectedDate.subtract(Duration(days: _reminderDays)))})',
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,
