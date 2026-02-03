@@ -14,9 +14,8 @@ class TaskService {
     categoryId,
     isRecurring,
     recurrenceType,
-    recurrenceType,
     memberId, // Added memberId
-    remindMeBeforeDays // Added remindMeBeforeDays
+    remindMeBeforeDays, // Added remindMeBeforeDays
   ) {
     // Validate user exists
     // FIX: Changed findUserByEmail to findUserById
@@ -63,7 +62,7 @@ class TaskService {
     if (isRecurring && dueDate) {
       nextOccurrence = RecurrenceHelper.calculateNextOccurrence(
         new Date(dueDate),
-        recurrenceType
+        recurrenceType,
       );
     }
 
@@ -139,7 +138,7 @@ class TaskService {
     // Validate category if being updated
     if (updateData.categoryId) {
       const category = await categoryDao.findCategoryById(
-        updateData.categoryId
+        updateData.categoryId,
       );
       if (!category) {
         throw new Error("Category not found");
@@ -187,7 +186,7 @@ class TaskService {
       if (dueDate && recurrenceType) {
         dataToUpdate.nextOccurrence = RecurrenceHelper.calculateNextOccurrence(
           dueDate,
-          recurrenceType
+          recurrenceType,
         );
       }
     }
@@ -229,7 +228,7 @@ class TaskService {
     // Calculate next due date
     const nextDueDate = RecurrenceHelper.calculateNextOccurrence(
       task.dueDate || new Date(),
-      task.recurrenceType
+      task.recurrenceType,
     );
 
     if (!nextDueDate) {
@@ -239,7 +238,7 @@ class TaskService {
     // Calculate next occurrence after that
     const nextOccurrence = RecurrenceHelper.calculateNextOccurrence(
       nextDueDate,
-      task.recurrenceType
+      task.recurrenceType,
     );
 
     // Create new task for next cycle

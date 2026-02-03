@@ -32,7 +32,8 @@ class NotificationService {
     try {
       // Verify task exists and belongs to user
       const task = await Task.findOne({
-        where: { id: taskId, userId },
+        _id: taskId,
+        userId: userId,
       });
 
       if (!task) {
@@ -174,12 +175,9 @@ class NotificationService {
   async checkAndCreateNotifications() {
     try {
       const now = new Date();
-      const upcomingTasks = await Task.findAll({
-        where: {
-          status: "Pending",
-        },
-        include: [{ model: User }],
-      });
+      const upcomingTasks = await Task.find({
+        status: "Pending",
+      }).populate("userId");
 
       let notificationsCreated = 0;
 
@@ -297,7 +295,7 @@ class NotificationService {
   async onTaskCompleted(taskId, userId) {
     try {
       // Get task details
-      const task = await Task.findByPk(taskId);
+      const task = await Task.findById(taskId);
 
       if (!task) {
         throw new Error("Task not found");
@@ -337,16 +335,14 @@ class NotificationService {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + days);
 
-      const tasks = await Task.findAll({
-        where: {
-          userId,
-          status: "Pending",
-          dueDate: {
-            [require("sequelize").Op.between]: [now, futureDate],
-          },
+      const tasks = await Task.find({
+        userId,
+        status: "Pending",
+        dueDate: {
+          $gte: now,
+          $lte: futureDate,
         },
-        order: [["dueDate", "ASC"]],
-      });
+      }).sort({ dueDate: 1 });
 
       return tasks;
     } catch (error) {

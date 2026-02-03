@@ -11,7 +11,6 @@ class TaskController {
         categoryId,
         isRecurring,
         recurrenceType,
-        recurrenceType,
         memberId,
         remindMeBeforeDays,
       } = req.body;
@@ -48,9 +47,8 @@ class TaskController {
         categoryId,
         isRecurring,
         recurrenceType,
-        recurrenceType,
         memberId,
-        remindMeBeforeDays
+        remindMeBeforeDays,
       );
 
       res.status(201).json({
@@ -108,7 +106,6 @@ class TaskController {
         dueDate,
         categoryId,
         isRecurring,
-        recurrenceType,
         recurrenceType,
         memberId,
         remindMeBeforeDays,
@@ -211,7 +208,7 @@ class TaskController {
 
       const tasks = await taskService.getUpcomingTasks(
         userId,
-        days ? parseInt(days) : 7
+        days ? parseInt(days) : 7,
       );
 
       res.status(200).json({
