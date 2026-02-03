@@ -11,7 +11,6 @@ class TaskController {
         categoryId,
         isRecurring,
         recurrenceType,
-        recurrenceType,
         memberId,
         remindMeBeforeDays,
       } = req.body;
@@ -47,7 +46,6 @@ class TaskController {
         dueDate,
         categoryId,
         isRecurring,
-        recurrenceType,
         recurrenceType,
         memberId,
         remindMeBeforeDays
@@ -109,7 +107,7 @@ class TaskController {
         categoryId,
         isRecurring,
         recurrenceType,
-        recurrenceType,
+
         memberId,
         remindMeBeforeDays,
       } = req.body;
