@@ -2,6 +2,7 @@ import taskDao from "../dao/taskDao.js";
 import categoryDao from "../dao/categoryDao.js";
 import userDao from "../dao/userDao.js";
 import RecurrenceHelper from "../utils/recurrenceHelper.js";
+import notificationDao from "../dao/notificationDao.js";
 
 class TaskService {
   async createTask(
@@ -77,6 +78,27 @@ class TaskService {
       nextOccurrence,
       memberId: memberId || null, // Persist memberId
     });
+
+    // AUTO-CREATE NOTIFICATION RULES (Fix for missing notifications)
+    if (task) {
+      // Rule 1: Push Notification on Due Date
+      await notificationDao.createNotificationRule({
+        taskId: task._id || task.id,
+        userId,
+        type: "push",
+        triggerType: "on_due_date",
+        isActive: true,
+      });
+
+      // Rule 2: In-App Notification on Due Date
+      await notificationDao.createNotificationRule({
+        taskId: task._id || task.id,
+        userId,
+        type: "in-app",
+        triggerType: "on_due_date",
+        isActive: true,
+      });
+    }
 
     return task;
   }
