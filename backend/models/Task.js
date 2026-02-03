@@ -47,6 +47,10 @@ const taskSchema = new mongoose.Schema(
       ref: "Member",
       default: null,
     },
+    remindMeBeforeDays: {
+      type: Number,
+      default: null,
+    },
   },
   {
     timestamps: true,

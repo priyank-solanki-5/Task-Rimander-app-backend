@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../features/dashboard/screens/dashboard_screen.dart';
 import '../features/documents/screens/documents_screen.dart';
 import '../features/members/screens/members_screen.dart';
-import '../features/notifications/screens/notification_test_screen.dart';
+import '../features/members/screens/members_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import 'package:provider/provider.dart';
 import '../core/providers/document_provider.dart';
@@ -75,7 +75,6 @@ class _MainScreenState extends State<MainScreen> {
       pages[0]!,
       pages[1]!,
       MembersScreen(onMemberTap: _navigateToDocumentsWithFilter),
-      const NotificationTestScreen(),
       pages[3]!,
     ];
 
@@ -106,11 +105,6 @@ class _MainScreenState extends State<MainScreen> {
                     icon: Icon(Icons.people_outline),
                     selectedIcon: Icon(Icons.people),
                     label: Text('Members'),
-                  ),
-                  NavigationRailDestination(
-                    icon: Icon(Icons.notifications_active_outlined),
-                    selectedIcon: Icon(Icons.notifications_active),
-                    label: Text('Test Notif'),
                   ),
                   NavigationRailDestination(
                     icon: Icon(Icons.person_outline),
@@ -180,11 +174,6 @@ class _MainScreenState extends State<MainScreen> {
                   icon: Icon(Icons.people_outline),
                   activeIcon: Icon(Icons.people),
                   label: 'Members',
-                ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.notifications_active_outlined),
-                  activeIcon: Icon(Icons.notifications_active),
-                  label: 'Test Notif',
                 ),
                 const BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline),

@@ -14,7 +14,9 @@ class TaskService {
     categoryId,
     isRecurring,
     recurrenceType,
-    memberId // Added memberId
+    recurrenceType,
+    memberId, // Added memberId
+    remindMeBeforeDays // Added remindMeBeforeDays
   ) {
     // Validate user exists
     // FIX: Changed findUserByEmail to findUserById
@@ -77,6 +79,7 @@ class TaskService {
       recurrenceType: recurrenceType || null,
       nextOccurrence,
       memberId: memberId || null, // Persist memberId
+      remindMeBeforeDays: remindMeBeforeDays || null,
     });
 
     // AUTO-CREATE NOTIFICATION RULES (Fix for missing notifications)
@@ -98,6 +101,18 @@ class TaskService {
         triggerType: "on_due_date",
         isActive: true,
       });
+
+      // Rule 3: Before Due Date (if requested)
+      if (remindMeBeforeDays && remindMeBeforeDays > 0) {
+        await notificationDao.createNotificationRule({
+          taskId: task._id || task.id,
+          userId,
+          type: "push", // Assuming push for reminders
+          triggerType: "before_due_date",
+          hoursBeforeDue: remindMeBeforeDays * 24,
+          isActive: true,
+        });
+      }
     }
 
     return task;
@@ -146,6 +161,8 @@ class TaskService {
       dataToUpdate.categoryId = updateData.categoryId || null;
     if (updateData.memberId !== undefined)
       dataToUpdate.memberId = updateData.memberId || null; // Handle memberId update
+    if (updateData.remindMeBeforeDays !== undefined)
+      dataToUpdate.remindMeBeforeDays = updateData.remindMeBeforeDays;
     if (updateData.isRecurring !== undefined)
       dataToUpdate.isRecurring = updateData.isRecurring;
     if (updateData.recurrenceType !== undefined) {

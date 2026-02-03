@@ -222,7 +222,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                           const SizedBox(height: 4),
                           Text(
                             DateFormat(
-                              'EEEE, MMM d, yyyy',
+                              'EEEE, MMM d, yyyy • h:mm a',
                             ).format(_selectedDate),
                             style: theme.textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.w600,
@@ -405,10 +405,23 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
 
-    if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-      });
+    if (picked != null && mounted) {
+      final timePicked = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(_selectedDate),
+      );
+
+      if (timePicked != null) {
+        setState(() {
+          _selectedDate = DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            timePicked.hour,
+            timePicked.minute,
+          );
+        });
+      }
     }
   }
 
@@ -433,6 +446,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         status: isEditing ? widget.task!.status : TaskStatus.pending,
         categoryId: _selectedCategoryId,
         memberId: _selectedMemberId, // Can be null (Myself)
+        remindMeBeforeDays: _reminderDays,
       );
 
       final success = isEditing
