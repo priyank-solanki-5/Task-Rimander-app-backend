@@ -112,6 +112,26 @@ class TaskService {
           isActive: true,
         });
       }
+
+      // Rule 4: Mandatory 1 Hour Before (Requested by User)
+      await notificationDao.createNotificationRule({
+        taskId: task._id || task.id,
+        userId,
+        type: "push",
+        triggerType: "before_due_date",
+        hoursBeforeDue: 1, // 1 hour before
+        isActive: true,
+      });
+
+      // Rule 5: Mandatory Overdue Notification 1 Day Later (Requested by User)
+      await notificationDao.createNotificationRule({
+        taskId: task._id || task.id,
+        userId,
+        type: "push",
+        triggerType: "after_due_date",
+        hoursBeforeDue: 24, // Interpreted as 24 hours *after* due date by updated logic
+        isActive: true,
+      });
     }
 
     return task;

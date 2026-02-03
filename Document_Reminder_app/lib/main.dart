@@ -5,11 +5,9 @@ import 'core/providers/document_provider.dart';
 import 'core/providers/category_provider.dart';
 import 'core/providers/member_provider.dart';
 import 'core/providers/theme_provider.dart';
-import 'core/providers/notification_provider.dart';
 import 'app/app.dart';
 
 import 'package:flutter/services.dart';
-import 'services/firebase_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,3 +49,9 @@ void main() async {
     ),
   );
 }
+
+class NotificationProvider extends ChangeNotifier {
+  // Add your properties and methods here
+}
+
+FirebaseNotificationService() {}
