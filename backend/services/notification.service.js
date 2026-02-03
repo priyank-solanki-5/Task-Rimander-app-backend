@@ -297,7 +297,7 @@ class NotificationService {
   async onTaskCompleted(taskId, userId) {
     try {
       // Get task details
-      const task = await Task.findByPk(taskId);
+      const task = await Task.findById(taskId);
 
       if (!task) {
         throw new Error("Task not found");
@@ -337,16 +337,14 @@ class NotificationService {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + days);
 
-      const tasks = await Task.findAll({
-        where: {
-          userId,
-          status: "Pending",
-          dueDate: {
-            [require("sequelize").Op.between]: [now, futureDate],
-          },
+      const tasks = await Task.find({
+        userId,
+        status: "Pending",
+        dueDate: {
+          $gte: now,
+          $lte: futureDate,
         },
-        order: [["dueDate", "ASC"]],
-      });
+      }).sort({ dueDate: 1 });
 
       return tasks;
     } catch (error) {
