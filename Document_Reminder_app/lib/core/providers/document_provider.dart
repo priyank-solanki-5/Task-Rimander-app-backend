@@ -12,7 +12,7 @@ class DocumentProvider extends ChangeNotifier {
 
   List<Document> _documents = [];
   String? _selectedTaskId;
-  String? _selectedMemberId = 'myself'; // Default to "Myself"
+  String? _selectedMemberId = 'all'; // Default to show all members
   SortType _sortType = SortType.uploadDate;
   bool _isLoading = false;
   String? _errorMessage;
