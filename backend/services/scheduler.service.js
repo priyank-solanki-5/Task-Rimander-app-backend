@@ -36,8 +36,9 @@ class SchedulerService {
   scheduleNotificationCheck() {
     const jobId = "notification-check";
 
-    // Run every 15 minutes to catch "1 hour before time" precise reminders
-    const job = cron.schedule("*/15 * * * *", async () => {
+    // TEMP: Run every 2 minutes to accelerate notification testing
+    // Revert to */15 * * * * after testing to reduce load
+    const job = cron.schedule("*/2 * * * *", async () => {
       console.log(
         `\n⏰ [${new Date().toISOString()}] Running notification check...`,
       );
@@ -51,7 +52,7 @@ class SchedulerService {
     });
 
     this.jobs.set(jobId, job);
-    console.log("📅 Scheduled: Notification check - every 15 minutes");
+    console.log("📅 Scheduled: Notification check - every 2 minutes (TEMP)");
   }
 
   /**

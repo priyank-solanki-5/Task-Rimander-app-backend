@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/dummy_data.dart';
 import '../../../widgets/custom_button.dart';
@@ -18,6 +19,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   String? _selectedMember;
   String? _selectedDocumentType;
   DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
   int? _selectedReminderDays;
 
   @override
@@ -27,18 +29,38 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+  Future<void> _selectDateTime(BuildContext context) async {
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 3650)),
     );
-    if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-      });
+
+    if (pickedDate != null) {
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: _selectedTime ?? TimeOfDay.now(),
+      );
+
+      if (pickedTime != null) {
+        setState(() {
+          _selectedTime = pickedTime;
+          _selectedDate = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+        });
+      }
     }
+  }
+
+  String _formatSelectedDateTime() {
+    if (_selectedDate == null) return 'Select date & time';
+    return DateFormat('EEE, MMM d, yyyy • h:mm a').format(_selectedDate!);
   }
 
   void _handleSave() {
@@ -46,9 +68,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       // Member and Document Type are now OPTIONAL
 
       if (_selectedDate == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Please select due date')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select due date & time')),
+        );
         return;
       }
       if (_selectedReminderDays == null) {
@@ -173,12 +195,12 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Due / Expiry Date',
+                      'Due / Expiry Date & Time',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     InkWell(
-                      onTap: () => _selectDate(context),
+                      onTap: () => _selectDateTime(context),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -197,9 +219,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              _selectedDate == null
-                                  ? 'Select date'
-                                  : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
+                              _formatSelectedDateTime(),
                               style: Theme.of(context).textTheme.bodyLarge,
                             ),
                           ],

@@ -107,11 +107,6 @@ class _MainScreenState extends State<MainScreen> {
                     label: Text('Members'),
                   ),
                   NavigationRailDestination(
-                    icon: Icon(Icons.notifications_active_outlined),
-                    selectedIcon: Icon(Icons.notifications_active),
-                    label: Text('Test Notif'),
-                  ),
-                  NavigationRailDestination(
                     icon: Icon(Icons.person_outline),
                     selectedIcon: Icon(Icons.person),
                     label: Text('Profile'),
@@ -179,11 +174,6 @@ class _MainScreenState extends State<MainScreen> {
                   icon: Icon(Icons.people_outline),
                   activeIcon: Icon(Icons.people),
                   label: 'Members',
-                ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.notifications_active_outlined),
-                  activeIcon: Icon(Icons.notifications_active),
-                  label: 'Test Notif',
                 ),
                 const BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline),

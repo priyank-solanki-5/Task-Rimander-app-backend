@@ -218,22 +218,30 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                         color: theme.colorScheme.primary,
                       ),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Due Date', style: theme.textTheme.labelMedium),
-                          const SizedBox(height: 4),
-                          Text(
-                            DateFormat(
-                              'EEEE, MMM d, yyyy • h:mm a',
-                            ).format(_selectedDate),
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Due Date',
+                              style: theme.textTheme.labelMedium,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              DateFormat(
+                                'EEEE, MMM d, yyyy • h:mm a',
+                              ).format(_selectedDate),
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 12),
                       Icon(
                         Icons.arrow_forward_ios_rounded,
                         size: 16,
