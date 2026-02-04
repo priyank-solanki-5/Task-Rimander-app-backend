@@ -81,57 +81,59 @@ class TaskService {
       remindMeBeforeDays: remindMeBeforeDays || null,
     });
 
-    // AUTO-CREATE NOTIFICATION RULES (Fix for missing notifications)
-    if (task) {
-      // Rule 1: Push Notification on Due Date
-      await notificationDao.createNotificationRule({
-        taskId: task._id || task.id,
-        userId,
-        type: "push",
-        triggerType: "on_due_date",
-        isActive: true,
-      });
+    // AUTO-CREATE NOTIFICATION RULES (Updated cadence)
+    if (task && task.dueDate) {
+      const taskId = task._id || task.id;
+      const basePayload = { taskId, userId, isActive: true };
+      const rules = [];
 
-      // Rule 2: In-App Notification on Due Date
-      await notificationDao.createNotificationRule({
-        taskId: task._id || task.id,
-        userId,
-        type: "in-app",
-        triggerType: "on_due_date",
-        isActive: true,
-      });
+      const due = new Date(task.dueDate);
+      const now = new Date();
+      const msInDay = 24 * 60 * 60 * 1000;
+      const daysUntilDue = Math.max(
+        0,
+        Math.ceil((due.getTime() - now.getTime()) / msInDay),
+      );
 
-      // Rule 3: Before Due Date (if requested)
-      if (remindMeBeforeDays && remindMeBeforeDays > 0) {
-        await notificationDao.createNotificationRule({
-          taskId: task._id || task.id,
-          userId,
-          type: "push", // Assuming push for reminders
+      // Daily notifications leading up to due date (one per day)
+      for (let d = 1; d <= daysUntilDue; d++) {
+        rules.push({
+          ...basePayload,
+          type: "push",
           triggerType: "before_due_date",
-          hoursBeforeDue: remindMeBeforeDays * 24,
-          isActive: true,
+          hoursBeforeDue: d * 24,
         });
       }
 
-      // Rule 4: Mandatory 1 Hour Before (Requested by User)
-      await notificationDao.createNotificationRule({
-        taskId: task._id || task.id,
-        userId,
-        type: "push",
-        triggerType: "before_due_date",
-        hoursBeforeDue: 1, // 1 hour before
-        isActive: true,
+      // Day-of notifications: 3h, 1h, 30m before due time
+      const dayOfOffsets = [3, 1, 0.5];
+      dayOfOffsets.forEach((hours) => {
+        rules.push({
+          ...basePayload,
+          type: "push",
+          triggerType: "before_due_date",
+          hoursBeforeDue: hours,
+        });
       });
 
-      // Rule 5: Mandatory Overdue Notification 1 Day Later (Requested by User)
-      await notificationDao.createNotificationRule({
-        taskId: task._id || task.id,
-        userId,
-        type: "push",
-        triggerType: "after_due_date",
-        hoursBeforeDue: 24, // Interpreted as 24 hours *after* due date by updated logic
-        isActive: true,
-      });
+      // In-app + push on due date (kept for visibility)
+      rules.push(
+        {
+          ...basePayload,
+          type: "push",
+          triggerType: "on_due_date",
+        },
+        {
+          ...basePayload,
+          type: "in-app",
+          triggerType: "on_due_date",
+        },
+      );
+
+      // Persist all rules
+      for (const rule of rules) {
+        await notificationDao.createNotificationRule(rule);
+      }
     }
 
     return task;

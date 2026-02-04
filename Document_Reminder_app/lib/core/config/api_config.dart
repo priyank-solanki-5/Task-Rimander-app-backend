@@ -33,7 +33,9 @@ class ApiConfig {
   // ========================================
 
   // 👇 PRODUCTION RENDER BACKEND URL
-  static const String baseUrl = 'https://reminderbackend.aurickrystal.com/';
+  // Render testing backend
+  static const String baseUrl =
+      'https://task-rimander-app-backend-1.onrender.com';
 
   // Example configurations (uncomment the one you need):
   // static const String baseUrl = 'https://reminderbackend.aurickrystal.com/';  // Production

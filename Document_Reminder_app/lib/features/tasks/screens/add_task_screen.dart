@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/constants/dummy_data.dart';
+import '../../../core/constants/dummy_data.dart' hide Task;
+import '../../../core/models/task.dart' as model;
+import '../../../core/providers/task_provider.dart';
+import '../../../core/services/token_storage.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_textfield.dart';
 
@@ -21,6 +25,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   int? _selectedReminderDays;
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -63,7 +68,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     return DateFormat('EEE, MMM d, yyyy • h:mm a').format(_selectedDate!);
   }
 
-  void _handleSave() {
+  Future<void> _handleSave() async {
     if (_formKey.currentState!.validate()) {
       // Member and Document Type are now OPTIONAL
 
@@ -80,11 +85,55 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         return;
       }
 
-      // Mock save
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Task added successfully!')));
-      Navigator.pop(context);
+      setState(() => _isSaving = true);
+
+      try {
+        final userId = await TokenStorage.getUserId();
+        if (userId == null) {
+          throw Exception('Session expired. Please log in again.');
+        }
+
+        final provider = context.read<TaskProvider>();
+
+        final task = model.Task(
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+          status: model.TaskStatus.pending,
+          dueDate: _selectedDate,
+          isRecurring: false,
+          recurrenceType: null,
+          userId: userId,
+          memberId: _selectedMember,
+          categoryId: null, // No category selection on this form
+          taskType: model.TaskType.oneTime,
+          remindMeBeforeDays: _selectedReminderDays,
+        );
+
+        final created = await provider.addTask(task);
+        if (created != null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Task added successfully!')),
+          );
+          Navigator.pop(context, true);
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                provider.errorMessage ?? 'Failed to add task. Please retry.',
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
+      } finally {
+        if (mounted) setState(() => _isSaving = false);
+      }
     }
   }
 
@@ -263,8 +312,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
                 // Save Button
                 CustomButton(
-                  text: 'Save Task',
-                  onPressed: _handleSave,
+                  text: _isSaving ? 'Saving...' : 'Save Task',
+                  onPressed: _isSaving ? () {} : () => _handleSave(),
                   icon: Icons.check,
                 ),
               ],
