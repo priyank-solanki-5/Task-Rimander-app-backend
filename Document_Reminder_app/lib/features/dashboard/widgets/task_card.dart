@@ -31,11 +31,20 @@ class TaskCard extends StatelessWidget {
   Color _getTaskStatusColor(ThemeData theme) {
     if (task.isCompleted) return theme.disabledColor;
 
-    if (task.isOverdue) {
-      return theme.colorScheme.error;
-    } else if (_daysUntilDue <= 1) {
+    // Red: Today due and tomorrow due (overdue, 0 days, 1 day)
+    if (task.isOverdue || _daysUntilDue <= 1) {
+      return Colors.red;
+    }
+    // Orange: Before 3 days (2 days left)
+    else if (_daysUntilDue <= 2) {
       return Colors.orange;
-    } else {
+    }
+    // Yellow: Before 7 days (3-7 days left)
+    else if (_daysUntilDue <= 7) {
+      return Colors.yellow[700]!;
+    }
+    // Primary color for tasks beyond 7 days
+    else {
       return theme.colorScheme.primary;
     }
   }

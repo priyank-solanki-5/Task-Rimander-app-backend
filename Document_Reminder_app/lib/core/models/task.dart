@@ -160,6 +160,25 @@ class Task {
     return dueDate!.isAfter(now) && dueDate!.isBefore(tenDaysLater);
   }
 
+  /// Get days remaining until due date
+  int get daysUntilDue {
+    if (dueDate == null) return 999;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final due = DateTime(dueDate!.year, dueDate!.month, dueDate!.day);
+    return due.difference(today).inDays;
+  }
+
+  /// Get task color priority
+  /// Returns: 'red' for today/tomorrow, 'orange' for within 3 days, 'yellow' for within 7 days
+  String get colorPriority {
+    if (isCompleted) return 'gray';
+    if (isOverdue || daysUntilDue <= 1) return 'red';
+    if (daysUntilDue <= 2) return 'orange';
+    if (daysUntilDue <= 7) return 'yellow';
+    return 'primary';
+  }
+
   /// Get status display string
   String get statusDisplay {
     return status == TaskStatus.completed ? 'Completed' : 'Pending';
