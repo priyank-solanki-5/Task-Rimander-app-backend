@@ -200,7 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
                       // Slightly taller cards to avoid overflow on small screens
-                      childAspectRatio: 1.2,
+                      childAspectRatio: 0.85,
                       children: [
                         _StatCard(
                           icon: Icons.description_outlined,
@@ -246,7 +246,7 @@ class _StatCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Icon(icon, size: 40, color: color),
             const SizedBox(height: 12),
