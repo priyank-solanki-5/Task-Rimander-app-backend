@@ -16,9 +16,14 @@ router.use(apiLimiter);
 
 // ===== CREATE & DELETE =====
 
-// Create a new reminder for a task
+// Create a new reminder for a task (creates multiple reminders at 5,4,3,2,1 minutes before due)
 router.post("/", validateReminderCreation, (req, res) =>
   reminderController.createReminder(req, res),
+);
+
+// Create a single reminder for a task (legacy support)
+router.post("/single", validateReminderCreation, (req, res) =>
+  reminderController.createSingleReminder(req, res),
 );
 
 // Delete a reminder (with ownership verification)

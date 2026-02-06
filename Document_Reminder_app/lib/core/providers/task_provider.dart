@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/task.dart';
 import '../services/task_api_service.dart';
+import '../../services/local_notification_service.dart';
 
 class TaskProvider extends ChangeNotifier {
   final TaskApiService _taskApiService = TaskApiService();
@@ -103,6 +104,15 @@ class TaskProvider extends ChangeNotifier {
 
           // Update with server data to be sure
           _tasks[index] = updatedTask;
+
+          // Handle notifications
+          if (isCompleted) {
+            await _cancelNotifications(taskId);
+          } else {
+            // Reschedule if pending
+            await _scheduleNotifications(updatedTask);
+          }
+
           notifyListeners();
           debugPrint('✅ Task completion toggled on server: $isCompleted');
           return true;
@@ -126,6 +136,10 @@ class TaskProvider extends ChangeNotifier {
     try {
       final createdTask = await _taskApiService.createTask(task);
       _tasks.add(createdTask);
+
+      // Schedule notifications
+      await _scheduleNotifications(createdTask);
+
       notifyListeners();
       debugPrint('✅ Task added successfully: ${createdTask.id}');
       return createdTask;
@@ -144,6 +158,11 @@ class TaskProvider extends ChangeNotifier {
       final index = _tasks.indexWhere((t) => t.id == task.id);
       if (index != -1) {
         _tasks[index] = updatedTask;
+
+        // Reschedule notifications
+        await _cancelNotifications(updatedTask.id!);
+        await _scheduleNotifications(updatedTask);
+
         notifyListeners();
       }
       debugPrint('✅ Task updated successfully');
@@ -160,6 +179,9 @@ class TaskProvider extends ChangeNotifier {
     try {
       final success = await _taskApiService.deleteTask(id);
       if (success) {
+        // Cancel notification
+        await _cancelNotifications(id);
+
         _tasks.removeWhere((t) => t.id == id);
         notifyListeners();
         debugPrint('✅ Task deleted successfully');
@@ -264,5 +286,113 @@ class TaskProvider extends ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  // Helper to schedule multiple notifications
+  Future<void> _scheduleNotifications(Task task) async {
+    if (task.dueDate == null || task.id == null || task.isCompleted) return;
+
+    debugPrint('🔔 Scheduling notifications for task: ${task.title} (Due: ${task.dueDate})');
+
+    // Show instant notification for new task
+    if (task.status == TaskStatus.pending) {
+      debugPrint('  - Showing instant notification for new task');
+      await LocalNotificationService().showInstantNotification(
+        title: 'Task Created',
+        body: 'New task "${task.title}" has been added successfully',
+        payload: 'task_${task.id}',
+      );
+    }
+
+    // Schedule reminders for 5,4,3,2,1 minutes before due
+    final minutes = [5, 4, 3, 2, 1];
+    int scheduledCount = 0;
+    
+    for (final min in minutes) {
+      final scheduledTime = task.dueDate!.subtract(Duration(minutes: min));
+      final currentTime = DateTime.now();
+      
+      // Only schedule if: reminder time is in: future
+      if (scheduledTime.isAfter(currentTime)) {
+        debugPrint('  - Scheduling $min min reminder at $scheduledTime');
+        try {
+          await LocalNotificationService().scheduleNotification(
+            id: (task.id! + '_$min').hashCode,
+            title: 'Task Due Soon',
+            body: 'Your task "${task.title}" is due in $min minutes',
+            scheduledTime: scheduledTime,
+            payload: 'task_${task.id}_reminder_$min',
+          );
+          scheduledCount++;
+        } catch (e) {
+          debugPrint('  - ❌ Failed to schedule $min min reminder: $e');
+        }
+      } else {
+        debugPrint('  - Skipping $min min reminder (time passed: $scheduledTime, now: $currentTime)');
+      }
+    }
+    
+    // Schedule due time notification
+    final currentTime = DateTime.now();
+    if (task.dueDate!.isAfter(currentTime)) {
+      debugPrint('  - Scheduling due time notification at ${task.dueDate}');
+      try {
+        await LocalNotificationService().scheduleNotification(
+          id: (task.id! + '_due').hashCode,
+          title: 'Task Due Now!',
+          body: 'Your task "${task.title}" is due now!',
+          scheduledTime: task.dueDate!,
+          payload: 'task_${task.id}_due',
+        );
+        scheduledCount++;
+      } catch (e) {
+        debugPrint('  - ❌ Failed to schedule due time notification: $e');
+      }
+      
+      // Schedule 2 additional notifications after due time
+      for (int i = 1; i <= 2; i++) {
+        final afterDueTime = task.dueDate!.add(Duration(minutes: i));
+        debugPrint('  - Scheduling +$i min notification at $afterDueTime');
+        try {
+          await LocalNotificationService().scheduleNotification(
+            id: (task.id! + '_after_$i').hashCode,
+            title: 'Task Overdue',
+            body: 'Your task "${task.title}" was due $i minute${i > 1 ? 's' : ''} ago!',
+            scheduledTime: afterDueTime,
+            payload: 'task_${task.id}_after_$i',
+          );
+          scheduledCount++;
+        } catch (e) {
+          debugPrint('  - ❌ Failed to schedule +$i min notification: $e');
+        }
+      }
+    }
+    
+    debugPrint('✅ Scheduled $scheduledCount reminders for task: ${task.title}');
+    
+    // Debug: Show all pending notifications
+    await LocalNotificationService().debugPendingNotifications();
+  }
+
+  // Helper to cancel all notifications for a task
+  Future<void> _cancelNotifications(String taskId) async {
+    // Cancel task creation notification
+    await LocalNotificationService().cancelNotification(taskId.hashCode);
+    
+    // Cancel minute-based reminders
+    final minutes = [5, 4, 3, 2, 1];
+    for (final min in minutes) {
+      await LocalNotificationService().cancelNotification(
+        (taskId + '_$min').hashCode
+      );
+    }
+    
+    // Cancel due time notification
+    await LocalNotificationService().cancelNotification((taskId + '_due').hashCode);
+    
+    // Cancel overdue notifications
+    for (int i = 1; i <= 2; i++) {
+      await LocalNotificationService().cancelNotification((taskId + '_after_$i').hashCode);
+    }
   }
 }

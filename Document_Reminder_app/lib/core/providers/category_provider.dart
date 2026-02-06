@@ -2,6 +2,7 @@
 import 'package:flutter/foundation.dart' hide Category;
 import '../models/category.dart';
 import '../services/category_api_service.dart';
+import '../constants/task_categories.dart';
 
 class CategoryProvider extends ChangeNotifier {
   final CategoryApiService _categoryService = CategoryApiService();
@@ -48,46 +49,28 @@ class CategoryProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    try {
-      final result = await _categoryService.getAllCategories();
-      if (result['success'] == true) {
-        final data = result['data'];
-        if (data is List) {
-          _categories = data.map((json) => Category.fromJson(json)).toList();
-        } else if (data is Map && data.containsKey('categories')) {
-          // Handle case where data might be { categories: [...] }
-          final list = data['categories'] as List;
-          _categories = list.map((json) => Category.fromJson(json)).toList();
-        } else {
-          // Fallback or assume data itself is the list if possible, or inspection needed.
-          // Based on typical API response structure from TaskApiService which returns data['data'] as list,
-          // but here getAllCategories returns {'success': true, 'data': response.data}.
-          // If response.data IS the list, then `data` is the list.
-          // If response.data is { data: [...] }, then `data` is that map.
-          // Looking at TaskApiService, it did `response.data['data']`.
-          // Here `CategoryApiService` does `return {'success': true, 'data': response.data}`.
-          // So if backend returns standard `{ status: ..., data: [...] }`, then `result['data']` is that whole object.
-          // This seems slightly inconsistent wrapper.
-          // Let's assume response.data IS the list or contains it.
-          // Safer to try casting.
-          if (data is List) {
-            _categories = data.map((json) => Category.fromJson(json)).toList();
-          } else if (data is Map && data.containsKey('data')) {
-            final list = data['data'] as List;
-            _categories = list.map((json) => Category.fromJson(json)).toList();
-          }
-        }
-        debugPrint('✅ Loaded ${_categories.length} categories from API');
-      } else {
-        _errorMessage = result['message'];
-      }
-    } catch (e) {
-      _errorMessage = 'Failed to load categories: $e';
-      debugPrint('❌ Error loading categories: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+    // Always use predefined categories locally
+    _loadPredefinedCategories();
+    
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // Load predefined categories as fallback
+  void _loadPredefinedCategories() {
+    debugPrint('🔄 Loading predefined categories as fallback');
+    _categories = TaskCategories.all.map((taskCat) {
+      return Category(
+        id: taskCat.id,
+        name: taskCat.name,
+        description: null,
+        color: '#${taskCat.color.value.toRadixString(16).padLeft(8, '0').substring(2)}',
+        isPredefined: true,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+    }).toList();
+    debugPrint('✅ Loaded ${_categories.length} predefined categories');
   }
 
   // Create custom category

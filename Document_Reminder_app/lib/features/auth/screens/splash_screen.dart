@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/routes.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../services/local_notification_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19,6 +20,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuthenticationAndNavigate() async {
+    // Initialize local notifications first
+    try {
+      await LocalNotificationService().initialize();
+      debugPrint('✅ Local notifications initialized');
+    } catch (e) {
+      debugPrint('❌ Failed to initialize local notifications: $e');
+    }
+
     // Show splash for at least 2 seconds
     await Future.delayed(const Duration(seconds: 2));
 

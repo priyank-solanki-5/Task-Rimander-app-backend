@@ -1,13 +1,17 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 import 'core/providers/task_provider.dart';
 import 'core/providers/document_provider.dart';
 import 'core/providers/category_provider.dart';
 import 'core/providers/member_provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'app/app.dart';
-
-import 'package:flutter/services.dart';
+import 'services/firebase_notification_service.dart';
+import 'services/local_notification_service.dart';
+import 'core/providers/notification_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +29,14 @@ void main() async {
   // Initialize theme provider
   final themeProvider = ThemeProvider();
   await themeProvider.loadThemeMode();
+
+  // Initialize local notifications
+  try {
+    await LocalNotificationService().initialize();
+    debugPrint('✅ Local notifications initialized');
+  } catch (e) {
+    debugPrint('❌ Failed to initialize local notifications: $e');
+  }
 
   // Initialize Firebase notifications
   final firebaseService = FirebaseNotificationService();
@@ -49,9 +61,3 @@ void main() async {
     ),
   );
 }
-
-class NotificationProvider extends ChangeNotifier {
-  // Add your properties and methods here
-}
-
-FirebaseNotificationService() {}

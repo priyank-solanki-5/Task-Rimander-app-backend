@@ -12,12 +12,22 @@ class ReminderDAO {
   }
 
   /**
-   * Get reminder for a specific task
+   * Get reminder for a specific task and minutes before due
    */
-  async getReminderByTaskId(taskId) {
-    return await Reminder.findOne({ taskId })
+  async getReminderByTaskIdAndMinutes(taskId, minutesBeforeDue) {
+    return await Reminder.findOne({ taskId, minutesBeforeDue })
       .populate("taskId", "id title dueDate status")
       .populate("userId", "id username email");
+  }
+
+  /**
+   * Get all reminders for a task
+   */
+  async getRemindersByTaskId(taskId) {
+    return await Reminder.find({ taskId })
+      .populate("taskId", "id title dueDate status")
+      .populate("userId", "id username email")
+      .sort({ reminderDate: 1 });
   }
 
   /**

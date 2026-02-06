@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import notificationService from "../services/notification.service.js";
+import reminderService from "../services/reminder.service.js";
 
 /**
  * Scheduler service for handling notification jobs
@@ -44,10 +45,15 @@ class SchedulerService {
       );
 
       try {
-        const result = await notificationService.checkAndCreateNotifications();
-        console.log(`✅ Notification check completed:`, result);
+        // Check and trigger reminders
+        const reminderResult = await reminderService.checkAndTriggerReminders();
+        console.log(`✅ Reminder check completed:`, reminderResult);
+
+        // Check and create notifications
+        const notificationResult = await notificationService.checkAndCreateNotifications();
+        console.log(`✅ Notification check completed:`, notificationResult);
       } catch (error) {
-        console.error(`❌ Error in notification check:`, error.message);
+        console.error(`❌ Error in scheduled checks:`, error.message);
       }
     });
 

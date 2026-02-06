@@ -188,24 +188,21 @@
 //                             child: CircleAvatar(
 // Old Dashboard implementation removed.
 
-//----------------------------------------------------------------------------------------------------------------
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-
 import '../../../core/providers/document_provider.dart';
 import '../../../core/providers/task_provider.dart';
 import '../../../core/providers/theme_provider.dart';
 import '../../../core/services/token_storage.dart';
 import '../../../core/models/document.dart';
-
 import '../widgets/task_section.dart';
 import 'add_edit_task_screen.dart';
 import '../../tasks/screens/all_tasks_screen.dart';
 import '../../../widgets/main_screen.dart';
 import '../../../widgets/double_back_to_exit_wrapper.dart';
+import '../../../services/local_notification_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -443,6 +440,85 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
           ),
         ),
+      ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: "debug_notifications",
+            onPressed: () async {
+              try {
+                await LocalNotificationService().debugPendingNotifications();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('📋 Check console for pending notifications'),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('❌ Error: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Icon(Icons.bug_report),
+            tooltip: 'Debug Pending Notifications',
+            mini: true,
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            heroTag: "test_5sec_notification",
+            onPressed: () async {
+              try {
+                await LocalNotificationService().test5SecondNotification();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('⏰ Test 5-second notification'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('❌ Failed to test 5-second notification: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Icon(Icons.timer),
+            tooltip: 'Test 5-Second Notification',
+            mini: true,
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            heroTag: "test_scheduled_notification",
+            onPressed: () async {
+              try {
+                await LocalNotificationService().testScheduledNotification();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✅ Test scheduled notification (10 seconds)'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('❌ Failed to test scheduled notification: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Icon(Icons.schedule),
+            tooltip: 'Test 10-Second Notification',
+            mini: true,
+          ),
+        ],
       ),
     );
   }

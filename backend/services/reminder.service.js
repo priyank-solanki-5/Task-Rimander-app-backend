@@ -1,12 +1,72 @@
 import reminderDao from "../dao/reminderDao.js";
 import Task from "../models/Task.js";
+import notificationService from "./notification.service.js";
 
 class ReminderService {
   /**
-   * Create a reminder for a task
-   * MVP: One reminder per task
+   * Create multiple reminders for a task (5,4,3,2,1 minutes before due)
    */
-  async createReminder(userId, taskId, daysBeforeDue = 1, type = "in-app") {
+  async createMultipleReminders(userId, taskId, type = "in-app") {
+    try {
+      // Check if task exists and belongs to user
+      const task = await Task.findOne({
+        where: { id: taskId, userId },
+      });
+
+      if (!task) {
+        throw new Error("Task not found or does not belong to this user");
+      }
+
+      if (!task.dueDate) {
+        throw new Error("Task must have a due date to create reminders");
+      }
+
+      // Define reminder intervals: 5, 4, 3, 2, 1 minutes before due
+      const reminderIntervals = [5, 4, 3, 2, 1];
+      const createdReminders = [];
+
+      for (const minutesBefore of reminderIntervals) {
+        // Check if reminder already exists for this specific interval
+        const existingReminder = await reminderDao.getReminderByTaskIdAndMinutes(taskId, minutesBefore);
+        if (existingReminder) {
+          console.log(`Reminder already exists for task ${taskId} at ${minutesBefore} minutes before due`);
+          continue;
+        }
+
+        // Calculate reminder date (X minutes before due date)
+        const dueDate = new Date(task.dueDate);
+        const reminderDate = new Date(dueDate.getTime() - minutesBefore * 60 * 1000);
+
+        // Only create reminder if it's in the future
+        if (reminderDate <= new Date()) {
+          console.log(`Skipping reminder for task ${taskId} at ${minutesBefore} minutes - time has passed`);
+          continue;
+        }
+
+        const reminderData = {
+          userId,
+          taskId,
+          minutesBeforeDue: minutesBefore,
+          reminderDate,
+          type,
+          isActive: true,
+          isTriggered: false,
+        };
+
+        const reminder = await reminderDao.createReminder(reminderData);
+        createdReminders.push(reminder);
+      }
+
+      return createdReminders;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Create a single reminder for a task (legacy support)
+   */
+  async createReminder(userId, taskId, minutesBeforeDue = 5, type = "in-app") {
     try {
       // Check if task exists and belongs to user
       const task = await Task.findOne({
@@ -21,21 +81,25 @@ class ReminderService {
         throw new Error("Task must have a due date to create a reminder");
       }
 
-      // Check if reminder already exists (MVP: one per task)
-      const existingReminder = await reminderDao.getReminderByTaskId(taskId);
+      // Check if reminder already exists for this specific interval
+      const existingReminder = await reminderDao.getReminderByTaskIdAndMinutes(taskId, minutesBeforeDue);
       if (existingReminder) {
-        throw new Error("Reminder already exists for this task");
+        throw new Error(`Reminder already exists for this task at ${minutesBeforeDue} minutes before due`);
       }
 
-      // Calculate reminder date (X days before due date)
+      // Calculate reminder date (X minutes before due date)
       const dueDate = new Date(task.dueDate);
-      const reminderDate = new Date(dueDate);
-      reminderDate.setDate(reminderDate.getDate() - daysBeforeDue);
+      const reminderDate = new Date(dueDate.getTime() - minutesBeforeDue * 60 * 1000);
+
+      // Only create reminder if it's in the future
+      if (reminderDate <= new Date()) {
+        throw new Error(`Reminder time has passed. Cannot create reminder for ${minutesBeforeDue} minutes before due.`);
+      }
 
       const reminderData = {
         userId,
         taskId,
-        daysBeforeDue,
+        minutesBeforeDue,
         reminderDate,
         type,
         isActive: true,
@@ -53,7 +117,7 @@ class ReminderService {
    */
   async getReminder(taskId) {
     try {
-      return await reminderDao.getReminderByTaskId(taskId);
+      return await reminderDao.getRemindersByTaskId(taskId);
     } catch (error) {
       throw error;
     }
@@ -89,8 +153,8 @@ class ReminderService {
       // Don't allow changing taskId or userId
       const { taskId, userId, ...safeData } = updateData;
 
-      // If updating daysBeforeDue, recalculate reminderDate
-      if (safeData.daysBeforeDue !== undefined) {
+      // If updating minutesBeforeDue, recalculate reminderDate
+      if (safeData.minutesBeforeDue !== undefined) {
         const reminder = await reminderDao.getReminderById(reminderId);
         if (!reminder) {
           throw new Error("Reminder not found");
@@ -98,10 +162,7 @@ class ReminderService {
 
         const task = await Task.findByPk(reminder.taskId);
         const dueDate = new Date(task.dueDate);
-        const newReminderDate = new Date(dueDate);
-        newReminderDate.setDate(
-          newReminderDate.getDate() - safeData.daysBeforeDue
-        );
+        const newReminderDate = new Date(dueDate.getTime() - safeData.minutesBeforeDue * 60 * 1000);
 
         safeData.reminderDate = newReminderDate;
       }
@@ -160,7 +221,7 @@ class ReminderService {
           taskTitle: reminder.Task.title,
           dueDate: reminder.Task.dueDate,
           reminderSentAt: new Date(),
-          daysBeforeDue: reminder.daysBeforeDue,
+          minutesBeforeDue: reminder.minutesBeforeDue,
         };
 
         // Mark as triggered
@@ -172,6 +233,25 @@ class ReminderService {
           status: "triggered",
           message: `Reminder triggered for task: ${reminder.Task.title}`,
         });
+
+        // Send notification
+        try {
+          await notificationService.sendNotification(reminder.userId, {
+            taskId: reminder.taskId,
+            title: "Task Reminder",
+            message: this.generateReminderMessage(reminder),
+            type: reminder.type || "in-app",
+            metadata: {
+              taskTitle: reminder.Task.title,
+              dueDate: reminder.Task.dueDate,
+              minutesBeforeDue: reminder.minutesBeforeDue,
+              reminderType: "pre_due",
+            },
+          });
+          console.log(`✅ Notification sent for reminder: ${reminder.Task.title} (${reminder.minutesBeforeDue} min before)`);
+        } catch (notificationError) {
+          console.error(`❌ Failed to send notification for reminder:`, notificationError.message);
+        }
 
         remindersTriggered++;
       }
@@ -223,7 +303,7 @@ class ReminderService {
         reminderId: reminder.id,
         taskId: reminder.taskId,
         taskTitle: reminder.Task.title,
-        daysBeforeDue: reminder.daysBeforeDue,
+        minutesBeforeDue: reminder.minutesBeforeDue,
         reminderDate: reminder.reminderDate,
         isTriggered: reminder.isTriggered,
         triggeredAt: reminder.triggeredAt,
@@ -273,9 +353,9 @@ class ReminderService {
   }
 
   /**
-   * Update reminder days before due
+   * Update reminder minutes before due
    */
-  async updateDaysBeforeDue(reminderId, daysBeforeDue) {
+  async updateMinutesBeforeDue(reminderId, minutesBeforeDue) {
     try {
       const reminder = await reminderDao.getReminderById(reminderId);
       if (!reminder) {
@@ -285,15 +365,30 @@ class ReminderService {
       // Recalculate reminder date
       const task = await Task.findByPk(reminder.taskId);
       const dueDate = new Date(task.dueDate);
-      const newReminderDate = new Date(dueDate);
-      newReminderDate.setDate(newReminderDate.getDate() - daysBeforeDue);
+      const newReminderDate = new Date(dueDate.getTime() - minutesBeforeDue * 60 * 1000);
 
       return await reminderDao.updateReminder(reminderId, {
-        daysBeforeDue,
+        minutesBeforeDue,
         reminderDate: newReminderDate,
       });
     } catch (error) {
       throw error;
+    }
+  }
+
+  /**
+   * Generate reminder message based on minutes before due
+   */
+  generateReminderMessage(reminder) {
+    const minutes = reminder.minutesBeforeDue;
+    const taskTitle = reminder.Task.title;
+    
+    if (minutes === 1) {
+      return `⏰ Task "${taskTitle}" is due in 1 minute!`;
+    } else if (minutes <= 5) {
+      return `⏰ Task "${taskTitle}" is due in ${minutes} minutes!`;
+    } else {
+      return `⏰ Task "${taskTitle}" is due in ${minutes} minutes`;
     }
   }
 

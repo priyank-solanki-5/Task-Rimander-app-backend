@@ -11,6 +11,7 @@ import '../features/settings/screens/settings_screen.dart';
 import '../features/tasks/screens/task_detail_screen.dart';
 import '../widgets/main_screen.dart';
 import '../widgets/double_back_to_exit_wrapper.dart';
+import '../demo.dart';
 
 class AppRoutes {
   // Route names
@@ -25,6 +26,7 @@ class AppRoutes {
   static const String documentViewer = '/document-viewer';
   static const String notificationSettings = '/notification-settings';
   static const String settings = '/settings';
+  static const String testNotifications = '/test-notifications';
 
   // Route map
   static Map<String, WidgetBuilder> routes = {
@@ -47,5 +49,7 @@ class AppRoutes {
         const DoubleBackToExitWrapper(child: NotificationSettingsScreen()),
     settings: (context) =>
         const DoubleBackToExitWrapper(child: SettingsScreen()),
+    testNotifications: (context) =>
+        DoubleBackToExitWrapper(child: TestNotificationsScreen()),
   };
 }

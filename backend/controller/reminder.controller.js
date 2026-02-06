@@ -2,29 +2,60 @@ import reminderService from "../services/reminder.service.js";
 
 class ReminderController {
   /**
-   * Create a reminder for a task
+   * Create multiple reminders for a task (5,4,3,2,1 minutes before due)
    * POST /api/reminders
    */
   async createReminder(req, res) {
     try {
       const userId = req.user.id;
-      const { taskId, daysBeforeDue = 1, type = "in-app" } = req.body;
+      const { taskId, type = "in-app" } = req.body;
 
       // Validate required fields
       if (!taskId) {
         return res.status(400).json({ error: "taskId is required" });
       }
 
-      if (daysBeforeDue < 0) {
+      const reminders = await reminderService.createMultipleReminders(
+        userId,
+        taskId,
+        type
+      );
+
+      return res.status(201).json({
+        success: true,
+        message: `Created ${reminders.length} reminders for task`,
+        reminders,
+      });
+    } catch (error) {
+      console.error("Error creating reminders:", error.message);
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Create a single reminder for a task (legacy support)
+   * POST /api/reminders/single
+   */
+  async createSingleReminder(req, res) {
+    try {
+      const userId = req.user.id;
+      const { taskId, minutesBeforeDue = 5, type = "in-app" } = req.body;
+
+      // Validate required fields
+      if (!taskId) {
+        return res.status(400).json({ error: "taskId is required" });
+      }
+
+      if (minutesBeforeDue < 0) {
         return res
           .status(400)
-          .json({ error: "daysBeforeDue must be a positive number" });
+          .json({ error: "minutesBeforeDue must be a positive number" });
       }
 
       const reminder = await reminderService.createReminder(
         userId,
         taskId,
-        daysBeforeDue,
+        minutesBeforeDue,
         type
       );
 

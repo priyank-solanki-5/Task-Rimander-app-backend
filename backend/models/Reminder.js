@@ -6,16 +6,15 @@ const reminderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
       required: true,
-      unique: true,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    daysBeforeDue: {
+    minutesBeforeDue: {
       type: Number,
-      default: 1,
+      required: true,
     },
     reminderDate: {
       type: Date,
