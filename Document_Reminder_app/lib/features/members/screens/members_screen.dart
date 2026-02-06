@@ -29,14 +29,7 @@ class _MembersScreenState extends State<MembersScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Members'),
-        backgroundColor:
-            theme.brightness == Brightness.light ? Colors.black : const Color(0xFFF1F5F9),
-        foregroundColor:
-            theme.brightness == Brightness.light ? Colors.white : Colors.black,
-        surfaceTintColor: Colors.transparent,
-      ),
+      appBar: AppBar(title: const Text('Members')),
       body: SafeArea(
         child: Consumer<MemberProvider>(
           builder: (context, provider, child) {

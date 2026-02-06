@@ -24,7 +24,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   String? _selectedDocumentType;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
-  int? _selectedReminderDays;
+  String? _selectedRecurrence;
   bool _isSaving = false;
 
   @override
@@ -46,6 +46,40 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: _selectedTime ?? TimeOfDay.now(),
+        builder: (context, child) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    useMaterial3: true,
+                    timePickerTheme: TimePickerThemeData(
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                      dialHandColor: Theme.of(context).colorScheme.primary,
+                      dialBackgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      hourMinuteTextColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurface,
+                      dayPeriodTextColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurface,
+                    ),
+                  ),
+                  child: MediaQuery(
+                    data: MediaQuery.of(
+                      context,
+                    ).copyWith(alwaysUse24HourFormat: false),
+                    child: child!,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       );
 
       if (pickedTime != null) {
@@ -78,9 +112,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         );
         return;
       }
-      if (_selectedReminderDays == null) {
+      if (_selectedRecurrence == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select reminder days')),
+          const SnackBar(content: Text('Please select recurrence type')),
         );
         return;
       }
@@ -95,6 +129,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
         final provider = context.read<TaskProvider>();
 
+        final isRecurring = _selectedRecurrence != 'One Time';
         final task = model.Task(
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim().isEmpty
@@ -102,13 +137,15 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               : _descriptionController.text.trim(),
           status: model.TaskStatus.pending,
           dueDate: _selectedDate,
-          isRecurring: false,
-          recurrenceType: null,
+          isRecurring: isRecurring,
+          recurrenceType: isRecurring ? _selectedRecurrence : null,
           userId: userId,
           memberId: _selectedMember,
           categoryId: null, // No category selection on this form
-          taskType: model.TaskType.oneTime,
-          remindMeBeforeDays: _selectedReminderDays,
+          taskType: isRecurring
+              ? model.TaskType.recurring
+              : model.TaskType.oneTime,
+          remindMeBeforeDays: null,
         );
 
         final created = await provider.addTask(task);
@@ -279,30 +316,37 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Reminder Days Dropdown
+                // Recurrence Type Dropdown
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Reminder (Days Before)',
+                      'Recurrence Type',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    DropdownButtonFormField<int>(
-                      value: _selectedReminderDays,
+                    DropdownButtonFormField<String>(
+                      value: _selectedRecurrence,
                       decoration: const InputDecoration(
-                        hintText: 'Select reminder days',
-                        prefixIcon: Icon(Icons.notifications_outlined),
+                        hintText: 'Select recurrence type',
+                        prefixIcon: Icon(Icons.repeat_outlined),
                       ),
-                      items: AppConstants.reminderDays.map((days) {
-                        return DropdownMenuItem(
-                          value: days,
-                          child: Text('$days days before'),
-                        );
-                      }).toList(),
+                      items:
+                          const [
+                            'One Time',
+                            'Monthly',
+                            'Quarterly',
+                            'Half-Yearly',
+                            'Yearly',
+                          ].map((type) {
+                            return DropdownMenuItem(
+                              value: type,
+                              child: Text(type),
+                            );
+                          }).toList(),
                       onChanged: (value) {
                         setState(() {
-                          _selectedReminderDays = value;
+                          _selectedRecurrence = value;
                         });
                       },
                     ),

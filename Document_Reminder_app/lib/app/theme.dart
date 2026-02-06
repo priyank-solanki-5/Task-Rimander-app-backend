@@ -40,24 +40,24 @@ class AppTheme {
         onSurface: const Color(0xFF1F2937),
       ),
 
-      // AppBar Theme (light: black background, white text/icons)
+      // AppBar Theme (light: light gray background, dark text/icons)
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: false,
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.grey.shade100,
+        foregroundColor: Colors.black87,
+        iconTheme: const IconThemeData(color: Colors.black87),
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
         systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
         ),
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: Colors.black87,
         ),
       ),
 
@@ -270,24 +270,24 @@ class AppTheme {
         surface: scaffoldDark, // App background
       ),
 
-      // AppBar Theme (dark: soft light background, dark text/icons)
+      // AppBar Theme (dark: dark gray background, light text/icons)
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: false,
-        backgroundColor: const Color(0xFFF1F5F9),
-        foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: const Color(0xFF1F2937),
+        foregroundColor: Colors.grey.shade100,
+        iconTheme: IconThemeData(color: Colors.grey.shade100),
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
         systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-          statusBarBrightness: Brightness.light,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
         ),
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: Colors.black,
+          color: Color(0xFFF3F4F6),
         ),
       ),
 
@@ -490,4 +490,3 @@ class AppTheme {
 }
 
 // -----------------------------------------------------------------------------------------
-

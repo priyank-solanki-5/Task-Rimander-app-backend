@@ -272,12 +272,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Tasks'),
-        elevation: 0,
-        backgroundColor:
-            theme.brightness == Brightness.light ? Colors.black : const Color(0xFFF1F5F9),
-        foregroundColor:
-            theme.brightness == Brightness.light ? Colors.white : Colors.black,
-        surfaceTintColor: Colors.transparent,
         actions: [
           Consumer<ThemeProvider>(
             builder: (_, themeProvider, _) {
