@@ -24,12 +24,20 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   late int _currentIndex;
   late final PageController _pageController;
+  late final Widget _dashboardScreen;
+  late final Widget _documentsScreen;
+  late final Widget _membersScreen;
+  late final Widget _profileScreen;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _currentIndex);
+    _dashboardScreen = const DashboardScreen();
+    _documentsScreen = const DocumentsScreen();
+    _membersScreen = MembersScreen(onMemberTap: _navigateToDocumentsWithFilter);
+    _profileScreen = const ProfileScreen();
   }
 
   @override
@@ -63,20 +71,11 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = Responsive.isDesktop(context);
-    final pages = const [
-      DashboardScreen(),
-      DocumentsScreen(),
-      // Members needs callback
-      null,
-      ProfileScreen(),
-    ];
-
-    // Build page widgets array with the callback-injected member screen
     final children = [
-      pages[0]!,
-      pages[1]!,
-      MembersScreen(onMemberTap: _navigateToDocumentsWithFilter),
-      pages[3]!,
+      _dashboardScreen,
+      _documentsScreen,
+      _membersScreen,
+      _profileScreen,
     ];
 
     if (isDesktop) {

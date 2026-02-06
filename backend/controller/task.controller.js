@@ -12,7 +12,6 @@ class TaskController {
         isRecurring,
         recurrenceType,
         memberId,
-        remindMeBeforeDays,
       } = req.body;
 
       const userId = req.user.id; // Get from authenticated token
@@ -48,7 +47,6 @@ class TaskController {
         isRecurring,
         recurrenceType,
         memberId,
-        remindMeBeforeDays,
       );
 
       res.status(201).json({

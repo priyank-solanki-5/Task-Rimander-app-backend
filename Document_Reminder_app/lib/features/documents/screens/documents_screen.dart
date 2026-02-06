@@ -123,107 +123,19 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             Expanded(
               child: Consumer2<DocumentProvider, MemberProvider>(
                 builder: (context, provider, memberProvider, child) {
-                  if (provider.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  final documents = provider.filteredDocuments;
-
-                  if (documents.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.folder_open,
-                            size: 64,
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.3,
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: provider.isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : RefreshIndicator(
+                            onRefresh: () => provider.refreshDocuments(),
+                            child: _buildDocumentBody(
+                              context,
+                              provider,
+                              memberProvider,
+                              theme,
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No documents found',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Upload your first document',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.4,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              final selectedMemberId =
-                                  provider.selectedMemberId;
-                              final initialMemberId =
-                                  (selectedMemberId == 'all' ||
-                                      selectedMemberId == 'myself')
-                                  ? null
-                                  : selectedMemberId;
-
-                              final result = await Navigator.push<bool>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AddDocumentScreen(
-                                    initialMemberId: initialMemberId,
-                                  ),
-                                ),
-                              );
-                              if (!context.mounted) return;
-                              if (result == true) {
-                                context
-                                    .read<DocumentProvider>()
-                                    .refreshDocuments();
-                              }
-                            },
-                            icon: const Icon(Icons.upload_file),
-                            label: const Text('Add Document'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 32,
-                                vertical: 16,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: documents.length,
-                    itemBuilder: (context, index) {
-                      final document = documents[index];
-                      return TweenAnimationBuilder<double>(
-                        duration: Duration(milliseconds: 300 + (index * 50)),
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, child) {
-                          return Transform.translate(
-                            offset: Offset(0, 20 * (1 - value)),
-                            child: Opacity(opacity: value, child: child),
-                          );
-                        },
-                        child: _DocumentCard(
-                          document: document,
-                          memberName: memberProvider.getMemberName(
-                            document.memberId,
-                          ),
-                          onView: () => _viewDocument(document),
-                          onDelete: () => _deleteDocument(document),
-                        ),
-                      );
-                    },
                   );
                 },
               ),
@@ -298,6 +210,110 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       if (!context.mounted) return;
       messenger.showSnackBar(const SnackBar(content: Text('Document deleted')));
     }
+  }
+
+  Widget _buildDocumentBody(
+    BuildContext context,
+    DocumentProvider provider,
+    MemberProvider memberProvider,
+    ThemeData theme,
+  ) {
+    final documents = provider.filteredDocuments;
+
+    if (documents.isEmpty) {
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.folder_open,
+                size: 64,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No documents found',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Pull to refresh or upload your first document',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final selectedMemberId = provider.selectedMemberId;
+                  final initialMemberId =
+                      (selectedMemberId == 'all' ||
+                          selectedMemberId == 'myself')
+                      ? null
+                      : selectedMemberId;
+
+                  final result = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          AddDocumentScreen(initialMemberId: initialMemberId),
+                    ),
+                  );
+                  if (!context.mounted) return;
+                  if (result == true) {
+                    context.read<DocumentProvider>().refreshDocuments();
+                  }
+                },
+                icon: const Icon(Icons.upload_file),
+                label: const Text('Add Document'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: documents.length,
+      itemBuilder: (context, index) {
+        final document = documents[index];
+        return TweenAnimationBuilder<double>(
+          duration: Duration(milliseconds: 300 + (index * 50)),
+          tween: Tween(begin: 0.0, end: 1.0),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Transform.translate(
+              offset: Offset(0, 20 * (1 - value)),
+              child: Opacity(opacity: value, child: child),
+            );
+          },
+          child: _DocumentCard(
+            document: document,
+            memberName: memberProvider.getMemberName(document.memberId),
+            onView: () => _viewDocument(document),
+            onDelete: () => _deleteDocument(document),
+          ),
+        );
+      },
+    );
   }
 }
 

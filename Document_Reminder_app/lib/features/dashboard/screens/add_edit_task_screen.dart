@@ -29,8 +29,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   bool _isLoading = false;
   String? _userId;
   String? _selectedMemberId;
-  int _reminderDays = 3;
-  TaskType _taskType = TaskType.oneTime;
+  String? _selectedRecurrence = 'One Time';
 
   bool get isEditing => widget.task != null;
 
@@ -47,12 +46,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           widget.task!.dueDate ?? DateTime.now().add(const Duration(days: 7));
       _isRecurring = widget.task!.isRecurring;
       _recurrenceType = widget.task!.recurrenceType;
-      _taskType = widget.task!.taskType;
+      _selectedRecurrence = _recurrenceType ?? 'One Time';
       if (widget.task!.memberId != null) {
         _selectedMemberId = widget.task!.memberId;
-      }
-      if (widget.task!.remindMeBeforeDays != null) {
-        _reminderDays = widget.task!.remindMeBeforeDays!;
       }
     }
 
@@ -288,86 +284,39 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Reminder & Task Type Group
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  color: theme.colorScheme.surfaceContainerLowest,
+              // Recurrence Type Selection
+              DropdownButtonFormField<String?>(
+                value: _selectedRecurrence,
+                decoration: InputDecoration(
+                  labelText: 'Recurrence Type',
+                  prefixIcon: const Icon(Icons.repeat_outlined),
+                  border: inputBorder,
+                  enabledBorder: inputBorder,
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerLowest,
                 ),
-                child: Column(
-                  children: [
-                    // Start of Reminder Section
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.notifications_outlined),
-                          const SizedBox(width: 12),
-                          Text('Remind me', style: theme.textTheme.bodyLarge),
-                          const Spacer(),
-                          Text(
-                            '$_reminderDays days before (${DateFormat('MMM d').format(_selectedDate.subtract(Duration(days: _reminderDays)))})',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Slider(
-                      value: _reminderDays.toDouble(),
-                      min: 1,
-                      max: 30,
-                      divisions: 29,
-                      onChanged: (value) =>
-                          setState(() => _reminderDays = value.toInt()),
-                    ),
-                    const Divider(height: 1),
-
-                    // Task Type Section
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: RadioListTile<TaskType>(
-                              title: const Text('One-time'),
-                              value: TaskType.oneTime,
-                              groupValue: _taskType,
-                              onChanged: (val) =>
-                                  setState(() => _taskType = val!),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: RadioListTile<TaskType>(
-                              title: const Text('Recurring'),
-                              value: TaskType.recurring,
-                              groupValue: _taskType,
-                              onChanged: (val) =>
-                                  setState(() => _taskType = val!),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                items:
+                    const [
+                      'One Time',
+                      'Monthly',
+                      'Quarterly',
+                      'Half-Yearly',
+                      'Yearly',
+                    ].map((type) {
+                      return DropdownMenuItem<String?>(
+                        value: type,
+                        child: Text(type),
+                      );
+                    }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedRecurrence = value;
+                      _isRecurring = value != 'One Time';
+                      _recurrenceType = _isRecurring ? value : null;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: 32),
 
@@ -420,6 +369,40 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       final timePicked = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(_selectedDate),
+        builder: (context, child) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    useMaterial3: true,
+                    timePickerTheme: TimePickerThemeData(
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                      dialHandColor: Theme.of(context).colorScheme.primary,
+                      dialBackgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      hourMinuteTextColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurface,
+                      dayPeriodTextColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurface,
+                    ),
+                  ),
+                  child: MediaQuery(
+                    data: MediaQuery.of(
+                      context,
+                    ).copyWith(alwaysUse24HourFormat: false),
+                    child: child!,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       );
 
       if (timePicked != null) {
@@ -457,7 +440,6 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         status: isEditing ? widget.task!.status : TaskStatus.pending,
         categoryId: _selectedCategoryId,
         memberId: _selectedMemberId, // Can be null (Myself)
-        remindMeBeforeDays: _reminderDays,
       );
 
       final success = isEditing

@@ -33,87 +33,14 @@ class _MembersScreenState extends State<MembersScreen> {
       body: SafeArea(
         child: Consumer<MemberProvider>(
           builder: (context, provider, child) {
-            if (provider.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            final members = provider.members;
-
-            if (members.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.people_outline,
-                      size: 64,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: provider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      onRefresh: () => provider.refreshMembers(),
+                      child: _buildMemberBody(theme, provider.members),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No members yet',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.5,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Add your first member',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.4,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    ElevatedButton.icon(
-                      onPressed: _addMember,
-                      icon: const Icon(Icons.person_add),
-                      label: const Text('Add Member'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 16,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return GridView.builder(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.1,
-              ),
-              itemCount: members.length,
-              itemBuilder: (context, index) {
-                final member = members[index];
-                return TweenAnimationBuilder<double>(
-                  duration: Duration(milliseconds: 300 + (index * 40)),
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, value, child) {
-                    return Transform.scale(
-                      scale: 0.8 + (0.2 * value),
-                      child: Opacity(opacity: value, child: child),
-                    );
-                  },
-                  child: MemberCard(
-                    member: member,
-                    onTap: () => _handleMemberTap(member),
-                    onEdit: () => _editMember(member),
-                    onDelete: () => _deleteMember(member),
-                  ),
-                );
-              },
             );
           },
         ),
@@ -199,5 +126,89 @@ class _MembersScreenState extends State<MembersScreen> {
         );
       }
     }
+  }
+
+  Widget _buildMemberBody(ThemeData theme, List<Member> members) {
+    if (members.isEmpty) {
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.people_outline,
+                size: 64,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No members yet',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Pull to refresh or add your first member',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: _addMember,
+                icon: const Icon(Icons.person_add),
+                label: const Text('Add Member'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return GridView.builder(
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.1,
+      ),
+      itemCount: members.length,
+      itemBuilder: (context, index) {
+        final member = members[index];
+        return TweenAnimationBuilder<double>(
+          duration: Duration(milliseconds: 300 + (index * 40)),
+          tween: Tween(begin: 0.0, end: 1.0),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: 0.8 + (0.2 * value),
+              child: Opacity(opacity: value, child: child),
+            );
+          },
+          child: MemberCard(
+            member: member,
+            onTap: () => _handleMemberTap(member),
+            onEdit: () => _editMember(member),
+            onDelete: () => _deleteMember(member),
+          ),
+        );
+      },
+    );
   }
 }

@@ -14,8 +14,7 @@ class TaskService {
     categoryId,
     isRecurring,
     recurrenceType,
-    memberId, // Added memberId
-    remindMeBeforeDays, // Added remindMeBeforeDays
+    memberId,
   ) {
     // Validate user exists
     // FIX: Changed findUserByEmail to findUserById
@@ -77,11 +76,10 @@ class TaskService {
       isRecurring: isRecurring || false,
       recurrenceType: recurrenceType || null,
       nextOccurrence,
-      memberId: memberId || null, // Persist memberId
-      remindMeBeforeDays: remindMeBeforeDays || null,
+      memberId: memberId || null,
     });
 
-    // AUTO-CREATE NOTIFICATION RULES (Updated cadence)
+    // AUTO-CREATE NOTIFICATION RULES based on recurrence type
     if (task && task.dueDate) {
       const taskId = task._id || task.id;
       const basePayload = { taskId, userId, isActive: true };
@@ -95,26 +93,41 @@ class TaskService {
         Math.ceil((due.getTime() - now.getTime()) / msInDay),
       );
 
-      // Daily notifications leading up to due date (one per day)
-      for (let d = 1; d <= daysUntilDue; d++) {
-        rules.push({
-          ...basePayload,
-          type: "push",
-          triggerType: "before_due_date",
-          hoursBeforeDue: d * 24,
+      // For "One Time" tasks: Create daily notifications leading up to due date
+      if (!isRecurring || recurrenceType === "One Time") {
+        // Daily notifications leading up to due date (one per day)
+        for (let d = 1; d <= daysUntilDue; d++) {
+          rules.push({
+            ...basePayload,
+            type: "push",
+            triggerType: "before_due_date",
+            hoursBeforeDue: d * 24,
+          });
+        }
+
+        // Day-of notifications: 3h, 1h, 30m before due time
+        const dayOfOffsets = [3, 1, 0.5];
+        dayOfOffsets.forEach((hours) => {
+          rules.push({
+            ...basePayload,
+            type: "push",
+            triggerType: "before_due_date",
+            hoursBeforeDue: hours,
+          });
+        });
+      } else {
+        // For recurring tasks (Monthly, Quarterly, Half-Yearly, Yearly):
+        // Create notifications 7 days, 3 days, and 1 day before due date
+        const recurringOffsets = [168, 72, 24]; // hours
+        recurringOffsets.forEach((hours) => {
+          rules.push({
+            ...basePayload,
+            type: "push",
+            triggerType: "before_due_date",
+            hoursBeforeDue: hours,
+          });
         });
       }
-
-      // Day-of notifications: 3h, 1h, 30m before due time
-      const dayOfOffsets = [3, 1, 0.5];
-      dayOfOffsets.forEach((hours) => {
-        rules.push({
-          ...basePayload,
-          type: "push",
-          triggerType: "before_due_date",
-          hoursBeforeDue: hours,
-        });
-      });
 
       // In-app + push on due date (kept for visibility)
       rules.push(

@@ -269,9 +269,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Tasks'),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
         actions: [
           Consumer<ThemeProvider>(
             builder: (_, themeProvider, _) {
@@ -312,7 +309,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               }
 
               return CustomScrollView(
-                physics: const BouncingScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
                 slivers: [
                   /// HEADER
                   SliverToBoxAdapter(
